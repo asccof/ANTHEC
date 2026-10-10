@@ -881,3 +881,73 @@ class PolicyTests(TestCase):
             ).status_code,
             403,
         )
+
+    def test_malformed_command_types_are_client_errors_and_duplicate_exemptions_conflict(
+        self,
+    ):
+        self.http_login()
+        app = self.application("founder")
+        for key, reason, object_id in [
+            (123, "Synthetic", app.pk),
+            ("null", None, app.pk),
+            ("list", [], app.pk),
+            ("bool-id", "Synthetic", True),
+        ]:
+            response = self.client.post(
+                "/operations/membership.approve/",
+                data={"key": key, "reason": reason, "application_id": object_id},
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 400)
+        paid = self.application("general")
+        s.exempt_fee(
+            self.request,
+            key="first-exemption",
+            application_id=paid.pk,
+            reason="Synthetic",
+        )
+        with self.assertRaises(s.Conflict):
+            s.exempt_fee(
+                self.request,
+                key="second-exemption",
+                application_id=paid.pk,
+                reason="Synthetic",
+            )
+        self.assertEqual(Membership.objects.count(), 0)
+
+    def test_minor_consent_requires_real_text_version_and_well_typed_guardian_fields(
+        self,
+    ):
+        minor = Person.objects.create(
+            full_name="Synthetic Minor",
+            minor=True,
+            guardian=self.holder,
+            verification_notice_at=timezone.now(),
+        )
+        activity = self.activity()
+        self.client.force_login(self.holder)
+        payload = {
+            "person_id": minor.pk,
+            "activity_id": activity.pk,
+            "guardian_name": None,
+            "guardian_capacity": "Parent",
+            "consent": True,
+        }
+        self.assertEqual(
+            self.client.post(
+                "/registrations/request/", data=payload, content_type="application/json"
+            ).status_code,
+            400,
+        )
+        activity.consent_text = ""
+        activity.save()
+        with self.assertRaises(ValidationError):
+            s.register(
+                activity,
+                minor,
+                self.holder,
+                guardian_name="Synthetic Guardian",
+                guardian_capacity="Parent",
+                consent=True,
+            )
+        self.assertEqual(Registration.objects.count(), 0)

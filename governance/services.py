@@ -1,6 +1,5 @@
 """Approved POL-01..08 command boundary. No ordinary domain CRUD is exposed."""
 
-import base64
 import hashlib
 import json
 import secrets
@@ -132,10 +131,40 @@ def command(action, primary_only=False):
     def decorator(fn):
         @wraps(fn)
         def wrapper(request, *, key, **payload):
-            if not key or len(key) > 120:
+            if not isinstance(key, str) or not key or len(key) > 120:
                 raise ValidationError("Invalid command key")
             with transaction.atomic():
                 actor = authorize(request, primary_only=primary_only)
+                for field, value in payload.items():
+                    if field in {
+                        "reason",
+                        "proof_reference",
+                        "tier",
+                        "model",
+                        "state",
+                        "kind",
+                        "subject_name",
+                        "starts_on",
+                        "ends_on",
+                        "starts_at",
+                    } and not isinstance(value, str):
+                        raise ValidationError("Text field required")
+                    if field.endswith("_id") and not (
+                        field == "person_id" and value is None
+                    ):
+                        if (
+                            not isinstance(value, int)
+                            or isinstance(value, bool)
+                            or value <= 0
+                        ):
+                            raise ValidationError(
+                                "Positive integer identifier required"
+                            )
+                if (
+                    len(payload.get("proof_reference", "")) > 120
+                    or len(payload.get("subject_name", "")) > 200
+                ):
+                    raise ValidationError("Text exceeds field limit")
                 hashed = digest(json.dumps(payload, sort_keys=True, default=str))
                 previous = Command.objects.filter(
                     actor=actor, action=action, key=key
@@ -294,6 +323,8 @@ def exempt_fee(*, actor, application_id, reason):
     app = Application.objects.select_for_update().get(pk=application_id)
     if not reason.strip() or app.state != "submitted":
         raise ValidationError("Pending application and reason required")
+    if Exemption.objects.filter(application=app).exists():
+        raise Conflict("Application already has a documented exemption")
     row = Exemption.objects.create(application=app, actor=actor, reason=reason)
     audit(actor, "fee.exempted", row.pk, reason)
     return {"exemption": row.pk}
@@ -342,7 +373,7 @@ def issue(
 @command("membership.approve")
 def approve_membership(*, actor, application_id, reason):
     app = (
-        Application.objects.select_for_update()
+        Application.objects.select_for_update(of=("self",))
         .select_related("person", "previous")
         .get(pk=application_id)
     )
@@ -516,8 +547,14 @@ def register(
             person.guardian_id != user.pk
             or not activity.allows_minors
             or consent is not True
+            or not isinstance(guardian_name, str)
+            or not isinstance(guardian_capacity, str)
             or not guardian_name.strip()
             or not guardian_capacity.strip()
+            or len(guardian_name) > 200
+            or len(guardian_capacity) > 100
+            or not activity.consent_text.strip()
+            or not activity.consent_version.strip()
         ):
             raise ValidationError(
                 "Eligible activity and legal guardian explicit consent required"
@@ -586,7 +623,7 @@ def cancel_registration(*, actor, registration_id, reason):
 @command("attendance.checkin")
 def check_in(*, actor, document_id):
     doc = (
-        Document.objects.select_for_update()
+        Document.objects.select_for_update(of=("self",))
         .select_related("registration")
         .get(pk=document_id)
     )

@@ -5,7 +5,7 @@ import qrcode.image.svg
 from django.db import transaction
 from django.conf import settings
 from .models import Outbox
-from .services import decrypt, encrypt, public_document, audit
+from .services import decrypt, encrypt, public_document
 
 
 def printable(doc):

@@ -10,7 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.debug import sensitive_post_parameters
 from . import services
-from .models import Document, RateBucket, Authority, Person, Activity, Application
+from .models import Document, RateBucket, Person, Activity
 from .documents import printable
 
 
@@ -125,6 +125,15 @@ def download(request, document_id):
 def registration_request(request):
     try:
         payload = json.loads(request.body)
+        if not isinstance(payload, dict):
+            raise ValueError()
+        for field in ["person_id", "activity_id"]:
+            if (
+                not isinstance(payload.get(field), int)
+                or isinstance(payload.get(field), bool)
+                or payload[field] <= 0
+            ):
+                raise ValueError()
         person = Person.objects.get(pk=payload["person_id"])
         activity = Activity.objects.get(pk=payload["activity_id"])
         row = services.register(

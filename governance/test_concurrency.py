@@ -1,7 +1,6 @@
 """Real row-lock tests run on PostgreSQL CI, never inferred from SQLite."""
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
 from io import StringIO
 from threading import Barrier
 from unittest import skipUnless
