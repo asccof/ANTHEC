@@ -298,6 +298,36 @@ class PDFTests(TestCase):
             pdf.artifact_for(certificate.pk, "en")
         self.assertEqual(PDFArtifact.objects.count(), 0)
 
+    def test_inactive_outbox_retries_after_reactivation_without_rewriting_outputs(self):
+        from django.core.management import call_command
+        from .documents import render_outbox
+
+        self.role.state = "suspended"
+        self.role.save(update_fields=["state"])
+        outbox = Outbox.objects.get(document=self.doc)
+        render_outbox(outbox.pk)
+        outbox.refresh_from_db()
+        self.doc.refresh_from_db()
+        original_html = self.doc.rendered
+        self.assertEqual(outbox.state, "failed")
+        self.assertEqual(outbox.last_error, "inactive_document")
+        self.assertFalse(PDFArtifact.objects.exists())
+        self.role.state = "active"
+        self.role.save(update_fields=["state"])
+        call_command("render_policy_documents", stdout=io.StringIO())
+        outbox.refresh_from_db()
+        self.doc.refresh_from_db()
+        self.assertEqual(outbox.state, "rendered")
+        self.assertEqual(outbox.last_error, "")
+        self.assertEqual(self.doc.rendered, original_html)
+        self.assertEqual(set(PDFArtifact.objects.values_list("language", flat=True)),
+                         {"ar", "fr", "en"})
+        snapshots = list(PDFArtifact.objects.values_list("pk", "sha256", "payload"))
+        call_command("render_policy_documents", stdout=io.StringIO())
+        self.assertEqual(list(PDFArtifact.objects.values_list("pk", "sha256", "payload")),
+                         snapshots)
+        self.assertEqual(Audit.objects.filter(action="document.pdf.rendered").count(), 3)
+
     def test_synthetic_membership_photo_finance_issue_reissue_journey(self):
         from django.core.management import call_command
         from django.core.files.uploadedfile import SimpleUploadedFile

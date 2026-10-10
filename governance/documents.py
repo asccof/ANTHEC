@@ -75,10 +75,12 @@ def render_outbox(outbox_id):
     row.attempts += 1
     try:
         row.last_error = ""
-        html = printable(row.document)
-        row.document.rendered = encrypt(html)
-        row.document.rendering_state = "ready"
-        row.document.save(update_fields=["rendered", "rendering_state"])
+        retry_pdf = False
+        if row.document.rendering_state != "ready" or not row.document.rendered:
+            html = printable(row.document)
+            row.document.rendered = encrypt(html)
+            row.document.rendering_state = "ready"
+            row.document.save(update_fields=["rendered", "rendering_state"])
         from .pdf_services import artifact_for, InactiveDocument
         from .pdf_design import PendingPhoto, LayoutError
         from .portraits import CARD_KINDS
@@ -97,7 +99,8 @@ def render_outbox(outbox_id):
                 row.last_error = "pending_layout"
             except InactiveDocument:
                 row.last_error = "inactive_document"
-        row.state = "rendered"
+                retry_pdf = True
+        row.state = "failed" if retry_pdf else "rendered"
         if row.last_error not in {"pending_photo", "pending_layout", "inactive_document"}:
             row.last_error = ""
     except Exception:
