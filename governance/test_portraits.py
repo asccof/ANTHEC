@@ -184,7 +184,9 @@ class PortraitTests(TestCase):
             ).status_code,
             403,
         )
-        self.assertEqual(self.client.get("/private-media/", follow=True).status_code, 404)
+        self.assertEqual(
+            self.client.get("/private-media/", follow=True).status_code, 404
+        )
 
     def test_localized_upload_and_admin_navigation(self):
         self.client.force_login(self.holder)
@@ -228,3 +230,19 @@ class PortraitTests(TestCase):
         self.assertEqual(response.status_code, 302)
         row.refresh_from_db()
         self.assertEqual(row.state, "approved")
+
+    def test_review_preview_identifier_matches_scoped_choice(self):
+        first = self.upload()
+        second_person = Person.objects.create(
+            user=self.other, full_name="Other Synthetic Holder"
+        )
+        second = self.upload(user=self.other, person=second_person)
+        self.http_login()
+        response = self.client.get("/operations/portraits/?lang=en")
+        for row in (first, second):
+            self.assertContains(
+                response, f'<option value="{row.pk}">{row.serial}</option>', html=True
+            )
+            self.assertContains(
+                response, f"<p>{row.serial} — {row.person.full_name}</p>", html=True
+            )
