@@ -51,3 +51,29 @@ class CMSAcceptanceTests(TestCase):
 
     def test_private_media_not_served(self):
         self.assertEqual(self.client.get('/private-media/synthetic.pdf').status_code,404)
+
+
+class SeedSafetyTests(TestCase):
+    def test_existing_leaf_homepage_is_preserved(self):
+        from django.core.management.base import CommandError
+        site = Site.objects.get(is_default_site=True)
+        original = site.root_page
+        original.title = 'Existing synthetic homepage'
+        original.save()
+        before = InstitutionalPage.objects.count()
+        with self.assertRaises(CommandError):
+            call_command('seed_demo', verbosity=0)
+        site.refresh_from_db()
+        self.assertEqual(site.root_page_id, original.pk)
+        self.assertEqual(site.root_page.title, 'Existing synthetic homepage')
+        self.assertEqual(InstitutionalPage.objects.count(), before)
+
+    def test_modified_placeholder_with_revision_is_preserved(self):
+        from django.core.management.base import CommandError
+        site = Site.objects.get(is_default_site=True)
+        site.root_page.save_revision()
+        original_id = site.root_page_id
+        with self.assertRaises(CommandError):
+            call_command('seed_demo', verbosity=0)
+        site.refresh_from_db()
+        self.assertEqual(site.root_page_id, original_id)
