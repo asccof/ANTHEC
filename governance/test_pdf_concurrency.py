@@ -1,7 +1,7 @@
 from unittest import skipUnless
 from datetime import date
 from django.db import connection, transaction
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, Client
 from django.utils import timezone
 from . import (
     test_concurrency as helpers,
@@ -115,3 +115,60 @@ class PDFConcurrencyTests(TransactionTestCase):
                 role.save(update_fields=["state"])
             self.assertEqual(future.result(timeout=10), "denied")
         self.assertFalse(PDFArtifact.objects.exists())
+
+    def test_pdf_download_and_preview_wait_for_committed_revocation(self):
+        from .models import Audit
+
+        member = synthetic_user("synthetic-member")
+        self.person.user = member
+        self.person.save(update_fields=["user"])
+        pdf.artifact_for(self.doc.pk, "en")
+        for endpoint in ("pdf", "preview"):
+            role = self.doc.institutional_role
+            role.state = "active"
+            role.save(update_fields=["state"])
+            worker_pid = Queue()
+
+            def download():
+                close_old_connections()
+                try:
+                    client = Client()
+                    client.force_login(type(member).objects.get(pk=member.pk))
+                    with connection.cursor() as cursor:
+                        cursor.execute("SELECT pg_backend_pid()")
+                        worker_pid.put(cursor.fetchone()[0])
+                    return client.get(
+                        f"/my-documents/{self.doc.pk}/{endpoint}/?lang=en"
+                    ).status_code
+                finally:
+                    close_old_connections()
+
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                with transaction.atomic():
+                    role = InstitutionalRole.objects.select_for_update().get(pk=role.pk)
+                    future = pool.submit(download)
+                    pid = worker_pid.get(timeout=5)
+                    waiting = False
+                    deadline = monotonic() + 5
+                    while monotonic() < deadline:
+                        with connection.cursor() as cursor:
+                            cursor.execute("SELECT pg_stat_clear_snapshot()")
+                            cursor.execute(
+                                "SELECT wait_event_type FROM pg_stat_activity WHERE pid=%s",
+                                [pid],
+                            )
+                            row = cursor.fetchone()
+                        if row and row[0] == "Lock":
+                            waiting = True
+                            break
+                        if future.done():
+                            break
+                        sleep(.02)
+                    self.assertTrue(waiting, f"{endpoint} must serialize with revocation")
+                    role.state = "terminated"
+                    role.save(update_fields=["state"])
+                self.assertEqual(future.result(timeout=10), 410)
+        self.assertEqual(PDFArtifact.objects.count(), 1)
+        self.assertFalse(Audit.objects.filter(
+            action__in=["document.pdf.downloaded", "document.pdf.previewed"]
+        ).exists())

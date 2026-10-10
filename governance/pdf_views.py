@@ -10,8 +10,8 @@ from . import portraits, services as s, pdf_services, pdf_design
 from .member_labels import vocabulary
 
 
-def permitted(request, doc):
-    person = (
+def document_person(doc):
+    return (
         doc.institutional_role.person
         if doc.institutional_role_id
         else (
@@ -24,22 +24,36 @@ def permitted(request, doc):
             )
         )
     )
+
+
+def permitted(request, doc):
+    person = document_person(doc)
     own = person and portraits.owned_people(request.user).filter(pk=person.pk).exists()
-    if not own:
-        try:
-            with transaction.atomic():
-                s.authorize(request)
-        except (PermissionDenied, ObjectDoesNotExist):
-            return False
-    return True
+    if own:
+        return "owned"
+    try:
+        with transaction.atomic():
+            s.authorize(request)
+    except (PermissionDenied, ObjectDoesNotExist):
+        return False
+    return "administrative"
 
 
 @never_cache
 @login_required(login_url="/members/login/")
 @require_http_methods(["GET"])
+@transaction.atomic
 def download(request, document_id, preview=False):
     doc = get_object_or_404(Document, pk=document_id)
-    if not permitted(request, doc):
+    access = permitted(request, doc)
+    if not access:
+        return HttpResponse(status=404)
+    # Administrative authority is acquired before Document, matching command
+    # lock order. Keep document/origin locks through audit and response creation.
+    doc = pdf_services.locked_document(document_id)
+    if access == "owned" and not portraits.owned_people(request.user).filter(
+        pk=document_person(doc).pk
+    ).exists():
         return HttpResponse(status=404)
     lang, _ = vocabulary(request.GET.get("lang", "ar"))
     status = s.document_status(doc)
@@ -89,8 +103,7 @@ def download(request, document_id, preview=False):
         )
     except ValidationError:
         return HttpResponse(status=409)
-    # Concurrent revocation must not be presented as a currently valid download.
-    doc.refresh_from_db()
+    # Recheck time-based expiry too after rendering, while lifecycle locks remain.
     status = s.document_status(doc)
     if status in {"cancelled", "suspended", "expired"}:
         return HttpResponse(status=410)
@@ -115,6 +128,7 @@ def download(request, document_id, preview=False):
 @never_cache
 @login_required(login_url="/members/login/")
 @require_http_methods(["POST"])
+@transaction.atomic
 def prepare(request, document_id):
     from django.shortcuts import redirect
     from django.urls import reverse
@@ -127,6 +141,8 @@ def prepare(request, document_id):
         return HttpResponse(status=410)
     try:
         pdf_services.artifact_for(doc.pk, language)
+    except pdf_services.InactiveDocument:
+        return HttpResponse(status=410)
     except (ValidationError, ObjectDoesNotExist):
         # Reuse localized pending-photo/layout feedback without creating an artifact.
         return HttpResponse(

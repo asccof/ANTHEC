@@ -13,9 +13,8 @@ class InactiveDocument(ValidationError):
     pass
 
 
-@transaction.atomic
-def artifact_for(document_id, language="ar"):
-    language = language if language in pdf_design.WORDS else "ar"
+def locked_document(document_id):
+    """Call inside an atomic boundary; retain locks through generation/delivery."""
     doc = Document.objects.select_for_update().get(pk=document_id)
     # Lock the records changed by the existing lifecycle commands too. Linked
     # membership precedes accreditation, matching membership-state propagation.
@@ -38,6 +37,13 @@ def artifact_for(document_id, language="ar"):
         )
         if membership:
             doc.accreditation.membership = membership
+    return doc
+
+
+@transaction.atomic
+def artifact_for(document_id, language="ar"):
+    language = language if language in pdf_design.WORDS else "ar"
+    doc = locked_document(document_id)
     if s.document_status(doc) in {"cancelled", "suspended", "expired"}:
         raise InactiveDocument("Document lifecycle does not permit PDF generation")
     previous = PDFArtifact.objects.filter(document=doc, language=language).first()
