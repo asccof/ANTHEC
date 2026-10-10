@@ -246,3 +246,31 @@ class PortraitTests(TestCase):
             self.assertContains(
                 response, f"<p>{row.serial} — {row.person.full_name}</p>", html=True
             )
+
+    def test_more_than_100_review_choices_have_matching_previews(self):
+        first = self.upload()
+        Portrait.objects.bulk_create(
+            [
+                Portrait(person=self.person, uploaded_by=self.holder, image=first.image)
+                for _ in range(101)
+            ]
+        )
+        self.http_login()
+        response = self.client.get("/operations/portraits/?lang=en")
+        choices = list(response.context["form"].fields["portrait_id"].queryset)
+        previews = list(response.context["portraits"])
+        self.assertEqual(len(choices), 100)
+        self.assertEqual([p.pk for p in choices], [p.pk for p in previews])
+        hidden = Portrait.objects.order_by("pk").last()
+        response = self.client.post(
+            "/operations/portraits/",
+            {
+                "portrait_id": hidden.pk,
+                "decision": "approved",
+                "reason": "Synthetic",
+                "key": str(uuid.uuid4()),
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        hidden.refresh_from_db()
+        self.assertEqual(hidden.state, "pending")

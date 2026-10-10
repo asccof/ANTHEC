@@ -78,12 +78,20 @@ def review(request):
     read_authority(request)
     data = ctx(request)
     labels = data["photo_labels"]
+    visible_ids = list(
+        Portrait.objects.filter(state="pending")
+        .order_by("pk")
+        .values_list("pk", flat=True)[:100]
+    )
+    visible = (
+        Portrait.objects.filter(state="pending", pk__in=visible_ids)
+        .select_related("person")
+        .order_by("pk")
+    )
 
     class ReviewForm(forms.Form):
         key = forms.UUIDField(initial=uuid.uuid4, widget=forms.HiddenInput)
-        portrait_id = forms.ModelChoiceField(
-            queryset=Portrait.objects.filter(state="pending"), label=labels["photo"]
-        )
+        portrait_id = forms.ModelChoiceField(queryset=visible, label=labels["photo"])
         decision = forms.ChoiceField(
             choices=[(k, labels[k]) for k in ("approved", "rejected")],
             label=labels["decision"],
@@ -113,9 +121,7 @@ def review(request):
                 form.add_error(None, labels["error"])
     data.update(
         form=form,
-        portraits=Portrait.objects.filter(state="pending")
-        .select_related("person")
-        .order_by("pk")[:100],
+        portraits=visible,
     )
     return render(request, "governance/portrait_review.html", data, status=status)
 
