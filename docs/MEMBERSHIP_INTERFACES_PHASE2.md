@@ -10,7 +10,7 @@ Owner authorization: 2026-10-10, approval of the Phase 2 mandate. Baseline live 
 | B | MFA primary/delegation; approval; cash/transfer verification; exemptions/refunds | Protected application register/detail, reasoned rejection, financial decisions and history; deliberate linkage of a legacy Person to an account |
 | C | Early/late renewal; separate gold card/certificate; institutional documents; protected download | Own renewal selection and documents/receipts/status history; integrate institutional records without reimplementing grant/state services; complete synthetic journey |
 
-Each package requires metadata checks, Django/migration/dependency checks, PostgreSQL CI and exact-head Codex review before merge. Acceptance evidence belongs to each PR; prepared code is not accepted code. No later package begins before its dependency is merged and live main re-fetched.
+Each package requires metadata checks, Django/migration/dependency checks, PostgreSQL CI and exact-head Codex review before merge. Acceptance evidence belongs to each PR; prepared code is not accepted code. When external review availability blocks acceptance, dependent packages may be prepared on stacked draft branches. None may merge until its dependency is accepted, the PR is retargeted to live main, and PostgreSQL CI plus exact-head review are revalidated.
 
 ## Technical boundaries
 
@@ -23,3 +23,13 @@ Verification notice acknowledgment is explicit, separate from optional directory
 Initial applications use the fixed quote service and one pending application per account-linked person. An existing membership uses renewal instead; tier upgrades or parallel initial memberships are not invented. Founder/honorary requests remain subject to administrative decision. Submission and payment never approve membership or create cards. Self-service command keys are scoped to actor/action with payload-digest replay protection and account locks; administrative commands keep their existing Authority/MFA boundary.
 
 Synthetic data only. No production deployment, real persons, external notifications, paid services, independent accreditation casework, events, partnerships or production PDFs. Protected/legal readiness gates remain open.
+
+## Package B interface behavior
+
+`/operations/membership/` lists the latest 100 applications; detail pages expose review/approve/reject, cash/transfer proof verification, reasoned exemption/refund, membership state and document reissue using existing services. Reads require live primary/delegation and MFA; sensitive writes also require recent password/factor. CSRF and origin-scoped payment/document choices reject cross-application manipulation. Rejection only changes submitted applications and records the reason; it never erases payments or automatically refunds them. State decisions retain linked accreditation and future-term propagation from the core.
+
+`/operations/membership/identities/` deliberately links an unlinked adult Person to an active account with no existing Person after recorded administrative identity verification. It never transfers an already linked record, merges accounts, changes minor/guardian fields or confers privileges. Operators must link legacy records before self-service profile creation. Existing duplicate real-world identities require separate verified remediation, not a name/email merge heuristic.
+
+All payment proofs, exemption/refund/internal decision reasons and administrative history remain behind the director boundary. Member records show only their own fixed amounts/states/receipts; public verification keeps its original allowlist. Refund decision recording does not execute a bank transfer.
+
+Historical preparation evidence: package A review requests were initially rejected because review usage was exhausted; PostgreSQL run 38064423647 passed its earlier 101-test head. This blocker is superseded: package A final head e56ba467b0d55af8247a7c79cf10a696ff0cf793 passed PostgreSQL run 38065371450 (102 application/CMS and six metadata tests), completed Codex review without major issues, and merged as 2f67eb47e4dc2aa8a8364d6fb8e03c1f40040bef. Package B is now reconciled directly onto accepted main using its own changes, with updated-head CI and review required before merge. Package C remains a preserved dependent draft. No credit purchase or paid service is authorized.

@@ -1,0 +1,1 @@
+{% extends 'governance/membership_admin_base.html' %}{% block administration %}<section><h2>{{ labels.identities }}</h2><p>{{ labels.link_notice }}</p><form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.save }}</button></form></section>{% endblock %}

@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.debug import sensitive_post_parameters
-from . import services, institutional
+from . import services, institutional, membership_admin_services
 from .models import Document, RateBucket, Person, Activity
 from .documents import printable
 from .institutional_labels import vocabulary, display_value
@@ -78,6 +78,8 @@ def verify(request):
 
 
 ACTIONS = {
+    "membership.reject": membership_admin_services.reject,
+    "person.link": membership_admin_services.link_person,
     "institutional.grant": institutional.grant,
     "institutional.state": institutional.change_state,
     "delegate": services.delegate,

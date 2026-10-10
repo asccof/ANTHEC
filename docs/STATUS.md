@@ -58,3 +58,21 @@ First Phase 1 PostgreSQL CI run 38063099746 passed all 90 application/CMS tests 
 ## 2026-10-10 — Phase 2 package A prepared / issue #17
 
 Live main verified at 6196e32704321b21e8deb4717c44673fd3b5242e; Phase 1 PR #16 merged and no open PR found. Owner approved the Phase 2 mandate. MEMBERSHIP_INTERFACES_PHASE2.md records the three bounded packages and service/interface gap map. Package A adds synthetic member account/profile/application interfaces with ownership, notice, CSRF, audit, replay and concurrency safeguards. PostgreSQL CI and external review of its final head are required before acceptance. No Phase 1 rebuild or POL-01–08 amendment.
+
+## 2026-10-10 — Phase 2 review gate blocked; package B prepared
+
+Package A PR #18 head 7012a6489470b04182c7cb4d006c1a2460d284c6 passed PostgreSQL CI run 38064423647 (101 application/CMS tests without skips plus six metadata tests). Initial local pass wording was corrected in the PR: the synthetic password-change fixture resembled its username and was rejected; fixture corrected without weakening password validators, full tests rerun. Codex rejected review requests due to exhausted account review usage. PR remains draft/unmerged; no paid service enabled. Live main is unchanged at Phase 1.
+
+Package B is prepared on a dependent branch: protected review/rejection, payment/exemption/refund/state/reissue and deliberate legacy account linking with scoped choices and existing MFA/audit/transactions. Stacked drafts allow useful authorized preparation while preserving the merge gate; dependency acceptance, retargeting, live-main CI and exact-head review are mandatory before merge. This is not an acceptance or production claim.
+
+## 2026-10-10 — Phase 2 recovery: package A accepted, B reconciled
+
+PR #18 exact head e56ba467b0d55af8247a7c79cf10a696ff0cf793 passed PostgreSQL 16 CI 38065371450 (102 application/CMS tests without skips, six metadata tests and required checks). Codex completed exact-head review without major issues; no inline findings. Merged as 2f67eb47e4dc2aa8a8364d6fb8e03c1f40040bef. This supersedes the historical quota blocker above.
+
+Package B PR #19 is reconciled onto that live main using only B-owned changes; shared password/MFA corrections remain inherited from A, without duplicate commits. Updated-head PostgreSQL CI and exact-head Codex review remain required before B acceptance. Package C remains a preserved draft and gated. Synthetic only; no policy changes or deployment.
+
+Package B reconciled head 0d0904aed0abd4cdd1b05307f610fb556e4f2d66 passed PostgreSQL CI 38066515876 (111 application/CMS tests, six metadata tests, no skips). Codex returned one P2 documentation finding: the interface specification still described the superseded package A quota blocker as current. Corrected it to distinguish historical evidence from A acceptance and B reconciliation. Updated-head CI/re-review remain required.
+
+Second package B review returned one P2 interface finding: the reauthentication navigation label was missing in all three locales. Added the explicit AR/FR/EN label and a regression asserting visible challenge links on every administrative page; existing MFA behavior remains unchanged. New-head PostgreSQL CI and review remain required.
+
+Third package B review found a P2 state-selector issue: an unbound form defaulted to active after suspension/cancellation. It now initializes from the actual membership state; a regression verifies selected suspended/cancelled states and unchanged linked accreditation after GET. New-head CI/review required.
