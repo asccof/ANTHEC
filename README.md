@@ -53,3 +53,7 @@ SQLite runs local acceptance tests; three concurrency tests intentionally requir
 ## Institutional cards (owner-authorized Phase 1)
 
 Protected AR/FR/EN administration: `/operations/institutional/`. Existing MFA-authorized directors grant recorded office terms or permanent free founder cards, record decisions and reissue documents. Institutional cards confer no platform privileges. See [Phase 1 contract and traceability](docs/INSTITUTIONAL_CARDS_PHASE1.md). Six concurrency tests now require PostgreSQL.
+
+## Membership interfaces (Phase 2)
+
+Synthetic self-service entry: `/members/signup/`, `/members/login/`, `/members/`, `/members/profile/`, `/members/apply/`. Add `?lang=ar|fr|en`. Accounts receive no administrative permissions. Previously recorded persons must request deliberate account linking; names/emails never establish identity. See [Phase 2 package map and boundaries](docs/MEMBERSHIP_INTERFACES_PHASE2.md).
