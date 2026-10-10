@@ -144,11 +144,37 @@ def password(request):
             status=429,
         )
     if request.method == "POST" and form.is_valid():
-        user = form.save()
+        from .models import Authority, Delegation
+
+        try:
+            with transaction.atomic():
+                authority = Authority.objects.select_for_update().filter(pk=1).first()
+                user = (
+                    get_user_model().objects.select_for_update().get(pk=request.user.pk)
+                )
+                if not user.is_active or not user.check_password(
+                    request.POST.get("old_password", "")
+                ):
+                    raise PermissionDenied("Current credentials required")
+                if (
+                    authority and authority.primary_id == user.pk
+                ) or Delegation.objects.filter(user=user, active=True).exists():
+                    services.authorize(request)
+                form.user = user
+                user = form.save()
+                services.audit(user, "member.password.changed", user.pk)
+        except PermissionDenied:
+            services.audit(request.user, "member.password.denied", request.user.pk)
+            form.add_error(None, ctx["labels"]["reauth"])
+            return render(
+                request,
+                "governance/member_form.html",
+                {**ctx, "form": form, "title": ctx["labels"]["change_password"]},
+                status=403,
+            )
         update_session_auth_hash(request, user)
         # A password change must not retain sensitive-operation reauthentication.
         request.session.pop("reauth_at", None)
-        services.audit(user, "member.password.changed", user.pk)
         return go(request, "member_home")
     return render(
         request,

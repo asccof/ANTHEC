@@ -229,3 +229,34 @@ class MemberTests(TestCase):
         self.user.save(update_fields=["is_active"])
         with self.assertRaises(PermissionDenied):
             self.profile()
+
+    def test_member_password_path_cannot_bypass_director_mfa(self):
+        from .models import Authority, Delegation
+        from . import tests as fixtures
+
+        self.admin = synthetic_user("synthetic-password-director", True)
+        Authority.objects.create(primary=self.admin)
+        payload = {
+            "old_password": "synthetic-password-123",
+            "new_password1": "Cedar-ocean-456!pass",
+            "new_password2": "Cedar-ocean-456!pass",
+        }
+        for user in [self.admin, self.user]:
+            if user == self.user:
+                Delegation.objects.create(user=user, active=True)
+            self.client.force_login(user)
+            self.assertEqual(
+                self.client.post("/members/password/", payload).status_code, 403
+            )
+            user.refresh_from_db()
+            self.assertTrue(user.check_password("synthetic-password-123"))
+            fixtures.PolicyTests.http_login(
+                self, user=user, epoch=0 if user == self.admin else 1
+            )
+            self.assertEqual(
+                self.client.post("/members/password/", payload).status_code, 302
+            )
+            self.assertNotIn("reauth_at", self.client.session)
+        self.assertEqual(
+            Audit.objects.filter(action="member.password.denied").count(), 2
+        )
