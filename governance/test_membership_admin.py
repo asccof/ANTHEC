@@ -113,6 +113,21 @@ class MembershipAdminTests(TestCase):
             self.assertContains(response, text)
         self.assertEqual(Payment.objects.count(), 2)
 
+    def test_state_selector_preserves_suspended_and_cancelled_membership(self):
+        self.assertEqual(self.post("exempt", reason="Synthetic").status_code, 302)
+        self.assertEqual(self.post("approve", reason="Synthetic").status_code, 302)
+        term = Membership.objects.get(application=self.app)
+        for state in ("suspended", "cancelled"):
+            self.assertEqual(
+                self.post("state", state=state, reason="Synthetic").status_code, 302
+            )
+            response = self.client.get(f"/operations/membership/{self.app.pk}/")
+            self.assertEqual(response.context["forms"]["state"]["state"].value(), state)
+            self.assertContains(response, f'<option value="{state}" selected>')
+            term.refresh_from_db()
+            self.assertEqual(term.state, state)
+            self.assertEqual(Accreditation.objects.get(membership=term).state, state)
+
     def test_exemption_and_rejection_preserve_records_and_resubmission(self):
         self.assertEqual(
             self.post("exempt", reason="Synthetic exception").status_code, 302

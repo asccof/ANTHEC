@@ -102,7 +102,7 @@ def detail(request, application_id):
         "payment": (PaymentForm, {}),
         "exempt": (ReasonForm, {}),
         "refund": (RefundForm, {"payments": payments}),
-        "state": (StateForm, {}),
+        "state": (StateForm, {"initial": {"state": term.state} if term else {}}),
         "replace": (DocumentForm, {"documents": documents}),
     }
     forms = {
