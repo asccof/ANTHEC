@@ -15,8 +15,23 @@ class Command(BaseCommand):
         if site and isinstance(site.root_page.specific, InstitutionalPage):
             self.stdout.write("Synthetic CMS already exists; no changes made.")
             return
-        if site and site.root_page.get_descendants().exists():
-            raise CommandError("Refusing to replace an existing site with content.")
+        if site:
+            current = site.root_page.specific
+            fresh_placeholder = (
+                type(current) is Page
+                and current.title == "Welcome to your new Wagtail site!"
+                and current.slug == "home"
+                and current.depth == 2
+                and current.get_parent().pk == root.pk
+                and Page.objects.count() == 2
+                and not current.revisions.exists()
+                and not current.seo_title
+                and not current.search_description
+                and site.hostname == "localhost"
+                and site.port == 80
+            )
+            if not fresh_placeholder:
+                raise CommandError("Refusing to replace an existing site; seed requires a fresh Wagtail placeholder.")
         data = {
             "ar": ("منصة ANTHEEC التجريبية", "مرحلة التطوير", "هذه صفحة اصطناعية لاختبار إدارة المحتوى. لا تستقبل طلبات عضوية ولا بيانات أشخاص."),
             "fr": ("Plateforme de démonstration ANTHEEC", "Développement en cours", "Cette page synthétique teste la gestion de contenu. Aucun dossier de membre ni donnée personnelle n’est collecté."),
