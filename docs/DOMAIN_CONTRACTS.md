@@ -39,3 +39,7 @@ Printable gold card, membership card, professional/independent accreditation cer
 Minimal core person fields are name, account/contact, minor/guardian association, verification notice and optional directory consent. No CIN, birth date, address, photo or clinical file. Decision/audit/payment/quote/term/consent/document history is retained by service; no ordinary update/delete endpoints exist. This does not prevent a privileged database operator from editing records. Automatic deletion is intentionally not enabled until legal retention, archive/holds, backup and rights-handling procedures are reviewed. Rate-limit buckets are operational metadata and need bounded cleanup before production.
 
 APPROVED_POLICIES.md and POLICY_EXECUTION.md distinguish approved organizational rules, tested services and incomplete UI/legal/security acceptance. No contract or successful test authorizes launch, real-person records, paid providers or external delivery.
+
+## Owner-authorized institutional cards, 2026-10-10
+
+[Phase 1](INSTITUTIONAL_CARDS_PHASE1.md) adds a fourth typed document origin and minimum protected administration. Office terms are explicitly recorded, founder cards permanent/free, existing Person identity reused, and no administrator rights are inferred. This owner authorization supplements POL-01–08 without changing them.

@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="{{ language }}" dir="{{ direction }}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ labels.title }} — ANTHEEC</title>
+<style>body{font-family:system-ui,sans-serif;max-width:1000px;margin:2rem auto;padding:0 1rem;color:#172b38;background:#f5f7fa}nav,a{margin-inline-end:1rem}section{background:white;border:1px solid #ccd7de;padding:1.2rem;margin:1rem 0;border-radius:8px}input,select,textarea{display:block;max-width:100%;min-width:240px;padding:.6rem;margin:.4rem 0}button{padding:.7rem 1.4rem;background:#16475b;color:white;border:0;border-radius:4px}.errorlist{color:#a11420}table{border-collapse:collapse;width:100%}td,th{text-align:start;padding:.5rem;border-bottom:1px solid #ccd7de}small{display:block}code{overflow-wrap:anywhere}</style></head>
+<body><nav><a href="?lang=ar" lang="ar">العربية</a><a href="?lang=fr" lang="fr">Français</a><a href="?lang=en" lang="en">English</a><a href="{% url 'institutional_register' %}?lang={{ language }}">{{ labels.list }}</a><a href="{% url 'security_challenge' %}">{{ labels.reauth }}</a></nav>
+<h1>ANTHEEC — {{ labels.title }}</h1><p>{{ labels.notice }}</p>{% block content %}{% endblock %}</body></html>

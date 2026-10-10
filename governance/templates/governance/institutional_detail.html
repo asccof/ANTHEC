@@ -1,0 +1,8 @@
+{% extends 'governance/institutional_base.html' %}
+{% block content %}
+<section><h2>{{ row.person.full_name }} — {{ role_label }}</h2><p>{{ labels.state }}: {{ state_label }}</p><p>{{ labels.starts_on }}: {{ row.starts_on|date:'Y-m-d' }}</p><p>{{ labels.ends_on }}: {{ row.ends_on|date:'Y-m-d'|default:'—' }}</p><p>{{ labels.legal_reference }}: {{ row.legal_reference }}</p>{% if row.replaces_id %}<a href="{% url 'institutional_detail' row.replaces_id %}?lang={{ language }}">{{ labels.replaces_role_id }} #{{ row.replaces_id }}</a>{% endif %}
+{% for item in documents %}<p><code>{{ item.document.serial }}</code> — {{ item.status }} — <a href="/my-documents/{{ item.document.pk }}/?lang={{ language }}">{{ labels.download }}</a></p>{% endfor %}</section>
+<section><h2>{{ labels.state }}</h2><form method="post">{% csrf_token %}<input type="hidden" name="action" value="state">{{ decision.as_p }}<button>{{ labels.save }}</button></form></section>
+<section><h2>{{ labels.replace }}</h2><form method="post">{% csrf_token %}<input type="hidden" name="action" value="replace">{{ replacement.as_p }}<button>{{ labels.replace }}</button></form></section>
+<section><h2>{{ labels.history }}</h2><ul>{% for event in history %}<li>{{ event.created_at|date:'c' }} — {{ event.actor.username }} — {{ event.action }} — {{ event.reason }}</li>{% empty %}<li>{{ labels.empty }}</li>{% endfor %}</ul></section>
+{% endblock %}
