@@ -36,4 +36,6 @@ jobs:
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py migrate --noinput
       - run: python manage.py seed_demo
-      - run: python manage.py test content --verbosity=2
+      - run: python manage.py seed_policy_prices
+      - run: pip check
+      - run: python manage.py test content governance --verbosity=2
