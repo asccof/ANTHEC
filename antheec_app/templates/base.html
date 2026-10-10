@@ -10,6 +10,9 @@
 <body>
   <header><strong>ANTHEEC</strong><nav aria-label="Languages">
     {% for version in language_versions %}<a href="{{ version.url }}" lang="{{ version.locale.language_code }}" hreflang="{{ version.locale.language_code }}" {% if version.pk == page.pk %}aria-current="page"{% endif %}>{{ version.locale.get_display_name }}</a>{% endfor %}
+  </nav><nav aria-label="Membership">
+    <a href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}طلب الانخراط{% elif page.locale.language_code == 'fr' %}Demande d’adhésion{% else %}Membership application{% endif %}</a>
+    <a href="{% url 'member_home' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}فضاء العضو{% elif page.locale.language_code == 'fr' %}Espace membre{% else %}Member area{% endif %}</a>
   </nav></header>
   <main>{% block content %}{% endblock %}</main>
 </body>

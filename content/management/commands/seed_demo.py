@@ -33,9 +33,9 @@ class Command(BaseCommand):
             if not fresh_placeholder:
                 raise CommandError("Refusing to replace an existing site; seed requires a fresh Wagtail placeholder.")
         data = {
-            "ar": ("منصة ANTHEEC التجريبية", "مرحلة التطوير", "هذه صفحة اصطناعية لاختبار إدارة المحتوى. لا تستقبل طلبات عضوية ولا بيانات أشخاص."),
-            "fr": ("Plateforme de démonstration ANTHEEC", "Développement en cours", "Cette page synthétique teste la gestion de contenu. Aucun dossier de membre ni donnée personnelle n’est collecté."),
-            "en": ("ANTHEEC demonstration platform", "Development in progress", "This synthetic page tests content management. No membership applications or personal data are collected."),
+            "ar": ("منصة ANTHEEC التجريبية", "مرحلة التطوير", "هذه صفحة تطوير اصطناعية. مسارات العضوية متاحة لاختبار بيانات اصطناعية فقط؛ لا ترسل بيانات أشخاص حقيقيين."),
+            "fr": ("Plateforme de démonstration ANTHEEC", "Développement en cours", "Page de développement fictive. Les parcours d’adhésion utilisent uniquement des données fictives ; aucune donnée réelle."),
+            "en": ("ANTHEEC demonstration platform", "Development in progress", "Synthetic development page. Membership workflows support synthetic data only; do not submit real-person data."),
         }
         title, heading, text = data["ar"]
         home = root.add_child(instance=InstitutionalPage(title=title, slug="antheec-demo", locale=locales["ar"], live=False, body=[("heading", heading), ("paragraph", text)]))

@@ -98,3 +98,30 @@ def submit_application(*, user, tier):
     app = s.create_application(person, tier)
     s.audit(user, "member.application.submitted", app.pk, tier=tier)
     return {"application": app.pk}
+
+
+@member_command("member.renewal")
+def submit_renewal(*, user, membership_id):
+    if (
+        not isinstance(membership_id, int)
+        or isinstance(membership_id, bool)
+        or membership_id <= 0
+    ):
+        raise ValidationError("Membership identifier required")
+    person = Person.objects.select_for_update().get(user=user)
+    if person.minor or person.guardian_id:
+        raise PermissionDenied("Managed membership requires administrative review")
+    previous = Membership.objects.select_for_update().get(
+        pk=membership_id, application__person=person
+    )
+    if previous.ends_on is None or previous.state not in {"active", "expired"}:
+        raise s.Conflict("Membership not renewable")
+    if Application.objects.filter(person=person, state="submitted").exists():
+        raise s.Conflict("Pending application already exists")
+    if Application.objects.filter(previous=previous, state="approved").exists():
+        raise s.Conflict("Select latest approved term")
+    app = s.create_application(person, previous.application.tier, previous=previous)
+    s.audit(
+        user, "member.renewal.submitted", app.pk, previous=previous.pk, tier=app.tier
+    )
+    return {"application": app.pk}

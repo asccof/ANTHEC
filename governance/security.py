@@ -14,6 +14,7 @@ from django_otp import login as otp_login, verify_token
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from .models import Authority, Delegation, RecoveryCode, RateBucket
 from .services import digest, audit
+from .member_views import context as member_context, localized as member_localized
 
 
 def epoch_for(user):
@@ -60,13 +61,15 @@ def authenticate_factor(user, code, recovery=False):
 @sensitive_post_parameters("password", "code")
 @login_required(login_url="/admin/login/")
 @require_http_methods(["GET", "POST"])
+@member_localized
 def challenge(request):
+    ctx = member_context(request)
     error = ""
     if request.method == "POST":
         if not consume_attempt(request.user) or not request.user.check_password(
             request.POST.get("password", "")
         ):
-            error = "Verification failed"
+            error = ctx["labels"]["error"]
         else:
             device = authenticate_factor(
                 request.user,
@@ -80,12 +83,13 @@ def challenge(request):
                 request.session["reauth_at"] = timezone.now().timestamp()
                 audit(request.user, "security.mfa.verified", request.user.pk)
                 return redirect("/admin/")
-            error = "Verification failed"
+            error = ctx["labels"]["error"]
         audit(request.user, "security.mfa.failed", request.user.pk)
     return render(
         request,
         "governance/challenge.html",
         {
+            **ctx,
             "error": error,
             "enrolled": TOTPDevice.objects.filter(
                 user=request.user, confirmed=True
@@ -98,24 +102,25 @@ def challenge(request):
 @sensitive_post_parameters("password", "code")
 @login_required(login_url="/admin/login/")
 @require_http_methods(["GET", "POST"])
+@member_localized
 def enroll(request):
     if TOTPDevice.objects.filter(user=request.user, confirmed=True).exists():
         return HttpResponseForbidden(
-            "Already enrolled; use protected recovery procedure"
+            member_context(request)["labels"]["already_enrolled"]
         )
-    context = {}
+    context = member_context(request)
     if request.method == "POST":
         if not consume_attempt(request.user) or not request.user.check_password(
             request.POST.get("password", "")
         ):
-            context["error"] = "Verification failed"
+            context["error"] = context["labels"]["error"]
         else:
             with transaction.atomic():
                 Authority.objects.select_for_update().get(pk=1)
                 if TOTPDevice.objects.filter(
                     user=request.user, confirmed=True
                 ).exists():
-                    return HttpResponseForbidden("Already enrolled")
+                    return HttpResponseForbidden(context["labels"]["already_enrolled"])
                 device = TOTPDevice.objects.filter(
                     user=request.user, confirmed=False
                 ).first()
@@ -137,8 +142,10 @@ def enroll(request):
                     request.session["authority_epoch"] = epoch_for(request.user)
                     request.session["reauth_at"] = timezone.now().timestamp()
                     audit(request.user, "security.mfa.enrolled", request.user.pk)
-                    return render(request, "governance/recovery.html", {"codes": codes})
+                    return render(
+                        request, "governance/recovery.html", {**context, "codes": codes}
+                    )
                 context["uri"] = device.config_url
                 if code:
-                    context["error"] = "Verification failed"
+                    context["error"] = context["labels"]["error"]
     return render(request, "governance/enroll.html", context)
