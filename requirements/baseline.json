@@ -1,0 +1,189 @@
+{
+  "project": "ANTHEEC",
+  "languages": [
+    "ar",
+    "fr",
+    "en"
+  ],
+  "boundaries": {
+    "production": false,
+    "paid_services": false,
+    "real_person_data": false
+  },
+  "requirements": [
+    {
+      "id": "AC-01",
+      "description": "CMS news AR/FR/EN",
+      "source_id": "SRC-04",
+      "section": "3",
+      "task": "ENG-005",
+      "design_tests": [
+        "T04"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-02",
+      "description": "Translation review choice",
+      "source_id": "SRC-04",
+      "section": "3",
+      "task": "ENG-005",
+      "design_tests": [],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-03",
+      "description": "Approval before membership card",
+      "source_id": "SRC-04",
+      "section": "4",
+      "task": "ENG-006",
+      "design_tests": [
+        "T01"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-04",
+      "description": "Annual validity from approved activation",
+      "source_id": "SRC-04",
+      "section": "4",
+      "task": "ENG-006",
+      "design_tests": [],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-05",
+      "description": "Founder honorary permanent approval-required",
+      "source_id": "SRC-04",
+      "section": "4",
+      "task": "ENG-006",
+      "design_tests": [
+        "T02"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-06",
+      "description": "Visibility independent of validity",
+      "source_id": "SRC-04",
+      "section": "4.2",
+      "task": "ENG-006",
+      "design_tests": [
+        "T03"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-07",
+      "description": "Accreditation fee and criteria private",
+      "source_id": "SRC-04",
+      "section": "5",
+      "task": "ENG-007",
+      "design_tests": [
+        "T05"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-08",
+      "description": "Revocation immediate verification and history",
+      "source_id": "SRC-04",
+      "section": "5,8",
+      "task": "ENG-007",
+      "design_tests": [
+        "T09"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-09",
+      "description": "Invitation only after confirmation",
+      "source_id": "SRC-04",
+      "section": "6",
+      "task": "ENG-008",
+      "design_tests": [
+        "T06"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-10",
+      "description": "Attendance exactly once",
+      "source_id": "SRC-04",
+      "section": "6",
+      "task": "ENG-008",
+      "design_tests": [
+        "T07"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-11",
+      "description": "Partner branch status controls publication",
+      "source_id": "SRC-04",
+      "section": "7",
+      "task": "ENG-009",
+      "design_tests": [
+        "T11"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-12",
+      "description": "CMS restore and homepage editing",
+      "source_id": "SRC-04",
+      "section": "3",
+      "task": "ENG-005",
+      "design_tests": [
+        "T12"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-13",
+      "description": "Editor cannot issue accreditation or verify money",
+      "source_id": "SRC-04",
+      "section": "9",
+      "task": "ENG-005",
+      "design_tests": [
+        "T08"
+      ],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC-14",
+      "description": "Sensitive decisions audited",
+      "source_id": "SRC-04",
+      "section": "9",
+      "task": "ENG-006",
+      "design_tests": [],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "ENG-NFR-001",
+      "description": "Delivery failure must not reissue document",
+      "source_id": "SRC-01",
+      "section": "8,10",
+      "task": "ENG-006",
+      "design_tests": [
+        "T10"
+      ],
+      "status": "planned",
+      "evidence": null
+    }
+  ]
+}
