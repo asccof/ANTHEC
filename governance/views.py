@@ -12,7 +12,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from . import services, institutional
 from .models import Document, RateBucket, Person, Activity
 from .documents import printable
-from .institutional_labels import vocabulary
+from .institutional_labels import vocabulary, display_value
 
 
 @never_cache
@@ -64,7 +64,7 @@ def verify(request):
                 "rows": [
                     {
                         "label": labels[k],
-                        "value": labels.get(str(v), str(v)) if v is not None else "—",
+                        "value": display_value(labels, k, v),
                     }
                     for k, v in data.items()
                 ],

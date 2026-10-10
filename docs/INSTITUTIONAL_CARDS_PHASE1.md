@@ -22,4 +22,4 @@ The baseline 0001-to-0002 migration preserves existing membership/accreditation/
 
 ## Validation status
 
-Local SQLite: 90 CMS/governance tests, 84 passing and six PostgreSQL concurrency cases skipped. Six metadata tests, validator, dependency/system and migration drift checks are required. PostgreSQL CI and external review of the PR head are required before merge; authoritative final evidence is recorded in the PR. This file records implementation scope, not an advance claim of acceptance.
+Local SQLite: 91 CMS/governance tests, 85 passing and six PostgreSQL concurrency cases skipped. Six metadata tests, validator, dependency/system and migration drift checks are required. PostgreSQL CI and external review of the PR head are required before merge; authoritative final evidence is recorded in the PR. This file records implementation scope, not an advance claim of acceptance.

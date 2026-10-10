@@ -148,3 +148,13 @@ LABELS = {
 def vocabulary(language="ar"):
     language = language if language in LABELS else "ar"
     return language, LABELS[language]
+
+
+def display_value(labels, field, value):
+    """Translate machine vocabulary only; never translate holder identity/data."""
+    if value is None:
+        return "—"
+    text = str(value)
+    return (
+        labels.get(text, text) if field in {"type", "document_type", "status"} else text
+    )

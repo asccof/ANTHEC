@@ -630,3 +630,19 @@ class InstitutionalTests(TestCase):
             ).json()["document_type"],
             "founder_card",
         )
+
+    def test_localization_preserves_name_matching_vocabulary_key(self):
+        self.person.full_name = "founder"  # synthetic collision with a machine label
+        self.person.save(update_fields=["full_name"])
+        doc = self.doc("founder")
+        credentials = s.decrypt(doc.credentials)
+        from .documents import printable
+
+        for lang in ["ar", "fr", "en"]:
+            response = self.client.post(
+                f"/verify/?lang={lang}",
+                {"token": credentials["token"]},
+                HTTP_ACCEPT="text/html",
+            )
+            self.assertContains(response, ">founder<")
+            self.assertIn(": founder</p>", printable(doc, language=lang))
