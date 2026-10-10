@@ -52,7 +52,7 @@ These blocks do not stop synthetic development of authorization/transactions. Te
 | PaymentAllocation | Payment linked to a specific application/case/registration; allocated totals cannot exceed verified funds; no ambiguous `case_ref` string foreign key |
 | Receipt | Immutable number, verified payment and issuing actor; adjustments linked to original; uniqueness enforced by database |
 | Event | Start/end + capacity + eligibility policy version; registration confirmation owns a seat |
-| Registration | Event + participant reference/deduplication key + state; uniqueness rule approved under POL-07; no invitation before confirmation |
+| Registration | Event + participant reference/deduplication key + state; uniqueness rule pending owner approval under POL-07; no guest/minor identity or deduplication policy is currently approved; no invitation before confirmation |
 | Attendance | Registration unique; verified scanner identity/time; canceled invitation cannot check in |
 | Partnership | Organization + proposal + agreement + decision + status; explicit publication authorization independent of status |
 | Branch | Region/city + status + publication authorization; local-account scopes deferred to later release |
