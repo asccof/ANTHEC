@@ -3,6 +3,11 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "professional": (
+        "اعتماد مهني",
+        "Accréditation professionnelle",
+        "Professional accreditation",
+    ),
     "reauth_link": ("إعادة التحقق", "Vérifier à nouveau", "Reauthenticate"),
     "mfa_title": (
         "التحقق الأمني للإدارة",

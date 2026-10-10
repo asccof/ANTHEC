@@ -1,5 +1,7 @@
 from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
+from django.urls import reverse
+from .member_labels import vocabulary
 from .models import Authority, Delegation
 
 
@@ -31,7 +33,10 @@ class AdminSecurityMiddleware:
                     not request.user.is_verified()
                     or request.session.get("authority_epoch") != epoch
                 ):
-                    return redirect("security_challenge")
+                    target = reverse("security_challenge")
+                    if "lang" in request.GET:
+                        target += "?lang=" + vocabulary(request.GET["lang"])[0]
+                    return redirect(target)
         return self.get_response(request)
 
 

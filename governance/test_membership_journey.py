@@ -137,6 +137,8 @@ class MembershipJourneyTests(TestCase):
                     self.assertContains(response, f'lang="{lang}"')
                     self.assertContains(response, labels[doc.kind])
                     self.assertContains(response, labels["association_notice"])
+                    if doc.kind == "professional_certificate":
+                        self.assertContains(response, labels["professional"])
                     credentials = s.decrypt(doc.credentials)
                     public = Client(enforce_csrf_checks=True)
                     public.get("/verify/?lang=" + lang)
@@ -151,6 +153,8 @@ class MembershipJourneyTests(TestCase):
                     )
                     self.assertContains(response, labels[doc.kind])
                     self.assertNotContains(response, "journey@example.invalid")
+                    if doc.kind == "professional_certificate":
+                        self.assertContains(response, labels["professional"])
             self.assertEqual(
                 self.form_post(
                     self.member, "/members/renew/", {"membership_id": first.pk}
@@ -396,6 +400,25 @@ class MembershipJourneyTests(TestCase):
             .fields["membership_id"]
             .queryset.exists()
         )
+
+    def test_administrative_mfa_entry_and_institutional_links_preserve_locale(self):
+        pending = Client()
+        pending.force_login(self.admin)
+        for language in ("ar", "fr", "en"):
+            for path in ("/operations/membership/", "/operations/institutional/"):
+                response = pending.get(path + "?lang=" + language)
+                self.assertRedirects(
+                    response,
+                    "/security/challenge/?lang=" + language,
+                    fetch_redirect_response=False,
+                )
+                self.assertContains(pending.get(response.url), f'lang="{language}"')
+            response = self.director.get("/operations/institutional/?lang=" + language)
+            self.assertContains(
+                response, f'href="/security/challenge/?lang={language}"'
+            )
+        response = pending.get("/operations/membership/?lang=untrusted")
+        self.assertEqual(response.url, "/security/challenge/?lang=ar")
 
     def test_existing_mfa_screens_localized_and_sensitive_password_change_reauth_cleared(
         self,
