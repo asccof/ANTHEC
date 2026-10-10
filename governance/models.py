@@ -290,6 +290,7 @@ class Portrait(models.Model):
 
 class Document(models.Model):
     serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    issued_at = models.DateTimeField(null=True, editable=False)
     kind = models.CharField(max_length=30)
     membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True)
     accreditation = models.ForeignKey(
@@ -390,3 +391,30 @@ class RecoveryCode(models.Model):
 class RateBucket(models.Model):
     key = models.CharField(max_length=64, primary_key=True)
     count = models.PositiveIntegerField(default=0)
+
+
+class PDFArtifact(models.Model):
+    document = models.ForeignKey(
+        Document, on_delete=models.PROTECT, related_name="pdf_artifacts"
+    )
+    language = models.CharField(
+        max_length=2, choices=[("ar", "Arabic"), ("fr", "French"), ("en", "English")]
+    )
+    template_version = models.CharField(max_length=40)
+    payload = (
+        models.TextField()
+    )  # Fernet-encrypted PDF, immutable after first rendering
+    sha256 = models.CharField(max_length=64)
+    metadata = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["document", "language"], name="one_pdf_artifact_per_language"
+            ),
+            models.CheckConstraint(
+                condition=Q(language__in=["ar", "fr", "en"]),
+                name="supported_pdf_language",
+            ),
+        ]

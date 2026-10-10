@@ -1,5 +1,6 @@
 from django.urls import path
 from . import (
+    pdf_views,
     portrait_views,
     security,
     views,
@@ -9,6 +10,20 @@ from . import (
 )
 
 urlpatterns = [
+    path(
+        "my-documents/<int:document_id>/prepare/",
+        pdf_views.prepare,
+        name="document_pdf_prepare",
+    ),
+    path(
+        "my-documents/<int:document_id>/pdf/", pdf_views.download, name="document_pdf"
+    ),
+    path(
+        "my-documents/<int:document_id>/preview/",
+        pdf_views.download,
+        {"preview": True},
+        name="document_pdf_preview",
+    ),
     path("members/portrait/", portrait_views.upload, name="portrait_upload"),
     path("operations/portraits/", portrait_views.review, name="portrait_review"),
     path(

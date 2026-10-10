@@ -390,6 +390,7 @@ def issue(
     )
     portrait = snapshot_for(kind, person)
     doc = Document.objects.create(
+        issued_at=timezone.now(),
         subject_name=name,
         portrait=portrait,
         kind=kind,
@@ -508,7 +509,16 @@ def change_state(*, actor, model, object_id, state, reason):
     ):
         raise ValidationError("Invalid right decision")
     cls = Membership if model == "membership" else Accreditation
+    linked_member = None
+    if model == "accreditation":
+        linked_id = Accreditation.objects.values_list("membership_id", flat=True).get(
+            pk=object_id
+        )
+        if linked_id:
+            linked_member = Membership.objects.select_for_update().get(pk=linked_id)
     row = cls.objects.select_for_update().get(pk=object_id)
+    if linked_member:
+        row.membership = linked_member
     row.state = state
     row.save(update_fields=["state"])
     if model == "membership":

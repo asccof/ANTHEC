@@ -12,8 +12,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         count = 0
         for pk in (
-            Outbox.objects.exclude(state="rendered")
-            .order_by("pk")
+            Outbox.objects.exclude(state__in=["rendered", "retired"])
+            .order_by("attempts", "pk")
             .values_list("pk", flat=True)[: max(0, min(options["limit"], 1000))]
         ):
             render_outbox(pk)

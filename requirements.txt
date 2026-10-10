@@ -38,3 +38,14 @@ qrcode==8.2
 cryptography==46.0.3
 cffi==2.0.0
 pycparser==2.23
+weasyprint==70.0
+pydyf==0.12.1
+tinyhtml5==2.1.0
+tinycss2==1.5.1
+cssselect2==0.10.1
+pyphen==0.18.1
+fonttools==4.66.1
+webencodings==0.6.1
+brotli==1.2.0
+zopfli==0.4.3
+pypdf==6.12.0
