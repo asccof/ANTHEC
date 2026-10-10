@@ -64,13 +64,13 @@ class MemberTests(TestCase):
             "/members/password/",
             {
                 "old_password": "Synthetic-long-567!pass",
-                "new_password1": "Synthetic-new-456!pass",
-                "new_password2": "Synthetic-new-456!pass",
+                "new_password1": "Cedar-ocean-456!pass",
+                "new_password2": "Cedar-ocean-456!pass",
             },
         )
         self.assertEqual(response.status_code, 302)
         user.refresh_from_db()
-        self.assertTrue(user.check_password("Synthetic-new-456!pass"))
+        self.assertTrue(user.check_password("Cedar-ocean-456!pass"))
         self.assertEqual(client.get("/members/").status_code, 200)
         for action in [
             "member.account.created",
