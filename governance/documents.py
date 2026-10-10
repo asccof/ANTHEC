@@ -74,12 +74,30 @@ def render_outbox(outbox_id):
         return row.document_id
     row.attempts += 1
     try:
+        row.last_error = ""
         html = printable(row.document)
         row.document.rendered = encrypt(html)
         row.document.rendering_state = "ready"
         row.document.save(update_fields=["rendered", "rendering_state"])
+        from .pdf_services import artifact_for
+        from .pdf_design import PendingPhoto, LayoutError
+        from .portraits import CARD_KINDS
+
+        if row.document.kind in CARD_KINDS | {
+            "professional_certificate",
+            "accreditation_certificate",
+        }:
+            try:
+                for language in ("ar", "fr", "en"):
+                    artifact_for(row.document_id, language)
+            except PendingPhoto:
+                # HTML stays backward compatible; photo PDFs fail closed until reissue.
+                row.last_error = "pending_photo"
+            except LayoutError:
+                row.last_error = "pending_layout"
         row.state = "rendered"
-        row.last_error = ""
+        if row.last_error not in {"pending_photo", "pending_layout"}:
+            row.last_error = ""
     except Exception:
         row.state = "failed"
         row.last_error = "render_failed"  # no sensitive exceptions logged
