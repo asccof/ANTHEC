@@ -3,6 +3,7 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "reauth_link": ("إعادة التحقق", "Vérifier à nouveau", "Reauthenticate"),
     "administration": (
         "إدارة العضوية",
         "Administration des adhésions",

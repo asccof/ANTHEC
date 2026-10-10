@@ -5,6 +5,7 @@ from django.test import TestCase, Client
 from django.utils import timezone
 from .tests import synthetic_user, administrative_request
 from . import tests as fixtures, services as s, membership_admin_services as a
+from .member_labels import vocabulary
 from .models import (
     Authority,
     Person,
@@ -290,6 +291,12 @@ class MembershipAdminTests(TestCase):
                 response = self.client.get(path + "?lang=" + language)
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, f'lang="{language}"')
+                self.assertContains(
+                    response,
+                    'href="/security/challenge/">'
+                    + vocabulary(language)["reauth_link"]
+                    + "</a>",
+                )
                 self.assertIn("no-store", response["Cache-Control"])
         session = self.client.session
         session["reauth_at"] = timezone.now().timestamp() - 600
