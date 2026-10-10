@@ -172,3 +172,55 @@ class PDFConcurrencyTests(TransactionTestCase):
         self.assertFalse(Audit.objects.filter(
             action__in=["document.pdf.downloaded", "document.pdf.previewed"]
         ).exists())
+
+    def test_post_generation_waits_for_committed_reactivation(self):
+        member = synthetic_user("synthetic-reactivated-member")
+        self.person.user = member
+        self.person.save(update_fields=["user"])
+        role = self.doc.institutional_role
+        role.state = "suspended"
+        role.save(update_fields=["state"])
+        worker_pid = Queue()
+
+        def generate():
+            close_old_connections()
+            try:
+                client = Client(enforce_csrf_checks=True)
+                client.force_login(type(member).objects.get(pk=member.pk))
+                client.get("/members/portrait/")
+                token = client.cookies["csrftoken"].value
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT pg_backend_pid()")
+                    worker_pid.put(cursor.fetchone()[0])
+                return client.post(
+                    f"/my-documents/{self.doc.pk}/prepare/?lang=en",
+                    HTTP_X_CSRFTOKEN=token,
+                ).status_code
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            with transaction.atomic():
+                role = InstitutionalRole.objects.select_for_update().get(pk=role.pk)
+                future = pool.submit(generate)
+                pid = worker_pid.get(timeout=5)
+                waiting = False
+                deadline = monotonic()+5
+                while monotonic() < deadline:
+                    with connection.cursor() as cursor:
+                        cursor.execute("SELECT pg_stat_clear_snapshot()")
+                        cursor.execute(
+                            "SELECT wait_event_type FROM pg_stat_activity WHERE pid=%s", [pid]
+                        )
+                        row = cursor.fetchone()
+                    if row and row[0] == "Lock":
+                        waiting = True
+                        break
+                    if future.done():
+                        break
+                    sleep(.02)
+                self.assertTrue(waiting, "Generation must serialize with reactivation")
+                role.state = "active"
+                role.save(update_fields=["state"])
+            self.assertEqual(future.result(timeout=30), 302)
+        self.assertEqual(PDFArtifact.objects.count(), 1)

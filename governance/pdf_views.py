@@ -137,8 +137,6 @@ def prepare(request, document_id):
     if not permitted(request, doc):
         return HttpResponse(status=404)
     language, _ = vocabulary(request.GET.get("lang", "ar"))
-    if s.document_status(doc) in {"cancelled", "suspended", "expired"}:
-        return HttpResponse(status=410)
     try:
         pdf_services.artifact_for(doc.pk, language)
     except pdf_services.InactiveDocument:
