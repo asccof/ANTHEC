@@ -240,6 +240,54 @@ class InstitutionalRole(models.Model):
         ]
 
 
+class Portrait(models.Model):
+    serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    person = models.ForeignKey(Person, on_delete=models.PROTECT)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="uploaded_portraits",
+    )
+    image = (
+        models.TextField()
+    )  # Fernet-encrypted normalized JPEG; no original file/media URL
+    state = models.CharField(
+        max_length=12,
+        default="pending",
+        choices=[
+            ("pending", "Pending"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+        ],
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="reviewed_portraits",
+    )
+    reviewed_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(
+                    state="pending", reviewed_by__isnull=True, reviewed_at__isnull=True
+                )
+                | Q(
+                    state__in=["approved", "rejected"],
+                    reviewed_by__isnull=False,
+                    reviewed_at__isnull=False,
+                ),
+                name="portrait_review_evidence",
+            )
+        ]
+
+    def __str__(self):
+        return str(self.serial)
+
+
 class Document(models.Model):
     serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     kind = models.CharField(max_length=30)
@@ -256,6 +304,7 @@ class Document(models.Model):
     code_digest = models.CharField(max_length=64)
     subject_name = models.CharField(max_length=200)
     credentials = models.TextField()  # encrypted verification token + printed code
+    portrait = models.ForeignKey(Portrait, on_delete=models.PROTECT, null=True)
     rendered = models.TextField(blank=True)  # encrypted printable HTML
     rendering_state = models.CharField(max_length=15, default="pending")
     void = models.BooleanField(default=False)

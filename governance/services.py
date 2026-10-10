@@ -373,8 +373,25 @@ def issue(
             )
         )
     )
+    from .portraits import snapshot_for
+
+    person = (
+        institutional_role.person
+        if institutional_role
+        else (
+            membership.application.person
+            if membership
+            else (
+                accreditation.person
+                if accreditation and accreditation.person_id
+                else registration.person if registration else None
+            )
+        )
+    )
+    portrait = snapshot_for(kind, person)
     doc = Document.objects.create(
         subject_name=name,
+        portrait=portrait,
         kind=kind,
         membership=membership,
         accreditation=accreditation,
