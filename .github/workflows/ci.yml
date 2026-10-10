@@ -1,0 +1,38 @@
+name: ANTHEEC foundation
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: antheec_test
+          POSTGRES_USER: antheec
+          POSTGRES_PASSWORD: synthetic-ci-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U antheec -d antheec_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DJANGO_SETTINGS_MODULE: antheec_app.settings.test
+      ANTHEEC_DB_ENGINE: postgresql
+      PGDATABASE: antheec_test
+      PGUSER: antheec
+      PGPASSWORD: synthetic-ci-only
+      PGHOST: 127.0.0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python manage.py check
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py migrate --noinput
+      - run: python manage.py seed_demo
+      - run: python manage.py test content --verbosity=2
