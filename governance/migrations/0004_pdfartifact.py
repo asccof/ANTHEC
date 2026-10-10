@@ -11,6 +11,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(
+            model_name="document",
+            name="issued_at",
+            field=models.DateTimeField(editable=False, null=True),
+        ),
         migrations.CreateModel(
             name="PDFArtifact",
             fields=[

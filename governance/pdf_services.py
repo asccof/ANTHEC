@@ -10,7 +10,30 @@ from . import pdf_design
 
 
 class InactiveDocument(ValidationError):
-    pass
+    def __init__(self, status, *, retryable=False):
+        self.status = status
+        self.retryable = retryable
+        super().__init__("Document lifecycle does not permit PDF generation")
+
+
+def retryable_inactive(doc):
+    """Queue classification from the existing lifecycle, not a new state decision."""
+    if doc.void or doc.registration_id:
+        return False
+    origin = (doc.institutional_role if doc.institutional_role_id else
+              doc.membership if doc.membership_id else doc.accreditation)
+    if origin.ends_on and s.today() >= origin.ends_on:
+        return False
+    if doc.institutional_role_id and (
+        origin.state == "terminated" or
+        origin.role != "founder" and origin.state == "cancelled"
+    ):
+        return False
+    if doc.accreditation_id and origin.membership_id:
+        term = origin.membership
+        if term.ends_on and s.today() >= term.ends_on:
+            return False
+    return True
 
 
 def locked_document(document_id):
@@ -44,8 +67,9 @@ def locked_document(document_id):
 def artifact_for(document_id, language="ar"):
     language = language if language in pdf_design.WORDS else "ar"
     doc = locked_document(document_id)
-    if s.document_status(doc) in {"cancelled", "suspended", "expired"}:
-        raise InactiveDocument("Document lifecycle does not permit PDF generation")
+    status = s.document_status(doc)
+    if status in {"cancelled", "suspended", "expired"}:
+        raise InactiveDocument(status, retryable=retryable_inactive(doc))
     previous = PDFArtifact.objects.filter(document=doc, language=language).first()
     if previous:
         return previous

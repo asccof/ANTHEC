@@ -1,7 +1,7 @@
 import base64
 import io
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone as dt_timezone
 from unittest.mock import patch
 from PIL import Image
 from django.test import TestCase, Client
@@ -277,6 +277,7 @@ class PDFTests(TestCase):
         render_outbox(outbox.pk)
         outbox.refresh_from_db()
         self.assertEqual(outbox.last_error, "inactive_document")
+        self.assertEqual(outbox.state, "retired")
         self.assertEqual(PDFArtifact.objects.count(), 0)
         self.assertFalse(Audit.objects.filter(action="document.pdf.rendered").exists())
         self.assertTrue(Document.objects.filter(pk=self.doc.pk).exists())
@@ -327,6 +328,65 @@ class PDFTests(TestCase):
         self.assertEqual(list(PDFArtifact.objects.values_list("pk", "sha256", "payload")),
                          snapshots)
         self.assertEqual(Audit.objects.filter(action="document.pdf.rendered").count(), 3)
+
+    def test_terminal_outbox_jobs_do_not_starve_new_issuance(self):
+        from django.core.management import call_command
+
+        self.doc.void = True
+        self.doc.save(update_fields=["void"])
+        for version in range(2, 101):
+            old = s.issue("president_card", institutional_role=self.role, version=version)
+            old.void = True
+            old.save(update_fields=["void"])
+        current = s.issue("president_card", institutional_role=self.role, version=101)
+        call_command("render_policy_documents", limit=100, stdout=io.StringIO())
+        self.assertEqual(Outbox.objects.filter(state="retired").count(), 100)
+        self.assertFalse(PDFArtifact.objects.exists())
+        call_command("render_policy_documents", limit=1, stdout=io.StringIO())
+        self.assertEqual(PDFArtifact.objects.filter(document=current).count(), 3)
+        attempts = list(Outbox.objects.filter(state="retired").values_list("attempts", flat=True))
+        call_command("render_policy_documents", stdout=io.StringIO())
+        self.assertEqual(list(Outbox.objects.filter(state="retired").values_list("attempts", flat=True)), attempts)
+
+    def test_cancelled_founder_can_resume_under_existing_state_rules(self):
+        from .documents import render_outbox
+        from .institutional import change_state
+
+        founder = InstitutionalRole.objects.create(
+            person=self.person, role="founder", starts_on=timezone.localdate(),
+            ends_on=None, state="cancelled", legal_reference="SYNTHETIC-FOUNDER"
+        )
+        doc = s.issue("founder_card", institutional_role=founder)
+        outbox = Outbox.objects.get(document=doc)
+        render_outbox(outbox.pk)
+        outbox.refresh_from_db()
+        self.assertEqual(outbox.state, "failed")
+        change_state(self.request, key="founder-reactivation", role_id=founder.pk,
+                     state="active", reason="Synthetic existing-rule reactivation")
+        render_outbox(outbox.pk)
+        outbox.refresh_from_db()
+        self.assertEqual(outbox.state, "rendered")
+        self.assertEqual(PDFArtifact.objects.filter(document=doc).count(), 3)
+
+    def test_certificate_issue_date_is_recorded_separately_from_future_validity(self):
+        starts = timezone.localdate() + timedelta(days=30)
+        accreditation = Accreditation.objects.create(
+            person=self.person, subject_name=self.person.full_name, kind="independent",
+            starts_on=starts, ends_on=starts+timedelta(days=365)
+        )
+        recorded = datetime(2026, 1, 7, 12, tzinfo=dt_timezone.utc)
+        with patch("governance.services.timezone.now", return_value=recorded):
+            doc = s.issue("accreditation_certificate", accreditation=accreditation)
+        self.assertEqual(doc.issued_at, recorded)
+        body, metadata = design.render(doc, "en")
+        text = PdfReader(io.BytesIO(body)).pages[0].extract_text()
+        self.assertIn("Issue date: 2026-01-07", text)
+        self.assertIn(starts.isoformat(), text)
+        doc.issued_at = None  # Legacy records have no invented issuance timestamp.
+        body, metadata = design.render(doc, "en")
+        text = PdfReader(io.BytesIO(body)).pages[0].extract_text()
+        self.assertNotIn("Issue date: 2026-01-07", text)
+        self.assertIn("Issue date: —", text)
 
     def test_synthetic_membership_photo_finance_issue_reissue_journey(self):
         from django.core.management import call_command

@@ -390,6 +390,7 @@ def issue(
     )
     portrait = snapshot_for(kind, person)
     doc = Document.objects.create(
+        issued_at=timezone.now(),
         subject_name=name,
         portrait=portrait,
         kind=kind,

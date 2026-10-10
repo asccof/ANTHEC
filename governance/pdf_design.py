@@ -7,6 +7,7 @@ import qrcode
 import qrcode.image.svg
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.utils import timezone
 from weasyprint import HTML
 from weasyprint.urls import URLFetcher, URLFetcherResponse
 from weasyprint.text.fonts import FontConfiguration
@@ -46,7 +47,7 @@ WORDS = {
         "رمز التحقق",
         "امسح QR أو أدخل المرجع ورمز التحقق.",
         "التوقيع المعتمد",
-        "الإصدار / انتهاء الصلاحية",
+        "بداية السريان / انتهاء الصلاحية",
         "تمنح الجمعية هذه الشهادة إلى",
         "اعتماد جمعوي وفق القرار المسجل. لا يمثل ترخيصًا حكوميًا.",
     ],
@@ -58,7 +59,7 @@ WORDS = {
         "Code de vérification",
         "Scannez le QR ou saisissez la référence et le code.",
         "Signature autorisée",
-        "Émission / expiration",
+        "Début de validité / expiration",
         "L’association décerne ce certificat à",
         "Accréditation associative selon la décision enregistrée. Ce document ne constitue pas une autorisation gouvernementale.",
     ],
@@ -70,7 +71,7 @@ WORDS = {
         "Verification code",
         "Scan the QR or enter the reference and code.",
         "Authorized signature",
-        "Issued / expires",
+        "Valid from / expires",
         "The association awards this certificate to",
         "Association accreditation under the recorded decision. This document does not constitute a government licence.",
     ],
@@ -227,11 +228,12 @@ def render(doc, language="ar", *, preview=False, bleed=False):
         )
 
     def page(content):
-        return f'<section class="sheet"><div class="trim">{img(bg,-pad,-pad,width+2*pad,height+2*pad)}{content}</div></section>'
+        bleed_background = img(bg, -pad, -pad, width+2*pad, height+2*pad) if pad else ""
+        return f'<section class="sheet"><div class="trim">{bleed_background}{img(bg,0,0,width,height)}{content}</div></section>'
 
     validity = data["valid_from"] + " / " + (data["valid_until"] or words[1])
     if is_card:
-        header = img(logo, 5.5, 4.3, 8.5, 8.5) + txt(
+        header = img(logo, 5.5, 4.3, 8.5, 8.5, "object-fit:contain") + txt(
             "ANTHEC",
             18,
             3.4,
@@ -321,7 +323,7 @@ def render(doc, language="ar", *, preview=False, bleed=False):
         back += txt(words[5], 33, 40.5, 44, 9, 6.6, fg)
         result = page(front) + page(back)
     else:
-        center = img(logo, 133, 20, 19, 19) + txt(
+        center = img(logo, 133, 20, 19, 19, "object-fit:contain") + txt(
             "ANTHEC",
             65,
             39,
@@ -394,12 +396,15 @@ def render(doc, language="ar", *, preview=False, bleed=False):
             '<div style="position:absolute;left:30mm;top:160mm;width:24mm;height:24mm;background:white"></div>'
             + img(qr_url, 30, 160, 24, 24)
         )
-        center += txt(words[3], 63, 158, 119, 4.5, 7.5, "#216459") + txt(
-            str(doc.serial), 63, 164, 119, 5, 8.2, "#122E3B", direction="ltr"
+        center += txt(words[3], 63, 152, 119, 4.5, 7.5, "#216459") + txt(
+            str(doc.serial), 63, 158, 119, 5, 8.2, "#122E3B", direction="ltr"
         )
         center += txt(
-            credentials["code"], 63, 170, 119, 5, 8.5, "#122E3B", direction="ltr"
+            credentials["code"], 63, 164, 119, 5, 8.5, "#122E3B", direction="ltr"
         )
+        issued_label = {"ar": "تاريخ الإصدار", "fr": "Date d’émission", "en": "Issue date"}[language]
+        issued_date = timezone.localdate(doc.issued_at).isoformat() if doc.issued_at else "—"
+        center += txt(issued_label + ": " + issued_date, 63, 170, 119, 4.5, 7.5, "#216459")
         center += txt(words[7], 63, 177, 119, 4.5, 7.5, "#216459") + txt(
             validity, 63, 183, 119, 5, 8.5, "#122E3B", direction="ltr"
         )
@@ -510,4 +515,5 @@ def render(doc, language="ar", *, preview=False, bleed=False):
         "language": language,
         "photo": str(doc.portrait.serial) if is_card else None,
         "font_scale": factor,
+        "issued_on": timezone.localdate(doc.issued_at).isoformat() if doc.issued_at else None,
     }

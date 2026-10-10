@@ -70,12 +70,13 @@ def render_outbox(outbox_id):
     row = (
         Outbox.objects.select_for_update().select_related("document").get(pk=outbox_id)
     )
-    if row.state == "rendered":
+    if row.state in {"rendered", "retired"}:
         return row.document_id
     row.attempts += 1
     try:
         row.last_error = ""
         retry_pdf = False
+        retire_pdf = False
         if row.document.rendering_state != "ready" or not row.document.rendered:
             html = printable(row.document)
             row.document.rendered = encrypt(html)
@@ -97,10 +98,11 @@ def render_outbox(outbox_id):
                 row.last_error = "pending_photo"
             except LayoutError:
                 row.last_error = "pending_layout"
-            except InactiveDocument:
+            except InactiveDocument as error:
                 row.last_error = "inactive_document"
-                retry_pdf = True
-        row.state = "failed" if retry_pdf else "rendered"
+                retry_pdf = error.retryable
+                retire_pdf = not error.retryable
+        row.state = "retired" if retire_pdf else "failed" if retry_pdf else "rendered"
         if row.last_error not in {"pending_photo", "pending_layout", "inactive_document"}:
             row.last_error = ""
     except Exception:

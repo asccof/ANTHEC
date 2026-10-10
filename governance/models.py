@@ -290,6 +290,7 @@ class Portrait(models.Model):
 
 class Document(models.Model):
     serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    issued_at = models.DateTimeField(null=True, editable=False)
     kind = models.CharField(max_length=30)
     membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True)
     accreditation = models.ForeignKey(
