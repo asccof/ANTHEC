@@ -1,0 +1,5 @@
+{% extends 'governance/institutional_base.html' %}
+{% block content %}
+<section><h2>{{ labels.grant }}</h2><form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.grant }}</button></form></section>
+<section><h2>{{ labels.list }}</h2><table><thead><tr><th>{{ labels.person }}</th><th>{{ labels.role }}</th><th>{{ labels.detail }}</th></tr></thead><tbody>{% for item in rows %}<tr><td>{{ item.role.person.full_name }}</td><td>{{ item.label }}</td><td><a href="{% url 'institutional_detail' item.role.pk %}?lang={{ language }}">#{{ item.role.pk }} — {{ labels.detail }}</a></td></tr>{% empty %}<tr><td colspan="3">{{ labels.empty }}</td></tr>{% endfor %}</tbody></table></section>
+{% endblock %}

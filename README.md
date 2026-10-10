@@ -49,3 +49,7 @@ python manage.py test content governance --settings=antheec_app.settings.test
 ```
 
 SQLite runs local acceptance tests; three concurrency tests intentionally require PostgreSQL. CI uses PostgreSQL 16. To test against a local instance set `ANTHEEC_DB_ENGINE=postgresql`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT`. PostgreSQL evidence must come from actual CI, not SQLite. Original source attachments/private criteria are excluded from this public repository; source hashes preserve traceability. No MHIOS code or governance is imported.
+
+## Institutional cards (owner-authorized Phase 1)
+
+Protected AR/FR/EN administration: `/operations/institutional/`. Existing MFA-authorized directors grant recorded office terms or permanent free founder cards, record decisions and reissue documents. Institutional cards confer no platform privileges. See [Phase 1 contract and traceability](docs/INSTITUTIONAL_CARDS_PHASE1.md). Six concurrency tests now require PostgreSQL.

@@ -194,6 +194,52 @@ class Attendance(models.Model):
     at = models.DateTimeField(auto_now_add=True)
 
 
+class InstitutionalRole(models.Model):
+    """Recorded institutional eligibility; never an administrative permission."""
+
+    person = models.ForeignKey(Person, on_delete=models.PROTECT)
+    role = models.CharField(
+        max_length=20,
+        choices=[
+            ("president", "President"),
+            ("vice_president", "Vice-President"),
+            ("founder", "Founding Member"),
+        ],
+    )
+    starts_on = models.DateField()
+    ends_on = models.DateField(null=True)  # exclusive; explicitly recorded legal end
+    legal_reference = models.CharField(max_length=120)
+    state = models.CharField(max_length=20, default="active")
+    created_at = models.DateTimeField(auto_now_add=True)
+    replaces = models.OneToOneField("self", on_delete=models.PROTECT, null=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(role="founder", ends_on__isnull=True)
+                    | Q(
+                        role__in=["president", "vice_president"],
+                        ends_on__isnull=False,
+                        ends_on__gt=models.F("starts_on"),
+                    )
+                ),
+                name="institutional_recorded_term",
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    state__in=["active", "suspended", "cancelled", "terminated"]
+                ),
+                name="institutional_valid_state",
+            ),
+            models.UniqueConstraint(
+                fields=["person"],
+                condition=Q(role="founder"),
+                name="one_founder_designation",
+            ),
+        ]
+
+
 class Document(models.Model):
     serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     kind = models.CharField(max_length=30)
@@ -202,6 +248,9 @@ class Document(models.Model):
         Accreditation, on_delete=models.PROTECT, null=True
     )
     registration = models.ForeignKey(Registration, on_delete=models.PROTECT, null=True)
+    institutional_role = models.ForeignKey(
+        InstitutionalRole, on_delete=models.PROTECT, null=True
+    )
     version = models.PositiveIntegerField(default=1)
     token_digest = models.CharField(max_length=64, unique=True)
     code_digest = models.CharField(max_length=64)
@@ -220,16 +269,25 @@ class Document(models.Model):
                         membership__isnull=False,
                         accreditation__isnull=True,
                         registration__isnull=True,
+                        institutional_role__isnull=True,
                     )
                     | Q(
                         membership__isnull=True,
                         accreditation__isnull=False,
                         registration__isnull=True,
+                        institutional_role__isnull=True,
                     )
                     | Q(
                         membership__isnull=True,
                         accreditation__isnull=True,
                         registration__isnull=False,
+                        institutional_role__isnull=True,
+                    )
+                    | Q(
+                        membership__isnull=True,
+                        accreditation__isnull=True,
+                        registration__isnull=True,
+                        institutional_role__isnull=False,
                     )
                 ),
                 name="one_document_origin",
@@ -245,6 +303,10 @@ class Document(models.Model):
             models.UniqueConstraint(
                 fields=["registration", "kind", "version"],
                 name="registration_document_version",
+            ),
+            models.UniqueConstraint(
+                fields=["institutional_role", "kind", "version"],
+                name="institutional_document_version",
             ),
         ]
 

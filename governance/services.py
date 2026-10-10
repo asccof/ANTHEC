@@ -136,21 +136,35 @@ def command(action, primary_only=False):
             with transaction.atomic():
                 actor = authorize(request, primary_only=primary_only)
                 for field, value in payload.items():
-                    if field in {
-                        "reason",
-                        "proof_reference",
-                        "tier",
-                        "model",
-                        "state",
-                        "kind",
-                        "subject_name",
-                        "starts_on",
-                        "ends_on",
-                        "starts_at",
-                    } and not isinstance(value, str):
+                    if (
+                        field
+                        in {
+                            "reason",
+                            "proof_reference",
+                            "tier",
+                            "model",
+                            "state",
+                            "kind",
+                            "subject_name",
+                            "starts_on",
+                            "ends_on",
+                            "starts_at",
+                        }
+                        and not isinstance(value, str)
+                        and not (
+                            action == "institutional.grant"
+                            and field == "ends_on"
+                            and value is None
+                        )
+                    ):
                         raise ValidationError("Text field required")
                     if field.endswith("_id") and not (
-                        field == "person_id" and value is None
+                        (
+                            field == "person_id"
+                            or action == "institutional.grant"
+                            and field == "replaces_role_id"
+                        )
+                        and value is None
                     ):
                         if (
                             not isinstance(value, int)
@@ -336,22 +350,27 @@ def issue(
     membership=None,
     accreditation=None,
     registration=None,
+    institutional_role=None,
     version=1,
     replaces=None
 ):
     token = secrets.token_urlsafe(32)
     code = secrets.token_hex(8).upper()
     name = (
-        membership.application.person.full_name
-        if membership
+        institutional_role.person.full_name
+        if institutional_role
         else (
-            (
-                accreditation.person.full_name
-                if accreditation.person_id
-                else accreditation.subject_name
+            membership.application.person.full_name
+            if membership
+            else (
+                (
+                    accreditation.person.full_name
+                    if accreditation.person_id
+                    else accreditation.subject_name
+                )
+                if accreditation
+                else registration.person.full_name
             )
-            if accreditation
-            else registration.person.full_name
         )
     )
     doc = Document.objects.create(
@@ -360,6 +379,7 @@ def issue(
         membership=membership,
         accreditation=accreditation,
         registration=registration,
+        institutional_role=institutional_role,
         version=version,
         replaces=replaces,
         token_digest=digest(token),
@@ -505,6 +525,7 @@ def replace_document(*, actor, document_id, reason):
         membership=old.membership,
         accreditation=old.accreditation,
         registration=old.registration,
+        institutional_role=old.institutional_role,
         version=old.version + 1,
         replaces=old,
     )
@@ -644,7 +665,11 @@ def check_in(*, actor, document_id):
 def document_status(doc):
     if doc.void:
         return "cancelled"
-    if doc.membership_id:
+    if doc.institutional_role_id:
+        origin = doc.institutional_role
+        if origin.state == "terminated":
+            return "cancelled"
+    elif doc.membership_id:
         origin = doc.membership
     elif doc.accreditation_id:
         origin = doc.accreditation
@@ -667,7 +692,10 @@ def document_status(doc):
 
 
 def public_document(doc):
-    if doc.membership_id:
+    if doc.institutional_role_id:
+        origin = doc.institutional_role
+        kind = origin.role
+    elif doc.membership_id:
         origin = doc.membership
         name = origin.application.person.full_name
         kind = origin.application.tier

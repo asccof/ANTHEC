@@ -8,15 +8,32 @@ from .models import Outbox
 from .services import decrypt, encrypt, public_document
 
 
-def printable(doc):
+def printable(doc, language="ar"):
     data = public_document(doc)
     credentials = decrypt(doc.credentials)
     # Fragment is never sent in HTTP request URLs/referrers/access logs.
-    link = settings.ANTHEEC_PUBLIC_ORIGIN + "/verify/#" + credentials["token"]
+    from .institutional_labels import vocabulary
+
+    language, labels = vocabulary(language)
+    link = (
+        settings.ANTHEEC_PUBLIC_ORIGIN
+        + "/verify/"
+        + ("?lang=" + language if doc.institutional_role_id else "")
+        + "#"
+        + credentials["token"]
+    )
     qr = qrcode.make(link, image_factory=qrcode.image.svg.SvgPathImage)
     output = io.BytesIO()
     qr.save(output)
     svg = output.getvalue().decode().split("?>")[-1]
+    if doc.institutional_role_id:
+        title = labels[doc.kind]
+        direction = "rtl" if language == "ar" else "ltr"
+        rows = "".join(
+            f'<p>{escape(labels[k])}: {escape(labels.get(str(v), str(v)) if v is not None else "—")}</p>'
+            for k, v in data.items()
+        )
+        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px;border:3px solid #16475b}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["demo"])}</p></body></html>'
     title = {
         "gold_card": "بطاقة عضوية ذهبية",
         "professional_certificate": "شهادة اعتماد مهني جمعوي",

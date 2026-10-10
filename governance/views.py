@@ -9,9 +9,10 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.debug import sensitive_post_parameters
-from . import services
+from . import services, institutional
 from .models import Document, RateBucket, Person, Activity
 from .documents import printable
+from .institutional_labels import vocabulary
 
 
 @never_cache
@@ -19,7 +20,17 @@ from .documents import printable
 @require_http_methods(["GET", "POST"])
 def verify(request):
     if request.method == "GET":
-        return render(request, "governance/verify.html")
+
+        language, labels = vocabulary(request.GET.get("lang", "ar"))
+        return render(
+            request,
+            "governance/verify.html",
+            {
+                "language": language,
+                "labels": labels,
+                "direction": "rtl" if language == "ar" else "ltr",
+            },
+        )
     # No forwarded headers trusted; fixed 10-minute IP bucket, hashed and bounded.
     bucket = services.digest(
         f'verify:{request.META.get("REMOTE_ADDR","")}:{int(timezone.now().timestamp()//600)}'
@@ -36,6 +47,29 @@ def verify(request):
         serial=request.POST.get("serial"),
         code=request.POST.get("code"),
     )
+    if (
+        data
+        and data["document_type"]
+        in {"president_card", "vice_president_card", "founder_card"}
+        and "text/html" in request.headers.get("Accept", "")
+    ):
+        language, labels = vocabulary(request.GET.get("lang", "ar"))
+        return render(
+            request,
+            "governance/institutional_verification.html",
+            {
+                "language": language,
+                "labels": labels,
+                "direction": "rtl" if language == "ar" else "ltr",
+                "rows": [
+                    {
+                        "label": labels[k],
+                        "value": labels.get(str(v), str(v)) if v is not None else "—",
+                    }
+                    for k, v in data.items()
+                ],
+            },
+        )
     response = JsonResponse(
         data if data else {"error": "Document not found"}, status=200 if data else 404
     )
@@ -44,6 +78,8 @@ def verify(request):
 
 
 ACTIONS = {
+    "institutional.grant": institutional.grant,
+    "institutional.state": institutional.change_state,
     "delegate": services.delegate,
     "price.change": services.change_price,
     "payment.verify": services.verify_payment,
@@ -90,12 +126,16 @@ def download(request, document_id):
     if doc is None:
         return HttpResponse(status=404)
     person = (
-        doc.membership.application.person
-        if doc.membership_id
+        doc.institutional_role.person
+        if doc.institutional_role_id
         else (
-            doc.accreditation.person
-            if doc.accreditation_id
-            else doc.registration.person
+            doc.membership.application.person
+            if doc.membership_id
+            else (
+                doc.accreditation.person
+                if doc.accreditation_id
+                else doc.registration.person
+            )
         )
     )
     own = person and (
@@ -109,7 +149,7 @@ def download(request, document_id):
                 services.authorize(request)
         except (PermissionDenied, ObjectDoesNotExist):
             return HttpResponse(status=404)
-    html = printable(doc)
+    html = printable(doc, language=request.GET.get("lang", "ar"))
     response = HttpResponse(html, content_type="text/html; charset=utf-8")
     response["Content-Disposition"] = (
         f'attachment; filename="ANTHEEC-{doc.serial}.html"'
