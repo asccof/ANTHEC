@@ -184,6 +184,86 @@
       ],
       "status": "planned",
       "evidence": null
+    },
+    {
+      "id": "POL-01",
+      "description": "Bounded service implementation of owner-approved POL-01; full feature gates remain in POLICY_EXECUTION.md",
+      "source_id": "SRC-08",
+      "section": "POL-01",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "implemented",
+      "evidence": "governance/tests.py; docs/POLICY_EXECUTION.md; end-to-end/legal gates remain pending"
+    },
+    {
+      "id": "POL-02",
+      "description": "Bounded service implementation of owner-approved POL-02; full feature gates remain in POLICY_EXECUTION.md",
+      "source_id": "SRC-08",
+      "section": "POL-02",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "implemented",
+      "evidence": "governance/tests.py; docs/POLICY_EXECUTION.md; end-to-end/legal gates remain pending"
+    },
+    {
+      "id": "POL-03",
+      "description": "Bounded service implementation of owner-approved POL-03; full feature gates remain in POLICY_EXECUTION.md",
+      "source_id": "SRC-08",
+      "section": "POL-03",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "implemented",
+      "evidence": "governance/tests.py; docs/POLICY_EXECUTION.md; end-to-end/legal gates remain pending"
+    },
+    {
+      "id": "POL-04",
+      "description": "Bounded service implementation of owner-approved POL-04; full feature gates remain in POLICY_EXECUTION.md",
+      "source_id": "SRC-08",
+      "section": "POL-04",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "implemented",
+      "evidence": "governance/tests.py; docs/POLICY_EXECUTION.md; end-to-end/legal gates remain pending"
+    },
+    {
+      "id": "POL-05",
+      "description": "Bounded service implementation of owner-approved POL-05; full feature gates remain in POLICY_EXECUTION.md",
+      "source_id": "SRC-08",
+      "section": "POL-05",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "implemented",
+      "evidence": "governance/tests.py; docs/POLICY_EXECUTION.md; end-to-end/legal gates remain pending"
+    },
+    {
+      "id": "POL-06",
+      "description": "Owner-approved policy POL-06; see APPROVED_POLICIES.md",
+      "source_id": "SRC-08",
+      "section": "POL-06",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "POL-07",
+      "description": "Bounded service implementation of owner-approved POL-07; full feature gates remain in POLICY_EXECUTION.md",
+      "source_id": "SRC-08",
+      "section": "POL-07",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "implemented",
+      "evidence": "governance/tests.py; docs/POLICY_EXECUTION.md; end-to-end/legal gates remain pending"
+    },
+    {
+      "id": "POL-08",
+      "description": "Bounded service implementation of owner-approved POL-08; full feature gates remain in POLICY_EXECUTION.md",
+      "source_id": "SRC-08",
+      "section": "POL-08",
+      "task": "POLICY-CORE-013",
+      "design_tests": [],
+      "status": "implemented",
+      "evidence": "governance/tests.py; docs/POLICY_EXECUTION.md; end-to-end/legal gates remain pending"
     }
   ]
 }

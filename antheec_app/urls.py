@@ -9,6 +9,12 @@ def health(request):
     return JsonResponse({"project": "ANTHEEC", "mode": "development", "status": "ok"})
 
 
-urlpatterns = [path("health/", health), path("admin/", include(wagtailadmin_urls))]
+urlpatterns = [
+    path("", include("governance.urls")),
+    path("health/", health),
+    path("admin/", include(wagtailadmin_urls)),
+]
 # No public document/media serving route and no public administrative API.
-urlpatterns += i18n_patterns(path("", include(wagtail_urls)), prefix_default_language=True)
+urlpatterns += i18n_patterns(
+    path("", include(wagtail_urls)), prefix_default_language=True
+)

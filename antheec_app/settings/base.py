@@ -8,6 +8,7 @@ if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test"}:
     raise ImproperlyConfigured("Only development and test modes are authorized.")
 
 INSTALLED_APPS = [
+    "governance", "django_otp", "django_otp.plugins.otp_totp",
     "content", "wagtail.contrib.simple_translation", "wagtail.locales",
     "wagtail.contrib.redirects", "wagtail.sites", "wagtail.users",
     "wagtail.snippets", "wagtail.documents", "wagtail.images",
@@ -19,10 +20,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.locale.LocaleMiddleware",
+    "governance.middleware.PolicyLocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
+    "governance.middleware.AdminSecurityMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
@@ -86,3 +89,10 @@ X_FRAME_OPTIONS = "DENY"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
+
+ANTHEEC_DATA_KEY = os.environ.get("ANTHEEC_DATA_KEY", "")
+OTP_TOTP_ISSUER = "ANTHEEC development"
+OTP_TOTP_THROTTLE_FACTOR = 1
+SESSION_COOKIE_AGE = 3600
+
+ANTHEEC_PUBLIC_ORIGIN = "http://127.0.0.1:8000" # local synthetic documents only

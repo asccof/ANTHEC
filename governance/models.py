@@ -1,0 +1,281 @@
+import uuid
+from django.conf import settings
+from django.db import models
+from django.db.models import Q
+
+
+class Authority(models.Model):
+    """One project authority; changing the primary is not a web operation."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    primary = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(id=1), name="single_authority")
+        ]
+
+
+class Delegation(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    active = models.BooleanField(default=True)
+    epoch = models.PositiveIntegerField(default=1)
+
+
+class Audit(models.Model):
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True
+    )
+    action = models.CharField(max_length=60)
+    subject = models.CharField(max_length=120)
+    reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    details = models.JSONField(default=dict)
+
+
+class Command(models.Model):
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    action = models.CharField(max_length=60)
+    key = models.CharField(max_length=120)
+    digest = models.CharField(max_length=64)
+    result = models.JSONField(default=dict)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["actor", "action", "key"], name="command_replay_scope"
+            )
+        ]
+
+
+class Price(models.Model):
+    tier = models.CharField(max_length=20)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    starts_at = models.DateTimeField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gte=0), name="price_nonnegative")
+        ]
+
+
+class Person(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True
+    )
+    guardian = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="dependants",
+    )
+    full_name = models.CharField(max_length=200)
+    contact = models.EmailField(blank=True)
+    minor = models.BooleanField(default=False)
+    directory_consent = models.BooleanField(default=False)
+    verification_notice_at = models.DateTimeField(null=True)
+
+
+class Application(models.Model):
+    person = models.ForeignKey(Person, on_delete=models.PROTECT)
+    tier = models.CharField(max_length=20)
+    state = models.CharField(max_length=20, default="submitted")
+    quote = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.ForeignKey(Price, on_delete=models.PROTECT, null=True)
+    quoted_on = models.DateField()
+    previous = models.ForeignKey(
+        "Membership",
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="renewal_applications",
+    )
+
+
+class Payment(models.Model):
+    application = models.ForeignKey(Application, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    method = models.CharField(
+        max_length=12, choices=[("cash", "Cash"), ("transfer", "Transfer")]
+    )
+    receipt = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    proof_reference = models.CharField(max_length=120)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0), name="positive_payment")
+        ]
+
+
+class Exemption(models.Model):
+    application = models.OneToOneField(Application, on_delete=models.PROTECT)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Membership(models.Model):
+    application = models.OneToOneField(Application, on_delete=models.PROTECT)
+    starts_on = models.DateField()
+    ends_on = models.DateField(null=True)  # exclusive
+    state = models.CharField(max_length=20, default="active")
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(ends_on__isnull=True)
+                | Q(ends_on__gt=models.F("starts_on")),
+                name="membership_dates",
+            )
+        ]
+
+
+class Accreditation(models.Model):
+    membership = models.OneToOneField(Membership, on_delete=models.PROTECT, null=True)
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, null=True)
+    subject_name = models.CharField(max_length=200, blank=True)
+    kind = models.CharField(max_length=20, default="professional")
+    starts_on = models.DateField()
+    ends_on = models.DateField()
+    state = models.CharField(max_length=20, default="active")
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(ends_on__gt=models.F("starts_on")),
+                name="accreditation_dates",
+            )
+        ]
+
+
+class Activity(models.Model):
+    title = models.CharField(max_length=200)
+    starts_on = models.DateField()
+    ends_on = models.DateField()
+    capacity = models.PositiveIntegerField()
+    allows_minors = models.BooleanField(default=False)
+    consent_version = models.CharField(max_length=60, default="v1")
+    consent_text = models.TextField()
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(ends_on__gte=models.F("starts_on")), name="activity_dates"
+            )
+        ]
+
+
+class Registration(models.Model):
+    activity = models.ForeignKey(Activity, on_delete=models.PROTECT)
+    person = models.ForeignKey(Person, on_delete=models.PROTECT)
+    submitted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    guardian_name = models.CharField(max_length=200, blank=True)
+    guardian_capacity = models.CharField(max_length=100, blank=True)
+    consent_at = models.DateTimeField(null=True)
+    consent_version = models.CharField(max_length=60, blank=True)
+    consent_text = models.TextField(blank=True)
+    state = models.CharField(max_length=20, default="requested")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["activity", "person"], name="one_participant_per_activity"
+            )
+        ]
+
+
+class Attendance(models.Model):
+    registration = models.OneToOneField(Registration, on_delete=models.PROTECT)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    at = models.DateTimeField(auto_now_add=True)
+
+
+class Document(models.Model):
+    serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    kind = models.CharField(max_length=30)
+    membership = models.ForeignKey(Membership, on_delete=models.PROTECT, null=True)
+    accreditation = models.ForeignKey(
+        Accreditation, on_delete=models.PROTECT, null=True
+    )
+    registration = models.ForeignKey(Registration, on_delete=models.PROTECT, null=True)
+    version = models.PositiveIntegerField(default=1)
+    token_digest = models.CharField(max_length=64, unique=True)
+    code_digest = models.CharField(max_length=64)
+    subject_name = models.CharField(max_length=200)
+    credentials = models.TextField()  # encrypted verification token + printed code
+    rendered = models.TextField(blank=True)  # encrypted printable HTML
+    rendering_state = models.CharField(max_length=15, default="pending")
+    void = models.BooleanField(default=False)
+    replaces = models.OneToOneField("self", on_delete=models.PROTECT, null=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        membership__isnull=False,
+                        accreditation__isnull=True,
+                        registration__isnull=True,
+                    )
+                    | Q(
+                        membership__isnull=True,
+                        accreditation__isnull=False,
+                        registration__isnull=True,
+                    )
+                    | Q(
+                        membership__isnull=True,
+                        accreditation__isnull=True,
+                        registration__isnull=False,
+                    )
+                ),
+                name="one_document_origin",
+            ),
+            models.UniqueConstraint(
+                fields=["membership", "kind", "version"],
+                name="membership_document_version",
+            ),
+            models.UniqueConstraint(
+                fields=["accreditation", "kind", "version"],
+                name="accreditation_document_version",
+            ),
+            models.UniqueConstraint(
+                fields=["registration", "kind", "version"],
+                name="registration_document_version",
+            ),
+        ]
+
+
+class Outbox(models.Model):
+    document = models.OneToOneField(Document, on_delete=models.PROTECT)
+    state = models.CharField(max_length=15, default="pending")
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.CharField(max_length=60, blank=True)
+
+
+class Refund(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    approved = models.BooleanField()
+    reason = models.TextField()
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0), name="positive_refund")
+        ]
+
+
+class RecoveryCode(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    digest = models.CharField(max_length=64, unique=True)
+    used_at = models.DateTimeField(null=True)
+
+
+class RateBucket(models.Model):
+    key = models.CharField(max_length=64, primary_key=True)
+    count = models.PositiveIntegerField(default=0)

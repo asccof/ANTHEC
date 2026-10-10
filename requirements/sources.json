@@ -40,5 +40,12 @@
     "filename": "الملف التعريفي للجمعية الوطنية للعلاج النفسي و الأسري و الكوتشينغ(20261008-232627).pdf",
     "sha256": "5b49f8849af10df75de022f2287aa16f2294b9cf26a1bbf046a324995bac082e",
     "bytes": 874336
+  },
+  {
+    "id": "SRC-08",
+    "filename": "ANTHEEC.docx",
+    "sha256": "bfb9ccd6d9f93674a1fc441dda36cb03ca471ddee2ca4a4aca01bf2a0247c558",
+    "bytes": 26486,
+    "authority": "Owner-approved consolidated policies v1.0, 2026-10-10; implementation authorized by current user instruction"
   }
 ]

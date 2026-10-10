@@ -1,20 +1,20 @@
 # ANTHEEC implementation backlog
 
-2026-10-10. No milestone here authorizes deployment or real-person data.
+Current authority: approved POL-01–08 in APPROVED_POLICIES.md / SRC-08. No milestone authorizes production or real-person data.
 
-| Task | GitHub | Dependency / acceptance gate | Current state |
-|---|---|---|---|
-| ENG-001/003 | #1 / PR #2 | Source baseline + executable multilingual CMS PoC; PostgreSQL CI and reviewed head | Accepted bounded foundation: PR #2 merged, findings resolved, PostgreSQL CI and updated-head Codex complete; full CMS acceptance remains pending |
-| ENG-002 | PR #2 | Independent GitHub history/CI/review; branch protection status separately checked | GitHub available; protection API inaccessible to integration, not claimed configured |
-| ENG-004 | #3 | Domain contracts, least-privilege matrix, data dictionary, transactions and test scenarios | Draft delivered in this documentation increment |
-| ENG-005 | #5 | #3 + PR #2; translation orchestration, administrative MFA/roles, CMS/media | Planned |
-| ENG-006 | #6 | #3 + #5; membership/payment/document outbox; calendar/pricing decisions | Planned |
-| ENG-007 | #7 | #3 + #6; separate accreditation, bounded validity, private criteria/fees | Planned |
-| ENG-008 | #8 | #3 + #5/#6; eligibility/capacity/invitation/attendance | Planned |
-| ENG-009 | #9 | #3 + #5; partnership requests/publication/branches | Planned |
-| ENG-010 | #10 | #5–9; all original acceptance criteria, security, backup restore, performance and training | Planned, non-production |
-| ENG-011 | Not commissioned | Separate approval after readiness | Production, paid services and real records blocked |
+| Task | GitHub | State / next gate |
+|---|---|---|
+| ENG-001/003 | #1 / PR #2 | Bounded CMS foundation accepted; not repeated |
+| ENG-002 | PR #2 | Independent repository/CI available; branch protection remains unverified |
+| ENG-004 | #3 / PR #4 | Proposed contracts merged; conflicting institutional proposals now superseded by approved register/current contracts |
+| Policy adoption/core | #13 | Current increment: source/supersession, authority/MFA, policy services, artifacts/verification, guardian admission, synthetic PostgreSQL/review evidence |
+| ENG-005 | #5 | Authority/MFA subset in #13; full translation/media/scheduling/editor UX still pending |
+| ENG-006 | #6 | Calendar/pricing/tier3/financial/issuance services in #13; complete forms, PDF design, uploads and operational acceptance pending |
+| ENG-007 | #7 | Linked tier3 and independent accreditation service in #13; full private assessment cases/workflow pending |
+| ENG-008 | #8 | Guardian consent/admission/capacity/invitation/checkin services in #13; public event/profile workflows and end-to-end checks pending |
+| ENG-009 | #9 | Partnerships/branches still pending; approved requirements remain |
+| ENG-010 | #10 | Security/privacy/backup/restore/performance/administrator/legal readiness pending |
+| Owner-policy queue | #12 | Eight organizational policies resolved by SRC-08; remaining legal/security readiness is not marked complete |
+| ENG-011 | Not authorized | Production/real-person operations and paid services blocked |
 
-Each issue specifies scope, dependency, acceptance and unresolved owner policies. Priority is #3 contracts + #5 identity/CMS before business workflows. Do not treat the metadata/CMS test count as complete platform acceptance.
-
-Policy review items POL-01–08 are defined in DOMAIN_CONTRACTS.md and traced to the original inception findings. The contracts are proposals, not a claim of owner approval.
+Use POLICY_EXECUTION.md for phased gates. Keep service coverage, UI completion, institutional approval, legal readiness and actual release separate.

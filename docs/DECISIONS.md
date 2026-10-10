@@ -1,16 +1,20 @@
-# Decision register
+# ANTHEEC decision register
 
-| ID | Status | Decision | Basis / next evidence |
-|---|---|---|---|
-| ADR-001 | Authorized | ANTHEEC independent from MHIOS | Current user instruction |
-| ADR-002 | Authorized boundary | No production, paid services or real-person data | Current user instruction |
-| ADR-003 | Existing baseline | AR/FR/EN; membership never automatically grants accreditation | Executive §§1,3–5 |
-| ADR-004 | Proposed, PoC required | Django/PostgreSQL/Wagtail modular monolith | Executive §11; prove CMS workflows first |
-| ADR-005 | Proposed engineering design | Atomic decision/outbox, idempotency scoped by action and payload hash | Detailed §§3,8; prove concurrency and crash recovery |
-| ADR-006 | Awaiting business approval | Validity boundaries, leap day, early renewal, campaign expiry | F04/F06; no production defaults |
-| ADR-007 | Awaiting privacy approval | Public verification fields and serial lookup restriction | F09/F14/F15 |
-| ADR-008 | Deferred | Tighri integration, payments gateway, WhatsApp, branch accounts | No integration contract; Executive §§7,9,14 |
+Owner policy authority: APPROVED_POLICIES.md, SRC-08, current continuation instruction dated 2026-10-10. No MHIOS rules imported.
 
-Changing a decision requires a dated entry with rationale, affected requirements and tests. This is an engineering log, not an assertion of external approval.
+| ID | Current status | Decision and evidence |
+|---|---|---|
+| ADR-001 | Owner-approved | Independent ANTHEEC project |
+| ADR-002 | Owner-approved boundary | Synthetic design/development/testing only; production/real-person operations blocked pending verified legal/security readiness; no paid service authorized |
+| ADR-003 | Superseded in part | The old blanket prohibition of automatic accreditation is superseded by POL-01: third-tier approval/renewal jointly grants professional association accreditation and separate gold card/certificate; lower tiers do not |
+| ADR-004 | Tested development architecture | Django/Wagtail modular monolith; PostgreSQL CI evidence in PR #2. Production architecture/readiness not accepted |
+| ADR-005 | Engineering choice | Atomic authority-locked commands, scoped idempotency and durable render outbox; synthetic PostgreSQL tests required on current head |
+| ADR-006 | Owner policy resolved; technical calendar | POL-02 early/late renewal, POL-03 ongoing current prices; exclusive end and Feb29→Feb28 technical rule explicitly permitted by source §11 |
+| ADR-007 | Owner policy resolved | POL-05 QR or serial+additional code, full name/type/reference/dates/status; prior notice; optional directory separate; contacts/internal reasons excluded |
+| ADR-008 | Deferred | Tighri, electronic gateway, WhatsApp, external mail/translation, branch accounts require separate scope |
+| ADR-009 | Owner-approved | POL-04 single primary director, full operational delegation permitted, no second electronic approval; MFA/audit/reauth/immediate revocation/recovery |
+| ADR-010 | Owner-approved | POL-07 appropriate minor participation through guardian explicit consent and administrative admission; technical profile deduplication documented |
+| ADR-011 | Owner-approved | POL-08 reasoned suspension/cancellation/reactivation/reissue/exemption/refund; preserve original history and invalidate replacements |
+| ADR-012 | Open legal/security gate | Detailed retention/CNDP/privacy/hosting/minor/backup/rights requirements are not completed or assigned invented durations |
 
-2026-10-10 technical evidence: Django 5.2.18 / Wagtail 7.4.3 LTS / psycopg 3.3.6 pinned, Python 3.12. Compatibility and content-locale approach checked against https://docs.wagtail.org/en/v7.4/releases/7.4.html and https://docs.wagtail.org/en/v7.4/advanced_topics/i18n.html. PostgreSQL 16 CI required; this is development evidence, not production architecture acceptance. All dependencies are open-source; package license metadata must be included in the next dependency audit.
+Technical constants (5-minute sensitive reauthentication, verification entropy/rate limits, account-linked participant keys) are engineering choices within authorized synthetic design/testing, not new organizational rules. Their adequacy needs security/readiness assessment. Historical decisions are retained in Git; conflicting proposals are not current authority.
