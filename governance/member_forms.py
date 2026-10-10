@@ -53,3 +53,24 @@ class ApplicationForm(CommandForm):
     def __init__(self, *args, labels, **kwargs):
         super().__init__(*args, labels=labels, **kwargs)
         self.fields["tier"].choices = [(k, labels[k]) for k in TIERS]
+
+
+class RenewalForm(CommandForm):
+    membership_id = forms.ModelChoiceField(queryset=None)
+
+    def __init__(self, *args, labels, user, **kwargs):
+        super().__init__(*args, labels=labels, **kwargs)
+        from .models import Membership, Application
+
+        self.fields["membership_id"].queryset = Membership.objects.filter(
+            application__person__user=user,
+            ends_on__isnull=False,
+            state__in=["active", "expired"],
+        ).exclude(
+            pk__in=Application.objects.filter(
+                state="approved", previous__isnull=False
+            ).values("previous_id")
+        )
+        self.fields["membership_id"].label_from_instance = (
+            lambda term: f"{term.pk} — {labels[term.application.tier]} — {term.starts_on} / {term.ends_on}"
+        )

@@ -226,6 +226,9 @@ def detail(request, application_id):
         payments=payments,
         refunds=refunds,
         history=history,
+        payment_rows=[
+            {"payment": p, "method": ctx["labels"][p.method]} for p in payments
+        ],
         paid=payments.aggregate(total=Sum("amount"))["total"] or 0,
         refunded=refunds.filter(approved=True).aggregate(total=Sum("amount"))["total"]
         or 0,

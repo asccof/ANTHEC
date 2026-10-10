@@ -57,3 +57,5 @@ Protected AR/FR/EN administration: `/operations/institutional/`. Existing MFA-au
 ## Membership interfaces (Phase 2)
 
 Synthetic self-service entry: `/members/signup/`, `/members/login/`, `/members/`, `/members/profile/`, `/members/apply/`. Add `?lang=ar|fr|en`. Accounts receive no administrative permissions. Previously recorded persons must request deliberate account linking; names/emails never establish identity. See [Phase 2 package map and boundaries](docs/MEMBERSHIP_INTERFACES_PHASE2.md).
+
+Prepared Phase 2 administration: `/operations/membership/` (MFA-authorized directors), `/operations/membership/identities/` (documented linkage to an unlinked existing Person). Member records: `/members/applications/<id>/`, `/members/renew/`, `/members/documents/`, with AR/FR/EN labels. Refund decisions record authorization; no bank transfer or external delivery executes. Phase 2 acceptance status is tracked in issue #17 and its draft PRs; availability of mandatory external review blocks merge.

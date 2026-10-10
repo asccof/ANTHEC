@@ -50,10 +50,19 @@ def verify(request):
     if (
         data
         and data["document_type"]
-        in {"president_card", "vice_president_card", "founder_card"}
+        in {
+            "president_card",
+            "vice_president_card",
+            "founder_card",
+            "membership_card",
+            "gold_card",
+            "professional_certificate",
+        }
         and "text/html" in request.headers.get("Accept", "")
     ):
-        language, labels = vocabulary(request.GET.get("lang", "ar"))
+        from .member_labels import vocabulary as member_vocabulary
+
+        language, labels = member_vocabulary(request.GET.get("lang", "ar"))
         return render(
             request,
             "governance/institutional_verification.html",
@@ -122,7 +131,7 @@ def operation(request, action):
 
 
 @never_cache
-@login_required(login_url="/admin/login/")
+@login_required(login_url="/members/login/")
 def download(request, document_id):
     doc = Document.objects.filter(pk=document_id).first()
     if doc is None:

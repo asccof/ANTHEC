@@ -2,6 +2,13 @@ from django.urls import path
 from . import security, views, institutional_views, member_views, membership_admin_views
 
 urlpatterns = [
+    path("members/renew/", member_views.renew, name="member_renew"),
+    path("members/documents/", member_views.documents, name="member_documents"),
+    path(
+        "members/applications/<int:application_id>/",
+        member_views.application_detail,
+        name="member_application",
+    ),
     path(
         "operations/membership/",
         membership_admin_views.register,

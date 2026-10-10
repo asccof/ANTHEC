@@ -274,3 +274,121 @@ def apply(request):
         {**ctx, "form": form, "title": ctx["labels"]["apply"]},
         status=status,
     )
+
+
+@never_cache
+@login_required(login_url="/members/login/")
+@require_http_methods(["GET", "POST"])
+@localized
+def renew(request):
+    from .member_forms import RenewalForm
+
+    ctx = context(request)
+    form = RenewalForm(
+        request.POST if request.method == "POST" else None,
+        labels=ctx["labels"],
+        user=request.user,
+    )
+    status = 200
+    if request.method == "POST":
+        if form.is_valid():
+            try:
+                member_services.submit_renewal(
+                    request.user,
+                    membership_id=form.cleaned_data["membership_id"].pk,
+                    key=str(form.cleaned_data["key"]),
+                )
+                return go(request, "member_home")
+            except (ValidationError, ObjectDoesNotExist, PermissionDenied):
+                form.add_error(None, ctx["labels"]["error"])
+        status = 400
+    return render(
+        request,
+        "governance/member_form.html",
+        {**ctx, "form": form, "title": ctx["labels"]["renew"]},
+        status=status,
+    )
+
+
+@never_cache
+@login_required(login_url="/members/login/")
+@require_http_methods(["GET"])
+@localized
+def application_detail(request, application_id):
+    from django.db.models import Q
+    from .models import Document, Refund, Membership
+
+    ctx = context(request)
+    app = get_object_or_404(
+        Application.objects.filter(
+            Q(person__user=request.user)
+            | Q(person__minor=True, person__guardian=request.user)
+        ),
+        pk=application_id,
+    )
+    term = Membership.objects.filter(application=app).first()
+    documents = (
+        Document.objects.filter(Q(membership=term) | Q(accreditation__membership=term))
+        if term
+        else Document.objects.none()
+    )
+    ctx.update(
+        app=app,
+        tier=ctx["labels"][app.tier],
+        state=ctx["labels"].get(app.state, app.state),
+        term=term,
+        payments=[
+            {
+                "receipt": p.receipt,
+                "amount": p.amount,
+                "method": ctx["labels"][p.method],
+            }
+            for p in app.payment_set.order_by("pk")
+        ],
+        refunds=[
+            {
+                "receipt": r.payment.receipt,
+                "amount": r.amount,
+                "decision": ctx["labels"]["approve" if r.approved else "reject"],
+            }
+            for r in Refund.objects.filter(payment__application=app)
+            .select_related("payment")
+            .order_by("pk")
+        ],
+        documents=document_rows(ctx["labels"], documents),
+    )
+    return render(request, "governance/member_application.html", ctx)
+
+
+def document_rows(labels, documents):
+    return [
+        {
+            "doc": d,
+            "label": labels.get(d.kind, d.kind),
+            "status": labels.get(
+                services.document_status(d), services.document_status(d)
+            ),
+        }
+        for d in documents
+    ]
+
+
+@never_cache
+@login_required(login_url="/members/login/")
+@require_http_methods(["GET"])
+@localized
+def documents(request):
+    from django.db.models import Q
+    from .models import Document
+
+    ctx = context(request)
+    people = Person.objects.filter(
+        Q(user=request.user) | Q(minor=True, guardian=request.user)
+    )
+    docs = Document.objects.filter(
+        Q(membership__application__person__in=people)
+        | Q(accreditation__membership__application__person__in=people)
+        | Q(institutional_role__person__in=people)
+    ).order_by("-pk")
+    ctx["documents"] = document_rows(ctx["labels"], docs)
+    return render(request, "governance/member_documents.html", ctx)

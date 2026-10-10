@@ -308,7 +308,7 @@ class MembershipAdminTests(TestCase):
                 self.assertContains(response, f'lang="{language}"')
                 self.assertContains(
                     response,
-                    'href="/security/challenge/">'
+                    f'href="/security/challenge/?lang={language}">'
                     + vocabulary(language)[1]["reauth_link"]
                     + "</a>",
                 )

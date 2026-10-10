@@ -4,6 +4,63 @@ from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
     "reauth_link": ("إعادة التحقق", "Vérifier à nouveau", "Reauthenticate"),
+    "mfa_title": (
+        "التحقق الأمني للإدارة",
+        "Vérification de sécurité administrative",
+        "Administrative security verification",
+    ),
+    "mfa_setup": (
+        "إعداد تطبيق المصادقة",
+        "Configurer l’authentification",
+        "Set up authenticator",
+    ),
+    "recovery_use": (
+        "استعمال رمز استعادة احتياطي",
+        "Utiliser un code de secours",
+        "Use a recovery code",
+    ),
+    "recovery_title": (
+        "احفظ رموز الاستعادة في مكان آمن",
+        "Conservez les codes de secours en sécurité",
+        "Store recovery codes securely",
+    ),
+    "recovery_hint": (
+        "تُعرض مرة واحدة، ويستعمل كل رمز مرة واحدة مع كلمة المرور.",
+        "Affichage unique ; chaque code est utilisable une seule fois avec le mot de passe.",
+        "Shown once; each code can be used once with your password.",
+    ),
+    "auth_uri_hint": (
+        "أضف هذا الرابط إلى تطبيق المصادقة واحفظه بسرية:",
+        "Ajoutez ce lien à votre application et gardez-le secret :",
+        "Add this link to your authenticator and keep it secret:",
+    ),
+    "already_enrolled": (
+        "المصادقة معدة بالفعل؛ استخدم مسار الاستعادة المحمي.",
+        "Déjà configurée ; utilisez la procédure de récupération protégée.",
+        "Already enrolled; use protected recovery procedure.",
+    ),
+    "continue_admin": (
+        "متابعة إلى الإدارة",
+        "Continuer vers l’administration",
+        "Continue to administration",
+    ),
+    "renew": ("طلب التجديد", "Demande de renouvellement", "Request renewal"),
+    "membership_id": (
+        "فترة العضوية المراد تجديدها",
+        "Période à renouveler",
+        "Membership term to renew",
+    ),
+    "documents": ("وثائقي", "Mes documents", "My documents"),
+    "renew_notice": (
+        "تُحسب المدة عند الموافقة الإدارية: التجديد المبكر يبدأ بعد نهاية الفترة السابقة، والمتأخر يبدأ من الموافقة دون تعويض الفراغ. لا تجديد سنوي للمؤسسين والشرفيين.",
+        "La période est fixée à l’approbation : renouvellement anticipé après la période précédente, tardif à l’approbation sans rétroactivité. Pas de renouvellement annuel des fondateurs/honoraires.",
+        "Term dates are fixed at administrative approval: early renewal follows the previous term; late renewal starts at approval without backdating. Founders/honorary members do not renew annually.",
+    ),
+    "association_notice": (
+        "الاعتماد جمعوي وليس ترخيصًا حكوميًا.",
+        "Accréditation associative, pas une licence officielle.",
+        "Association accreditation is not a government licence.",
+    ),
     "administration": (
         "إدارة العضوية",
         "Administration des adhésions",
@@ -40,7 +97,7 @@ ROWS = {
     "document_id": ("الوثيقة", "Document", "Document"),
     "membership_card": ("بطاقة العضوية", "Carte de membre", "Membership card"),
     "gold_card": (
-        "بطاقة العضوية الذهبية",
+        "بطاقة عضوية ذهبية",
         "Carte de membre dorée",
         "Gold membership card",
     ),
