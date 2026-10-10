@@ -591,7 +591,12 @@ def decide_registration(*, actor, registration_id, accept, reason):
         raise Conflict("Pending registration and reason required")
     if accept:
         if row.person.minor and (
-            not row.consent_at or not row.guardian_name or not activity.allows_minors
+            not row.consent_at
+            or not row.guardian_name
+            or not row.guardian_capacity
+            or not row.consent_text.strip()
+            or not row.consent_version.strip()
+            or not activity.allows_minors
         ):
             raise ValidationError("Guardian consent required")
         if (
@@ -649,6 +654,8 @@ def document_status(doc):
         origin = doc.registration
         if origin.state != "confirmed":
             return "cancelled"
+        if today() < origin.activity.starts_on:
+            return "pending"
         return "expired" if today() > origin.activity.ends_on else "active"
     if origin.state != "active":
         return origin.state

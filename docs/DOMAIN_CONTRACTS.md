@@ -26,7 +26,7 @@ Public/member document downloads enforce holder/guardian ownership or administra
 
 Authenticated adult participant profile links to one account. A minor profile is controlled by its authenticated guardian; each registration stores explicit guardian name/capacity, consent timestamp, the activity's consent text and version. No invitation before administrative confirmation. Unique (activity, participant) prevents repeated registration of the same managed profile; account/guardian-managed stable profile references avoid collecting national IDs or birth dates merely for deduplication. Identity matching across different accounts is not established by this technical prototype and requires readiness verification; name alone is never treated as globally unique.
 
-Capacity is checked under the sensitive-command lock and activity lock. Confirmed invitations can be cancelled; cancellation releases the counted seat. Attendance is unique per registration and requires a valid confirmed invitation and administrative MFA authorization; public verification cannot record attendance. Event age conditions remain configurable administration data, not fixed organizational policy.
+Capacity is checked under the sensitive-command lock and activity lock. Confirmed invitations can be cancelled; cancellation releases the counted seat. Attendance is unique per registration and requires a valid confirmed invitation within the activity dates and administrative MFA authorization; future invitations report pending, and past invitations expired; public verification cannot record attendance. Event age conditions remain configurable administration data, not fixed organizational policy.
 
 ## Public verification and rendering
 

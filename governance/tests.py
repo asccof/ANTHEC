@@ -951,3 +951,67 @@ class PolicyTests(TestCase):
                 consent=True,
             )
         self.assertEqual(Registration.objects.count(), 0)
+
+    def test_future_invitation_cannot_record_attendance_before_valid_from(self):
+        day = date(2026, 10, 10)
+        activity = Activity.objects.create(
+            title="Synthetic future activity",
+            starts_on=day + timedelta(days=2),
+            ends_on=day + timedelta(days=3),
+            capacity=1,
+            consent_text="Synthetic",
+        )
+        row = s.register(activity, self.person, self.holder)
+        result = s.decide_registration(
+            self.request,
+            key="future-admission",
+            registration_id=row.pk,
+            accept=True,
+            reason="Synthetic",
+        )
+        doc = Document.objects.get(pk=result["document"])
+        with patch("governance.services.today", return_value=day):
+            self.assertEqual(s.public_document(doc)["status"], "pending")
+            with self.assertRaises(ValidationError):
+                s.check_in(self.request, key="too-early", document_id=doc.pk)
+        self.assertEqual(Attendance.objects.count(), 0)
+        with patch("governance.services.today", return_value=activity.starts_on):
+            self.assertEqual(s.document_status(doc), "active")
+            s.check_in(self.request, key="on-time", document_id=doc.pk)
+        with patch(
+            "governance.services.today",
+            return_value=activity.ends_on + timedelta(days=1),
+        ):
+            self.assertEqual(s.document_status(doc), "expired")
+            with self.assertRaises(ValidationError):
+                s.check_in(self.request, key="too-late", document_id=doc.pk)
+        self.assertEqual(Attendance.objects.count(), 1)
+
+    def test_minor_admission_rejects_missing_recorded_consent_snapshot(self):
+        minor = Person.objects.create(
+            full_name="Synthetic Minor",
+            minor=True,
+            guardian=self.holder,
+            verification_notice_at=timezone.now(),
+        )
+        row = Registration.objects.create(
+            activity=self.activity(),
+            person=minor,
+            submitted_by=self.holder,
+            guardian_name="Synthetic Guardian",
+            guardian_capacity="Parent",
+            consent_at=timezone.now(),
+            consent_text="",
+            consent_version="",
+        )
+        with self.assertRaises(ValidationError):
+            s.decide_registration(
+                self.request,
+                key="missing-snapshot",
+                registration_id=row.pk,
+                accept=True,
+                reason="Synthetic",
+            )
+        row.refresh_from_db()
+        self.assertEqual(row.state, "requested")
+        self.assertEqual(Document.objects.count(), 0)
