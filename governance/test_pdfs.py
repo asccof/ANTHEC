@@ -236,6 +236,13 @@ class PDFTests(TestCase):
         self.doc.save()
         body, metadata = design.render(self.doc, "ar")
         self.assertLessEqual(metadata["font_scale"], 1)
+        self.doc.subject_name = "Éléonore Françoise Andréa de la Vallée — نموذجي"
+        for language in ("ar", "fr", "en"):
+            body, metadata = design.render(self.doc, language)
+            text = PdfReader(io.BytesIO(body)).pages[0].extract_text()
+            self.assertIn("Éléonore", text)
+            self.assertIn("Françoise", text)
+            self.assertLessEqual(metadata["font_scale"], 1)
         self.doc.subject_name = "W" * 200
         # Explicit layout review rather than silently hiding identity glyphs.
         with self.assertRaises(design.LayoutError):
@@ -245,6 +252,51 @@ class PDFTests(TestCase):
         self.doc.kind = "participation_certificate"
         with self.assertRaises(ValidationError):
             design.render(self.doc)
+
+    def test_generation_rechecks_lifecycle_and_outbox_preserves_history(self):
+        from .documents import render_outbox
+
+        self.doc.void = True
+        self.doc.save(update_fields=["void"])
+        with self.assertRaises(pdf.InactiveDocument):
+            pdf.artifact_for(self.doc.pk, "en")
+        self.doc.void = False
+        self.doc.save(update_fields=["void"])
+        for state in ("suspended", "terminated", "cancelled"):
+            self.role.state = state
+            self.role.save(update_fields=["state"])
+            with self.assertRaises(pdf.InactiveDocument):
+                pdf.artifact_for(self.doc.pk, "en")
+        self.role.state = "active"
+        self.role.starts_on = timezone.localdate() - timedelta(days=3)
+        self.role.ends_on = timezone.localdate()
+        self.role.save()
+        with self.assertRaises(pdf.InactiveDocument):
+            pdf.artifact_for(self.doc.pk, "en")
+        outbox = Outbox.objects.get(document=self.doc)
+        render_outbox(outbox.pk)
+        outbox.refresh_from_db()
+        self.assertEqual(outbox.last_error, "inactive_document")
+        self.assertEqual(PDFArtifact.objects.count(), 0)
+        self.assertFalse(Audit.objects.filter(action="document.pdf.rendered").exists())
+        self.assertTrue(Document.objects.filter(pk=self.doc.pk).exists())
+
+        app = Application.objects.create(
+            person=self.person, tier="accredited", state="approved", quote=0,
+            quoted_on=timezone.localdate()
+        )
+        term = Membership.objects.create(
+            application=app, starts_on=timezone.localdate(),
+            ends_on=timezone.localdate()+timedelta(days=365), state="suspended"
+        )
+        accreditation = Accreditation.objects.create(
+            person=self.person, membership=term, subject_name=self.person.full_name,
+            kind="professional", starts_on=term.starts_on, ends_on=term.ends_on
+        )
+        certificate = s.issue("professional_certificate", accreditation=accreditation)
+        with self.assertRaises(pdf.InactiveDocument):
+            pdf.artifact_for(certificate.pk, "en")
+        self.assertEqual(PDFArtifact.objects.count(), 0)
 
     def test_synthetic_membership_photo_finance_issue_reissue_journey(self):
         from django.core.management import call_command

@@ -5,14 +5,41 @@ import hashlib
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from . import services as s
-from .models import Document, PDFArtifact
+from .models import Document, PDFArtifact, Membership, Accreditation, InstitutionalRole
 from . import pdf_design
+
+
+class InactiveDocument(ValidationError):
+    pass
 
 
 @transaction.atomic
 def artifact_for(document_id, language="ar"):
     language = language if language in pdf_design.WORDS else "ar"
     doc = Document.objects.select_for_update().get(pk=document_id)
+    # Lock the records changed by the existing lifecycle commands too. Linked
+    # membership precedes accreditation, matching membership-state propagation.
+    if doc.institutional_role_id:
+        doc.institutional_role = InstitutionalRole.objects.select_for_update().get(
+            pk=doc.institutional_role_id
+        )
+    elif doc.membership_id:
+        doc.membership = Membership.objects.select_for_update().get(pk=doc.membership_id)
+    elif doc.accreditation_id:
+        membership_id = Accreditation.objects.values_list("membership_id", flat=True).get(
+            pk=doc.accreditation_id
+        )
+        membership = (
+            Membership.objects.select_for_update().get(pk=membership_id)
+            if membership_id else None
+        )
+        doc.accreditation = Accreditation.objects.select_for_update().get(
+            pk=doc.accreditation_id
+        )
+        if membership:
+            doc.accreditation.membership = membership
+    if s.document_status(doc) in {"cancelled", "suspended", "expired"}:
+        raise InactiveDocument("Document lifecycle does not permit PDF generation")
     previous = PDFArtifact.objects.filter(document=doc, language=language).first()
     if previous:
         return previous

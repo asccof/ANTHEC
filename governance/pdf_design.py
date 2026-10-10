@@ -243,6 +243,10 @@ def render(doc, language="ar", *, preview=False, bleed=False):
             direction="ltr",
             alignment="left",
         )
+        if category == "accredited":
+            # The approved gold ornament has a navy corner behind this line.
+            # Keep the full official wording legible without changing the artwork.
+            header += '<div style="position:absolute;left:18mm;top:11mm;width:60mm;height:6mm;background:#FAF8F1;border-radius:.5mm"></div>'
         front = header + txt(
             AR, 18, 11.3, 60, 6, 6.8, fg, direction="rtl", alignment="right"
         )

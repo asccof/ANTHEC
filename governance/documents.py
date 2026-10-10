@@ -40,7 +40,7 @@ def printable(doc, language="ar"):
             f"<p>{escape(labels[k])}: {escape(display_value(labels, k, v))}</p>"
             for k, v in data.items()
         )
-        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px;border:3px solid #16475b}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["demo"])}</p></body></html>'
+        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px;border:3px solid #16475b}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["demo"])}</p></body></html>'
     if doc.membership_id or doc.accreditation_id and doc.accreditation.membership_id:
         from .member_labels import vocabulary as member_vocabulary
 
@@ -52,7 +52,7 @@ def printable(doc, language="ar"):
             f"<p>{escape(labels[k])}: {escape(display_value(labels, k, v))}</p>"
             for k, v in data.items()
         )
-        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{background};padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["association_notice"])}</p><p>{escape(labels["demo"])}</p></body></html>'
+        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{background};padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["association_notice"])}</p><p>{escape(labels["demo"])}</p></body></html>'
     title = {
         "gold_card": "بطاقة عضوية ذهبية",
         "professional_certificate": "شهادة اعتماد مهني جمعوي",
@@ -62,7 +62,7 @@ def printable(doc, language="ar"):
     }[doc.kind]
     bg = "#f7e3a0" if doc.kind == "gold_card" else "#ffffff"
     rows = "".join(f"<p>{escape(k)}: {escape(str(v))}</p>" for k, v in data.items())
-    return f"""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{bg};padding:30px}}svg{{width:150px;height:150px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEEC</h1><h2>{escape(title)}</h2>{rows}<p>رمز التحقق: {escape(credentials['code'])}</p>{svg}<p>للاطلاع على الحالة الحالية امسح QR أو أدخل المرجع ورمز التحقق.</p><p>نموذج تطوير ببيانات اصطناعية فقط. الاعتماد جمعوي وليس ترخيصًا حكوميًا.</p></body></html>"""
+    return f"""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{bg};padding:30px}}svg{{width:150px;height:150px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>رمز التحقق: {escape(credentials['code'])}</p>{svg}<p>للاطلاع على الحالة الحالية امسح QR أو أدخل المرجع ورمز التحقق.</p><p>نموذج تطوير ببيانات اصطناعية فقط. الاعتماد جمعوي وليس ترخيصًا حكوميًا.</p></body></html>"""
 
 
 @transaction.atomic
@@ -79,7 +79,7 @@ def render_outbox(outbox_id):
         row.document.rendered = encrypt(html)
         row.document.rendering_state = "ready"
         row.document.save(update_fields=["rendered", "rendering_state"])
-        from .pdf_services import artifact_for
+        from .pdf_services import artifact_for, InactiveDocument
         from .pdf_design import PendingPhoto, LayoutError
         from .portraits import CARD_KINDS
 
@@ -95,8 +95,10 @@ def render_outbox(outbox_id):
                 row.last_error = "pending_photo"
             except LayoutError:
                 row.last_error = "pending_layout"
+            except InactiveDocument:
+                row.last_error = "inactive_document"
         row.state = "rendered"
-        if row.last_error not in {"pending_photo", "pending_layout"}:
+        if row.last_error not in {"pending_photo", "pending_layout", "inactive_document"}:
             row.last_error = ""
     except Exception:
         row.state = "failed"
