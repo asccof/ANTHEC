@@ -12,3 +12,15 @@ def institutional_menu():
     return MenuItem(
         label, reverse("institutional_register"), icon_name="user", order=900
     )
+
+
+@hooks.register("register_admin_menu_item")
+def membership_menu():
+    from .member_labels import vocabulary as labels
+
+    label = lazy(
+        lambda: labels(get_language().split("-")[0])[1]["administration"], str
+    )()
+    return MenuItem(
+        label, reverse("membership_admin_register"), icon_name="group", order=910
+    )

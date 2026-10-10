@@ -1,7 +1,22 @@
 from django.urls import path
-from . import security, views, institutional_views, member_views
+from . import security, views, institutional_views, member_views, membership_admin_views
 
 urlpatterns = [
+    path(
+        "operations/membership/",
+        membership_admin_views.register,
+        name="membership_admin_register",
+    ),
+    path(
+        "operations/membership/identities/",
+        membership_admin_views.identities,
+        name="membership_identities",
+    ),
+    path(
+        "operations/membership/<int:application_id>/",
+        membership_admin_views.detail,
+        name="membership_admin_detail",
+    ),
     path("members/", member_views.home, name="member_home"),
     path(
         "members/signup/",
