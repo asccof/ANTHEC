@@ -8,6 +8,7 @@ from . import services
 class InstitutionalMigrationTests(TransactionTestCase):
     def test_existing_membership_card_retains_origin_serial_and_credentials(self):
         executor = MigrationExecutor(connection)
+        restore_target = executor.loader.graph.leaf_nodes()
         old_target = [("governance", "0001_initial")]
         new_target = [("governance", "0002_institutionalrole_and_more")]
         executor.migrate(old_target)
@@ -53,4 +54,4 @@ class InstitutionalMigrationTests(TransactionTestCase):
                 new.get_model("governance", "Outbox").objects.get().document_id, doc.pk
             )
         finally:
-            MigrationExecutor(connection).migrate(new_target)
+            MigrationExecutor(connection).migrate(restore_target)

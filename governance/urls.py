@@ -1,7 +1,19 @@
 from django.urls import path
-from . import security, views, institutional_views, member_views, membership_admin_views
+from . import (
+    portrait_views,
+    security,
+    views,
+    institutional_views,
+    member_views,
+    membership_admin_views,
+)
 
 urlpatterns = [
+    path("members/portrait/", portrait_views.upload, name="portrait_upload"),
+    path("operations/portraits/", portrait_views.review, name="portrait_review"),
+    path(
+        "private-portraits/<uuid:serial>/", portrait_views.image, name="portrait_image"
+    ),
     path("members/renew/", member_views.renew, name="member_renew"),
     path("members/documents/", member_views.documents, name="member_documents"),
     path(
