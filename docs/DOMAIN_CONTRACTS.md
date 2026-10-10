@@ -19,6 +19,21 @@ The implementation must not choose a production policy by reading a convenient c
 | POL-07 | Guest/minor eligibility and participant deduplication | No automatic minor enrollment or identity-number collection | Activity eligibility/guest enrollment |
 | POL-08 | Reissue, refunds, payment exceptions, annulled decisions | Explicit reason/authority and compensating history | Exceptions and reissue automation |
 
+### Policy traceability and proposal boundaries
+
+The F references below identify findings in INCEPTION_AR.md. Executive and DDD sections identify source requirements or relevant gaps; a reference does not imply that the source approved the proposed solution.
+
+| Policy | Inception findings | Source sections | Source-backed requirement versus new proposal |
+|---|---|---|---|
+| POL-01 | F02/F03 | Executive §4–5; institutional profile, professional benefits | Independent accreditation is explicit; tier wording is proposed to remove misleading implication |
+| POL-02 | F06 | Executive §4/5; DDD §3 | Annual/course durations are explicit; activation boundary, leap-day handling and renewal formula remain proposed |
+| POL-03 | F04 | Executive §4 | Current/promotional/reference prices are recorded; campaign end and future renewal charging rule are unspecified |
+| POL-04 | F10 | Executive §9; DDD §5 | Separate action permissions are required; actual delegation, role combination and emergency-access model need approval |
+| POL-05 | F09/F14 | Executive §4.2/8; DDD §7–8 | Minimal verification and publication consent are required; exact public fields/serial lookup restriction are proposals |
+| POL-06 | F14/F15 | Executive §11; DDD §9; institutional profile, application form | Data protection/minimization are required; per-field necessity, retention values, erasure and legal-hold rules remain unspecified |
+| POL-07 | F08/F14 | Executive §6; institutional profile §5 | Eligible public/member registration is explicit; account/deduplication/minor enrollment policy is a new proposal to address omitted handling, not a source-authorized restriction |
+| POL-08 | F17; relevant finance gap in F04 | Executive §8–9; DDD §4/8 | Reissue/history and manual finance are explicit; refund/exemption/annulment exception rules are new policy proposals because sources do not define them |
+
 These blocks do not stop synthetic development of authorization/transactions. Tests can inject policies explicitly; fixtures must not be presented as institutional approvals.
 
 ## 2. Logical entities and constraints

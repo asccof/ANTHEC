@@ -4,7 +4,7 @@
 
 | Task | GitHub | Dependency / acceptance gate | Current state |
 |---|---|---|---|
-| ENG-001/003 | #1 / PR #2 | Source baseline + executable multilingual CMS PoC; PostgreSQL CI and reviewed head | Implemented; Codex findings being resolved; full CMS acceptance pending |
+| ENG-001/003 | #1 / PR #2 | Source baseline + executable multilingual CMS PoC; PostgreSQL CI and reviewed head | Accepted bounded foundation: PR #2 merged, findings resolved, PostgreSQL CI and updated-head Codex complete; full CMS acceptance remains pending |
 | ENG-002 | PR #2 | Independent GitHub history/CI/review; branch protection status separately checked | GitHub available; protection API inaccessible to integration, not claimed configured |
 | ENG-004 | #3 | Domain contracts, least-privilege matrix, data dictionary, transactions and test scenarios | Draft delivered in this documentation increment |
 | ENG-005 | #5 | #3 + PR #2; translation orchestration, administrative MFA/roles, CMS/media | Planned |

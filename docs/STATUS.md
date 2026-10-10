@@ -30,3 +30,7 @@ Branch-protection read returned integration-access 403. Protection is therefore 
 PR #2 merged into main as `46e1ba242170ab638ff828d6f7bceab2e1a2cc46`. Reviewed head: `b6ce04ea396e85f9fd92ea49cc37a900ce5eede9`. PostgreSQL CI runs 38055593398 and 38055588826 succeeded; direct validator, 6 baseline tests and 28 CMS/translation tests passed. Codex completed the updated-head review without major issues; both prior findings are resolved. This accepts only the bounded CMS foundation, not full platform or business-policy acceptance.
 
 PR #4 is retargeted to main for the expanded proposed contracts and backlog. Draft 0.2 supersedes the earlier contract draft; none of POL-01–08 is marked approved. An initially reused local virtual environment showed third-party migration drift; a new environment installed from the committed requirements passed dependency consistency, system/migration checks and 28 CMS tests. No source/package migration workaround was committed.
+
+## 2026-10-10 — contract review corrections
+
+Codex review of 8702554f0df973610822120a1aa7b90bd66f121e identified two documentation inconsistencies: stale foundation state in BACKLOG.md, and an unsubstantiated policy-to-source trace claim. The next revision marks the bounded foundation accepted while retaining full CMS acceptance as pending, and adds an explicit POL-01–08 to F/source mapping distinguishing source requirements, gaps and new proposals. Re-review/CI of the corrected head is required; this entry records fixes, not a review pass.
