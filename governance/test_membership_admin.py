@@ -294,7 +294,7 @@ class MembershipAdminTests(TestCase):
                 self.assertContains(
                     response,
                     'href="/security/challenge/">'
-                    + vocabulary(language)["reauth_link"]
+                    + vocabulary(language)[1]["reauth_link"]
                     + "</a>",
                 )
                 self.assertIn("no-store", response["Cache-Control"])
