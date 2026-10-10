@@ -224,3 +224,62 @@ class PDFConcurrencyTests(TransactionTestCase):
                 role.save(update_fields=["state"])
             self.assertEqual(future.result(timeout=30), 302)
         self.assertEqual(PDFArtifact.objects.count(), 1)
+
+    def test_linked_accreditation_state_and_render_share_lock_order(self):
+        from .models import Application, Membership, Accreditation
+        from datetime import timedelta
+
+        start = s.today()
+        app = Application.objects.create(person=self.person, tier="accredited",
+                                        state="approved", quote=0, quoted_on=start)
+        term = Membership.objects.create(application=app, starts_on=start,
+                                         ends_on=start+timedelta(days=365))
+        accreditation = Accreditation.objects.create(
+            person=self.person, membership=term, subject_name=self.person.full_name,
+            kind="professional", starts_on=term.starts_on, ends_on=term.ends_on
+        )
+        with transaction.atomic():
+            certificate = s.issue("professional_certificate", accreditation=accreditation)
+        worker_pid = Queue()
+
+        def suspend():
+            close_old_connections()
+            try:
+                user = type(self.admin).objects.get(pk=self.admin.pk)
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT pg_backend_pid()")
+                    worker_pid.put(cursor.fetchone()[0])
+                return s.change_state(administrative_request(user), key="linked-order",
+                                      model="accreditation", object_id=accreditation.pk,
+                                      state="suspended", reason="Synthetic order regression")
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            with transaction.atomic():
+                Membership.objects.select_for_update().get(pk=term.pk)
+                future = pool.submit(suspend)
+                pid = worker_pid.get(timeout=5)
+                waiting = False
+                deadline = monotonic()+5
+                while monotonic() < deadline:
+                    with connection.cursor() as cursor:
+                        cursor.execute("SELECT pg_stat_clear_snapshot()")
+                        cursor.execute(
+                            "SELECT wait_event_type FROM pg_stat_activity WHERE pid=%s", [pid]
+                        )
+                        row = cursor.fetchone()
+                    if row and row[0] == "Lock":
+                        waiting = True
+                        break
+                    if future.done():
+                        break
+                    sleep(.02)
+                self.assertTrue(waiting, "State command must acquire membership first")
+                # The state worker cannot hold accreditation while awaiting membership.
+                Accreditation.objects.select_for_update(nowait=True).get(pk=accreditation.pk)
+                pdf.artifact_for(certificate.pk, "en")
+            self.assertEqual(future.result(timeout=10)["state"], "suspended")
+        self.assertEqual(PDFArtifact.objects.filter(document=certificate).count(), 1)
+        certificate.refresh_from_db()
+        self.assertEqual(s.document_status(certificate), "suspended")
