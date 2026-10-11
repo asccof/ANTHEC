@@ -101,7 +101,7 @@ def card_background(category, back=False):
                   '<path d="M30 440 Q8 265 30 80 M826 100 Q850 278 826 460" fill="none" stroke="url(#foil)" stroke-width="6"/>']
         corners = [(28,28,1,1),(828,28,-1,1),(28,512,1,-1),(828,512,-1,-1)]
     elif category == "vice_president":
-        parts += [f'<path d="M0 0 H856 V27 H160 Q62 17 0 101Z M0 539.8 H856 V514 H696 Q794 524 856 439Z" fill="{accent}"/>',
+        parts += [f'<path d="M0 0 H856 V27 H160 Q62 17 0 101Z M0 539.8 H856 V523.8 H0Z M856 539.8 H798 Q841 529 856 480Z" fill="{accent}"/>',
                   '<path d="M12 103 Q47 14 165 14 H826 V437 Q791 526 673 526 H30Z" fill="none" stroke="url(#foil)" stroke-width="2.5"/>']
         corners = [(28,26,1,1),(828,514,-1,-1)]
     elif category == "founder":

@@ -244,15 +244,15 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
                       "IBM", alignment="right" if rtl else "left")
         front = header + img(photo, 7, 21.7, 19.6, 24.5, "border:.22mm solid #B79A58;object-fit:contain;border-radius:.7mm")
         front += txt(title, 30.5, 21.2, 46, 6, 12.5 if rtl else 10.5, fg, "NaskhB" if rtl else "IBMB")
-        front += txt(doc.subject_name, 30.5, 28.1, 46, 13.5, 15 if rtl else 11, fg,
+        front += txt(doc.subject_name, 30.5, 28.1, 46, 10.5 if category == "president" else 13.5, 15 if rtl else 11, fg,
                      "NaskhB" if rtl else "IBMB", identity=True)
-        front += rule(30.5, 42.1, 46, accent)
-        front += txt(words[0], 30.5, 43, 46, 3.1, 6.2, fg)
+        front += rule(30.5, 39.3 if category == "president" else 42.1, 46, accent)
+        front += txt(words[0], 30.5, 40 if category == "president" else 43, 46, 3.1, 6.2, fg)
         if category == "president":
             # The preserved gold ribbon crosses this print zone. A small inset
             # matching the midnight field keeps dates readable without redrawing it.
-            front += '<div style="position:absolute;left:30.2mm;top:45.9mm;width:47mm;height:4.2mm;background:#071521"></div>'
-        front += txt(validity, 30.5, 46.1, 46, 3.8, 6.4, fg, direction="ltr")
+            front += '<div style="position:absolute;left:30.2mm;top:43.5mm;width:47mm;height:4.2mm;background:#071521"></div>'
+        front += txt(validity, 30.5, 43.8 if category == "president" else 46.1, 46, 3.8, 6.4, fg, direction="ltr")
         front += spec(13, 17.4 if category == "president" else 49.5, 59.6, fg)
         back = header + txt(words[2], 7, 19, 71, 4.6, 9.5 if rtl else 8.5, fg,
                             "NaskhB" if rtl else "IBMB")
@@ -262,10 +262,9 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
                     direction="ltr", alignment="left")
         back += txt(words[4], 35, 35.2, 42, 3.1, 6.5, fg)
         back += txt(credentials["code"], 35, 38.5, 42, 4, 8.2, fg, "IBMB", direction="ltr", alignment="left")
-        back += txt(words[5], 35, 43, 42, 6.5, 6.2, fg)
         if category == "president":
             back += '<div style="position:absolute;left:34.7mm;top:42.8mm;width:43mm;height:6.9mm;background:#071521"></div>'
-            back += txt(words[5], 35, 43, 42, 6.5, 6.2, fg)
+        back += txt(words[5], 35, 43, 42, 6.5, 6.2, fg)
         back += spec(13, 17.4 if category == "president" else 49.5, 59.6, fg)
         result = page(front) + page(back, back_bg)
     else:
