@@ -1,8 +1,12 @@
-"""Owner-approved v4 layout. Fixed assets and escaped text; no external fetches."""
+"""Credential design proofs pending owner approval; closed assets and escaped text."""
 
 import html
 import io
+import re
 from pathlib import Path
+from dataclasses import dataclass
+from types import SimpleNamespace
+from .premium_artwork import THEMES, card_background, certificate_background
 import qrcode
 import qrcode.image.svg
 from django.core.exceptions import ValidationError
@@ -15,11 +19,14 @@ from . import services as s
 from .portraits import CARD_KINDS, portrait_bytes
 
 ASSETS = Path(__file__).resolve().parent / "document_assets"
-VERSION = "approved-v4.1"
+VERSION = "owner-review-v5.0"
 AR = "الجمعية الوطنية للعلاج النفسي والأسري والكوتشينغ"
 FR = "Association Nationale de Thérapie Psychologique, Familiale et Coaching"
+# Working translation submitted for owner content approval, not a registered legal name.
+EN = "National Association for Psychological and Family Therapy and Coaching"
+IDENTITY = {"ar": AR, "fr": FR, "en": EN}
 TITLES = {
-    "general": ("عضو عام", "Membre général", "General Member"),
+    "general": ("عضو", "Membre", "Member"),
     "affiliate": ("عضو منتسب", "Membre associé", "Associate Member"),
     "advanced": ("عضو متقدم", "Membre avancé", "Advanced Member"),
     "accredited": ("عضو معتمد", "Membre accrédité", "Accredited Member"),
@@ -76,14 +83,6 @@ WORDS = {
         "Association accreditation under the recorded decision. This document does not constitute a government licence.",
     ],
 }
-PALETTES = {
-    "general": ("#FCFCF8", "#122E3B", "#237C9D"),
-    "affiliate": ("#071E2B", "#FFFFFF", "#55CFCC"),
-    "advanced": ("#09263F", "#FFFFFF", "#D3DAE0"),
-    "vice_president": ("#071E2B", "#FFFFFF", "#DFD4B6"),
-    "founder": ("#104B3E", "#FFFFFF", "#E9D4A6"),
-    "honorary": ("#FAF7EC", "#122E3B", "#9A7837"),
-}
 
 
 class PendingPhoto(ValidationError):
@@ -107,38 +106,55 @@ class AssetFetcher(URLFetcher):
         return URLFetcherResponse(url, body=body, headers={"Content-Type": mime})
 
 
-def generic_background(category):
-    bg, fg, gold = PALETTES[category]
-    curves = "".join(
-        f'<path d="M-20 {i*7} Q430 {i*7-140} 900 {i*7+70}"/>' for i in range(40)
-    )
-    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 856 540"><rect width="856" height="540" fill="{bg}"/><g fill="none" stroke="{gold}" stroke-width=".6" opacity=".18">{curves}</g><path d="M-40 200 Q150 500 920 430 L920 466 Q80 610 -40 270Z" fill="{gold}" opacity=".85"/><rect x="14" y="14" width="828" height="512" rx="24" fill="none" stroke="{gold}" stroke-width="3"/><rect x="21" y="21" width="814" height="498" rx="21" fill="none" stroke="{gold}" stroke-width=".8"/></svg>'.encode()
+@dataclass(frozen=True)
+class ParticipationProof:
+    participant: str
+    activity_title: str
+    organizer: str
+    starts_on: str
+    ends_on: str
+    duration: str = ""
+
+
+def render_participation_proof(proof, language="ar", *, bleed=False):
+    """Design proof only. No issuance record, authority, identity or verification claim."""
+    if not isinstance(proof, ParticipationProof):
+        raise ValidationError("Explicit participation design proof required")
+    return _render(None, language, bleed=bleed, participation=proof)
 
 
 def render(doc, language="ar", *, preview=False, bleed=False):
+    return _render(doc, language, preview=preview, bleed=bleed)
+
+
+def _render(doc, language="ar", *, preview=False, bleed=False, participation=None):
     language = language if language in WORDS else "ar"
     idx = ("ar", "fr", "en").index(language)
     rtl = language == "ar"
     words = WORDS[language]
-    data = s.public_document(doc)
-    credentials = s.decrypt(doc.credentials)
-    is_card = doc.kind in CARD_KINDS
-    if not is_card and doc.kind not in {
-        "professional_certificate",
-        "accreditation_certificate",
-    }:
-        raise ValidationError("No approved PDF template for this document type")
-    if is_card and (not doc.portrait_id or doc.portrait.state != "approved"):
-        raise PendingPhoto(
-            "Approved issuance portrait missing; formal reissuance required"
-        )
-    category = data["type"] if is_card else doc.kind
-    if category not in TITLES:
-        raise ValidationError("Unsupported approved category")
-    title = TITLES[category][idx]
-    dark = is_card and category not in {"general", "accredited", "honorary"}
-    fg = "#FFFFFF" if dark else "#122E3B"
-    accent = "#EADBB9" if dark else "#216459"
+    if participation is not None:
+        doc = SimpleNamespace(kind="participation_design_proof", subject_name=participation.participant,
+                              serial="NOT ISSUED", issued_at=None, portrait_id=None)
+        data = {"type": "participation_design_proof", "valid_from": participation.starts_on,
+                "valid_until": participation.ends_on}
+        credentials = {"token": "", "code": "NOT ISSUED"}
+        is_card = False
+        category = "participation_design_proof"
+        title = ("شهادة المشاركة", "Certificat de participation", "Certificate of Participation")[idx]
+    else:
+        data = s.public_document(doc)
+        credentials = s.decrypt(doc.credentials)
+        is_card = doc.kind in CARD_KINDS
+        if not is_card and doc.kind not in {"professional_certificate", "accreditation_certificate"}:
+            raise ValidationError("No approved PDF template for this document type")
+        if is_card and (not doc.portrait_id or doc.portrait.state != "approved"):
+            raise PendingPhoto("Approved issuance portrait missing; formal reissuance required")
+        category = data["type"] if is_card else doc.kind
+        if category not in TITLES:
+            raise ValidationError("Unsupported approved category")
+        title = TITLES[category][idx]
+    fg = THEMES[category][1] if is_card else "#173045"
+    accent = THEMES[category][2] if is_card else "#216459"
     width, height = (85.6, 53.98) if is_card else (297, 210)
     pad = 3 if bleed else 0
     resources = {}
@@ -162,23 +178,16 @@ def render(doc, language="ar", *, preview=False, bleed=False):
         )
         font_css += f'@font-face{{font-family:{family};src:url("{url}")}}'
     logo = asset("logo", (ASSETS / "logo.png").read_bytes(), "image/png")
-    if not is_card:
-        bg = asset(
-            "certificate", (ASSETS / "certificate.svg").read_bytes(), "image/svg+xml"
-        )
-    elif category == "accredited":
-        bg = asset("gold", (ASSETS / "gold.png").read_bytes(), "image/png")
-    elif category == "president":
+    if is_card and category == "president":
+        # Preserve the owner-selected executive artwork unchanged.
         bg = asset("president", (ASSETS / "president.png").read_bytes(), "image/png")
+        back_bg = bg
     else:
-        bg = asset("background", generic_background(category), "image/svg+xml")
-    link = (
-        settings.ANTHEEC_PUBLIC_ORIGIN
-        + "/verify/?lang="
-        + language
-        + "#"
-        + credentials["token"]
-    )
+        bg = asset("background", card_background(category) if is_card else certificate_background(participation is not None), "image/svg+xml")
+        back_bg = asset("back-background", card_background(category, back=True), "image/svg+xml") if is_card else bg
+    # Issued documents retain the existing authorized origin and fragment workflow.
+    link = ("ANTHEC PARTICIPATION DESIGN PROOF - NOT ISSUED" if participation else
+            settings.ANTHEEC_PUBLIC_ORIGIN + "/verify/?lang=" + language + "#" + credentials["token"])
     qr = qrcode.make(
         link,
         image_factory=qrcode.image.svg.SvgPathImage,
@@ -215,214 +224,103 @@ def render(doc, language="ar", *, preview=False, bleed=False):
     def img(url, x, y, w, h, style=""):
         return f'<img src="{url}" style="position:absolute;left:{x}mm;top:{y}mm;width:{w}mm;height:{h}mm;{style}">'
 
-    def spec(x, y, w, color):
-        return txt(
-            "SPECIMEN / نموذج تجريبي",
-            x,
-            y,
-            w,
-            6,
-            5.8 if is_card else 8,
-            color,
-            alignment="center",
-        )
+    def rule(x, y, w, color="#B79A58"):
+        return f'<div style="position:absolute;left:{x}mm;top:{y}mm;width:{w}mm;border-top:.18mm solid {color}"></div>'
 
-    def page(content):
-        bleed_background = img(bg, -pad, -pad, width+2*pad, height+2*pad) if pad else ""
-        return f'<section class="sheet"><div class="trim">{bleed_background}{img(bg,0,0,width,height)}{content}</div></section>'
+    def spec(x, y, w, color):
+        label = "SPECIMEN / نموذج تجريبي" if not participation else "DESIGN PROOF / NOT ISSUED / نموذج غير صادر"
+        return txt(label, x, y, w, 4, 5.2 if is_card else 7.4, color, alignment="center", direction="ltr")
+
+    def page(content, artwork=None):
+        artwork = artwork or bg
+        bleed_background = img(artwork, -pad, -pad, width+2*pad, height+2*pad) if pad else ""
+        return f'<section class="sheet"><div class="trim">{bleed_background}{img(artwork,0,0,width,height)}{content}</div></section>'
 
     validity = data["valid_from"] + " / " + (data["valid_until"] or words[1])
     if is_card:
-        header = img(logo, 5.5, 4.3, 8.5, 8.5, "object-fit:contain") + txt(
-            "ANTHEC",
-            18,
-            3.4,
-            57,
-            8,
-            19,
-            "#EADBB9" if dark else fg,
-            "ClassicB",
-            direction="ltr",
-            alignment="left",
-        )
-        if category == "accredited":
-            # The approved gold ornament has a navy corner behind this line.
-            # Keep the full official wording legible without changing the artwork.
-            header += '<div style="position:absolute;left:18mm;top:11mm;width:60mm;height:6mm;background:#FAF8F1;border-radius:.5mm"></div>'
-        front = header + txt(
-            AR, 18, 11.3, 60, 6, 6.8, fg, direction="rtl", alignment="right"
-        )
-        front += img(
-            photo, 7, 21, 18.4, 23, "border:.2mm solid #AC8B4C;object-fit:contain"
-        )
-        front += txt(
-            title,
-            30,
-            21,
-            46.5,
-            6.6,
-            13 if rtl else 11,
-            accent,
-            "NaskhB" if rtl else "IBMB",
-        )
-        front += txt(
-            doc.subject_name,
-            30,
-            28.7,
-            46.5,
-            10.5,
-            15 if rtl else 10.6,
-            fg,
-            "NaskhB" if rtl else "IBMB",
-            identity=True,
-        )
-        front += txt(
-            str(doc.serial),
-            30,
-            17.4,
-            46.5,
-            3.2,
-            5.8,
-            fg,
-            direction="ltr",
-            alignment="left",
-        )
-        front += txt(words[0], 30, 40, 46.5, 3.5, 6.5, accent)
-        front += f'<div style="position:absolute;left:29.7mm;top:43.5mm;width:47mm;height:4.2mm;background:{"#071E2B" if dark else "transparent"}"></div>'
-        front += txt(validity, 30, 43.8, 46.5, 4, 6.7, fg, direction="ltr")
-        front += (
-            '<div style="position:absolute;left:7mm;top:44.7mm;width:22mm;height:6.3mm;background:#FAF8F1"></div>'
-            + spec(7, 45, 22, "#122E3B")
-        )
-        back = header + txt(
-            words[2], 18, 11, 60, 5.5, 9, fg, "NaskhB" if rtl else "IBM"
-        )
-        back += (
-            '<div style="position:absolute;left:7mm;top:18mm;width:23mm;height:23mm;background:white"></div>'
-            + img(qr_url, 7, 18, 23, 23)
-        )
-        back += txt(words[3], 34, 18, 43, 4, 7.2, accent) + txt(
-            str(doc.serial)[:24] + "\n" + str(doc.serial)[24:],
-            34,
-            22,
-            43,
-            7,
-            6.8,
-            fg,
-            direction="ltr",
-        )
-        back += txt(words[4], 34, 29.5, 43, 4, 7.2, accent) + txt(
-            credentials["code"], 34, 34, 43, 4.5, 9.4, fg, "IBMB", direction="ltr"
-        )
-        back += (
-            '<div style="position:absolute;left:6.5mm;top:41.2mm;width:24mm;height:6.2mm;background:'
-            + ("#071E2B" if dark else "#FAF8F1")
-            + '"></div>'
-            + spec(6.5, 41.3, 24, accent)
-        )
-        back += txt(words[5], 33, 40.5, 44, 9, 6.6, fg)
-        result = page(front) + page(back)
+        header = img(logo, 6.4, 4.1, 8.2, 8.2, "object-fit:contain")
+        header += txt("ANTHEC", 18, 3.3, 58, 7.5, 18.5, fg, "ClassicB", direction="ltr", alignment="left")
+        header += txt(IDENTITY[language], 18, 11, 60, 8.3, 6.3 if rtl else 5.9, fg,
+                      "IBM", alignment="right" if rtl else "left")
+        front = header + img(photo, 7, 21.7, 19.6, 24.5, "border:.22mm solid #B79A58;object-fit:contain;border-radius:.7mm")
+        front += txt(title, 30.5, 21.2, 46, 6, 12.5 if rtl else 10.5, fg, "NaskhB" if rtl else "IBMB")
+        front += txt(doc.subject_name, 30.5, 28.1, 46, 13.5, 15 if rtl else 11, fg,
+                     "NaskhB" if rtl else "IBMB", identity=True)
+        front += rule(30.5, 42.1, 46, accent)
+        front += txt(words[0], 30.5, 43, 46, 3.1, 6.2, fg)
+        if category == "president":
+            # The preserved gold ribbon crosses this print zone. A small inset
+            # matching the midnight field keeps dates readable without redrawing it.
+            front += '<div style="position:absolute;left:30.2mm;top:45.9mm;width:47mm;height:4.2mm;background:#071521"></div>'
+        front += txt(validity, 30.5, 46.1, 46, 3.8, 6.4, fg, direction="ltr")
+        front += spec(13, 17.4 if category == "president" else 49.5, 59.6, fg)
+        back = header + txt(words[2], 7, 19, 71, 4.6, 9.5 if rtl else 8.5, fg,
+                            "NaskhB" if rtl else "IBMB")
+        back += img(qr_url, 7, 24, 23, 23, "background:white")
+        back += txt(words[3], 35, 24, 42, 3.4, 6.8, fg)
+        back += txt(str(doc.serial)[:24]+"\n"+str(doc.serial)[24:], 35, 28, 42, 6.5, 6.4, fg,
+                    direction="ltr", alignment="left")
+        back += txt(words[4], 35, 35.2, 42, 3.1, 6.5, fg)
+        back += txt(credentials["code"], 35, 38.5, 42, 4, 8.2, fg, "IBMB", direction="ltr", alignment="left")
+        back += txt(words[5], 35, 43, 42, 6.5, 6.2, fg)
+        if category == "president":
+            back += '<div style="position:absolute;left:34.7mm;top:42.8mm;width:43mm;height:6.9mm;background:#071521"></div>'
+            back += txt(words[5], 35, 43, 42, 6.5, 6.2, fg)
+        back += spec(13, 17.4 if category == "president" else 49.5, 59.6, fg)
+        result = page(front) + page(back, back_bg)
     else:
-        center = img(logo, 133, 20, 19, 19, "object-fit:contain") + txt(
-            "ANTHEC",
-            65,
-            39,
-            167,
-            15,
-            32,
-            "#122E3B",
-            "ClassicB",
-            direction="ltr",
-            alignment="center",
-        )
-        center += txt(
-            FR if language == "fr" else AR,
-            43,
-            53.5,
-            211,
-            10,
-            10.8 if language == "fr" else 14,
-            "#122E3B",
-            direction="ltr" if language == "fr" else "rtl",
-            alignment="center",
-        )
-        center += txt(
-            title,
-            38,
-            70,
-            221,
-            18,
-            31 if rtl else 24,
-            "#122E3B",
-            "NaskhB" if rtl else "ClassicB",
-            alignment="center",
-        )
-        center += txt(
-            words[8],
-            40,
-            91,
-            217,
-            9,
-            12,
-            "#216459",
-            "Naskh" if rtl else "IBM",
-            alignment="center",
-        )
-        center += txt(
-            doc.subject_name,
-            42,
-            103,
-            213,
-            21,
-            32 if rtl else 28,
-            "#122E3B",
-            "NaskhB" if rtl else "ClassicB",
-            alignment="center",
-            identity=True,
-        )
-        center += '<div style="position:absolute;left:94mm;top:130mm;width:109mm;border-top:.2mm solid #AC8B4C"></div>'
-        center += txt(
-            words[9],
-            43,
-            135,
-            211,
-            15,
-            11.5,
-            "#122E3B",
-            "Naskh" if rtl else "IBM",
-            alignment="center",
-        )
-        center += (
-            '<div style="position:absolute;left:30mm;top:160mm;width:24mm;height:24mm;background:white"></div>'
-            + img(qr_url, 30, 160, 24, 24)
-        )
-        center += txt(words[3], 63, 152, 119, 4.5, 7.5, "#216459") + txt(
-            str(doc.serial), 63, 158, 119, 5, 8.2, "#122E3B", direction="ltr"
-        )
-        center += txt(
-            credentials["code"], 63, 164, 119, 5, 8.5, "#122E3B", direction="ltr"
-        )
-        issued_label = {"ar": "تاريخ الإصدار", "fr": "Date d’émission", "en": "Issue date"}[language]
-        issued_date = timezone.localdate(doc.issued_at).isoformat() if doc.issued_at else "—"
-        center += txt(issued_label + ": " + issued_date, 63, 170, 119, 4.5, 7.5, "#216459")
-        center += txt(words[7], 63, 177, 119, 4.5, 7.5, "#216459") + txt(
-            validity, 63, 183, 119, 5, 8.5, "#122E3B", direction="ltr"
-        )
-        center += (
-            '<div style="position:absolute;left:207mm;top:169mm;width:56mm;border-top:.2mm solid #AC8B4C"></div>'
-            + txt(
-                words[6],
-                206,
-                173,
-                58,
-                8,
-                10,
-                "#122E3B",
-                "Naskh" if rtl else "IBM",
-                alignment="center",
-            )
-        )
-        center += spec(205, 22, 58, "#216459")
+        center = img(logo, 139.5, 18, 18, 18, "object-fit:contain")
+        center += txt("ANTHEC", 60, 35.3, 177, 13, 28, fg, "ClassicB", direction="ltr", alignment="center")
+        center += txt(IDENTITY[language], 43, 49, 211, 12, 13 if rtl else 10.4, fg,
+                      "IBM", alignment="center")
+        center += txt(title, 37, 65.5, 223, 20, 30 if rtl else 25, fg,
+                      "NaskhB" if rtl else "ClassicB", alignment="center")
+        lead = words[8] if not participation else ("يشهد هذا النموذج بمشاركة", "Ce modèle atteste la participation de", "This design proof records participation by")[idx]
+        center += txt(lead, 44, 89.2, 209, 8, 12, "#216459", "Naskh" if rtl else "IBM", alignment="center")
+        center += txt(doc.subject_name, 42, 99, 213, 23, 32 if rtl else 29, fg,
+                      "NaskhB" if rtl else "ClassicB", alignment="center", identity=True)
+        center += rule(99, 124, 99)
+        if participation:
+            scope = participation.activity_title
+            center += txt(scope, 43, 129, 211, 11, 16 if rtl else 14, fg,
+                          "NaskhB" if rtl else "IBMB", alignment="center", identity=True)
+            center += txt(("المنظم: ", "Organisateur : ", "Organizer: ")[idx]+participation.organizer,
+                          43, 143, 211, 7, 10, fg, alignment="center", identity=True)
+        else:
+            kind = doc.accreditation.kind
+            scopes = {
+                "professional": ("اعتماد مهني جمعوي مرتبط بصفة عضو معتمد", "Accréditation professionnelle associative liée à la qualité de membre accrédité", "Association professional accreditation linked to accredited membership"),
+                "individual": ("اعتماد جمعوي فردي", "Accréditation associative individuelle", "Individual association accreditation"),
+                "institution": ("اعتماد جمعوي لمؤسسة", "Accréditation associative d’une institution", "Institutional association accreditation"),
+                "course": ("اعتماد جمعوي لدورة أو برنامج تكويني", "Accréditation associative d’une formation ou d’un programme", "Association accreditation of a training course or programme"),
+            }
+            if kind not in scopes:
+                raise ValidationError("Recorded accreditation subtype required")
+            center += txt(scopes[kind][idx], 43, 129, 211, 10, 13 if rtl else 11, fg,
+                          "Naskh" if rtl else "IBM", alignment="center", identity=True)
+            center += txt(words[9], 43, 141, 211, 10, 10 if rtl else 8.8, fg,
+                          "Naskh" if rtl else "IBM", alignment="center")
+        center += img(qr_url, 28, 160, 22, 22, "background:white")
+        center += txt(words[3] if not participation else ("مرجع المشاركة: غير صادر", "Référence de participation : non émise", "Participation reference: not issued")[idx],
+                      59, 155, 120, 4.5, 7.2, "#216459")
+        center += txt(str(doc.serial), 59, 161, 120, 4.5, 8, fg, direction="ltr", alignment="left")
+        if not participation:
+            center += txt(credentials["code"], 59, 166, 120, 4.5, 8, fg, direction="ltr", alignment="left")
+            issued_label = ("تاريخ الإصدار", "Date d’émission", "Issue date")[idx]
+            issued_date = timezone.localdate(doc.issued_at).isoformat() if doc.issued_at else "—"
+            center += txt(issued_label + " :", 59, 172, 46, 4.5, 7.2, "#216459")
+            center += txt(issued_date, 110, 172, 69, 4.5, 8, fg, direction="ltr", alignment="left")
+            center += txt(words[7], 59, 178, 120, 4.5, 7.2, "#216459")
+            center += txt(validity, 59, 183, 120, 4.5, 8, fg, direction="ltr", alignment="left")
+        else:
+            center += txt(("تاريخ النشاط", "Dates de l’activité", "Activity dates")[idx], 59, 168, 120, 4.5, 7.2, "#216459")
+            center += txt(validity, 59, 173, 120, 4.5, 8, fg, direction="ltr", alignment="left")
+            center += txt(("المدة: ", "Durée : ", "Duration: ")[idx]+(participation.duration or "—"), 59, 179, 120, 4.5, 8, fg)
+            center += txt(("QR تجريبي غير مفعّل", "QR de maquette non actif", "Non-operational design QR")[idx], 25, 184, 30, 6, 6.5, fg, alignment="center")
+        center += rule(210, 174, 53)
+        center += txt(words[6], 207, 178, 59, 7, 10, fg,
+                      "Naskh" if rtl else "IBM", alignment="center")
+        center += spec(56, 192, 185, "#216459")
         result = page(center)
     if preview:
         result = result.replace(
@@ -445,18 +343,14 @@ def render(doc, language="ar", *, preview=False, bleed=False):
     # recurse through their children so nested fixed credential boxes are checked.
     # Bounded reflow for long holder names; never silently truncate an identity.
     for factor in (1, 0.85, 0.7, 0.6):
-        adjusted = (
-            result
-            if factor == 1
-            else result.replace(
-                'class="text fit"', f'class="text fit" data-fit="{factor}"'
-            )
+        # Scale every bounded identity box from its own declared size. Activity and
+        # organizer fields must not inherit the much larger holder-name size.
+        adjusted = re.sub(
+            r'(<div class="text fit" style="[^">]*font-size:)([0-9.]+)(pt;)',
+            lambda match: match[1] + str(float(match[2]) * factor) + match[3],
+            result,
         )
-        extra = (
-            ""
-            if factor == 1
-            else f".fit{{font-size:{(15 if rtl else 10.6)*factor if is_card else (32 if rtl else 28)*factor}pt!important}}"
-        )
+        extra = ""
         document = HTML(
             string=f'<!doctype html><html lang="{language}"><head><meta charset="utf-8"><title>ANTHEC SPECIMEN</title><style>{css}{extra}</style></head><body>{adjusted}</body></html>',
             url_fetcher=fetcher,
@@ -501,7 +395,7 @@ def render(doc, language="ar", *, preview=False, bleed=False):
         page.bleedbox = page.mediabox
     writer.add_metadata(
         {
-            "/Title": "ANTHEC SPECIMEN",
+            "/Title": "ANTHEC PARTICIPATION DESIGN PROOF - NOT ISSUED" if participation else "ANTHEC SPECIMEN",
             "/Subject": "Synthetic non-production credential; RGB; not PDF/X",
         }
     )

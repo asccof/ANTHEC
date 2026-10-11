@@ -37,3 +37,8 @@ Routes: owned/authorized /my-documents/<id>/preview/ for ephemeral marked previe
 Package A is merged as PR #21 after final-head PostgreSQL CI and Codex review. Package B must independently pass the complete PostgreSQL suite, metadata/system/migration/dependency checks and exact-head Codex review before merge; evidence belongs in STATUS.md and the PR. Tests cover CSRF generation, immutable artifacts/reissue, private access, MFA, lifecycle, eight categories, bleed/dimensions/fonts, closed fetches, long names, synthetic membership/payment/issuance/replacement, and concurrent generation/review. Independent raster QR checks and visual print proofs supplement regression tests.
 
 Physical print/duplex/rounded-corner clearance, supplier profile, legal notices/retention/rights/key operations and deployment readiness remain separate prerequisites. Participation requires an owner-approved issuing actor and eligibility/attendance decision, not an engineering guess. No production deployment, paid services, real people, external notifications or later-phase activation.
+
+
+## 2026-10-11 focused redesign draft
+
+The owner now authorizes a bounded visual refinement with the existing President card as the primary quality reference. The historical approval above does not approve the new owner-review-v5.0 compositions. See VISUAL_REDESIGN_REVIEW.md for changes, field mapping, proposed English wording and print limits. Both existing certificate types still render; participation is a pure marked proof only, with no eligibility/issuance activation. Existing encrypted outputs remain immutable. No merge/deployment is authorized by this increment.

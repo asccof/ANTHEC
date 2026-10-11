@@ -159,7 +159,7 @@ ROWS = {
     ),
     "apply": ("طلب الانخراط", "Demande d’adhésion", "Membership application"),
     "tier": ("نوع العضوية", "Catégorie", "Membership tier"),
-    "general": ("عضو عام", "Membre général", "General member"),
+    "general": ("عضو", "Membre", "Member"),
     "affiliate": ("عضو منتسب", "Membre affilié", "Affiliated member"),
     "advanced": ("عضو متقدم", "Membre avancé", "Advanced member"),
     "accredited": ("عضو معتمد", "Membre accrédité", "Accredited member"),

@@ -92,7 +92,10 @@ class PDFTests(TestCase):
                     self.assertTrue(
                         "/FontFile2" in descriptor or "/FontFile3" in descriptor
                     )
-            self.assertIn(str(self.doc.serial)[:8], reader.pages[0].extract_text())
+            self.assertNotIn(str(self.doc.serial)[:8], reader.pages[0].extract_text())
+            reverse = reader.pages[1].extract_text().replace("\n", "").replace(" ", "")
+            self.assertIn(str(self.doc.serial), reverse)
+            self.assertIn(self.role.ends_on.isoformat(), reader.pages[0].extract_text())
         data, meta = design.render(self.doc, "ar", bleed=True)
         page = PdfReader(io.BytesIO(data)).pages[0]
         self.assertAlmostEqual(float(page.mediabox.width) * 25.4 / 72, 91.6, places=3)
@@ -371,7 +374,7 @@ class PDFTests(TestCase):
     def test_certificate_issue_date_is_recorded_separately_from_future_validity(self):
         starts = timezone.localdate() + timedelta(days=30)
         accreditation = Accreditation.objects.create(
-            person=self.person, subject_name=self.person.full_name, kind="independent",
+            person=self.person, subject_name=self.person.full_name, kind="individual",
             starts_on=starts, ends_on=starts+timedelta(days=365)
         )
         recorded = datetime(2026, 1, 7, 12, tzinfo=dt_timezone.utc)
@@ -380,13 +383,15 @@ class PDFTests(TestCase):
         self.assertEqual(doc.issued_at, recorded)
         body, metadata = design.render(doc, "en")
         text = PdfReader(io.BytesIO(body)).pages[0].extract_text()
-        self.assertIn("Issue date: 2026-01-07", text)
+        self.assertIn("Issue date", text)
+        self.assertIn("2026-01-07", text)
         self.assertIn(starts.isoformat(), text)
         doc.issued_at = None  # Legacy records have no invented issuance timestamp.
         body, metadata = design.render(doc, "en")
         text = PdfReader(io.BytesIO(body)).pages[0].extract_text()
-        self.assertNotIn("Issue date: 2026-01-07", text)
-        self.assertIn("Issue date: —", text)
+        self.assertNotIn("2026-01-07", text)
+        self.assertIn("Issue date", text)
+        self.assertIn("—", text)
 
     def test_synthetic_membership_photo_finance_issue_reissue_journey(self):
         from django.core.management import call_command
@@ -530,3 +535,35 @@ class PDFTests(TestCase):
             self.client.get(f"/my-documents/{self.doc.pk}/pdf/").status_code, 409
         )
         self.assertEqual(PDFArtifact.objects.count(), 0)
+
+    def test_participation_is_a_proof_with_no_issuance_or_authority(self):
+        counts = (Document.objects.count(), PDFArtifact.objects.count(), Audit.objects.count())
+        proof = design.ParticipationProof("Synthetic Participant", "Synthetic Training", "ANTHEC", "2026-10-11", "2026-10-12", "16 hours - synthetic")
+        for language in ("ar", "fr", "en"):
+            body, metadata = design.render_participation_proof(proof, language)
+            reader = PdfReader(io.BytesIO(body))
+            self.assertEqual(len(reader.pages), 1)
+            text = reader.pages[0].extract_text()
+            for value in (proof.participant, proof.activity_title, proof.organizer, proof.starts_on, proof.ends_on, "NOT ISSUED"):
+                self.assertIn(value, text)
+            self.assertEqual(metadata["issued_on"], None)
+            self.assertAlmostEqual(float(reader.pages[0].trimbox.width)*25.4/72, 297, places=3)
+        self.assertEqual((Document.objects.count(), PDFArtifact.objects.count(), Audit.objects.count()), counts)
+        with self.assertRaises(ValidationError):
+            design.render_participation_proof(self.doc)
+
+    def test_accreditation_subtype_is_recorded_and_not_invented(self):
+        for kind, wording in (("individual", "Individual association"), ("institution", "Institutional association"), ("course", "training course")):
+            acc = Accreditation.objects.create(person=self.person, subject_name="Synthetic Subject", kind=kind, starts_on=self.role.starts_on, ends_on=self.role.ends_on)
+            doc = s.issue("accreditation_certificate", accreditation=acc)
+            body, _ = design.render(doc, "en")
+            self.assertIn(wording, PdfReader(io.BytesIO(body)).pages[0].extract_text())
+        doc.accreditation.kind = "unapproved"
+        with self.assertRaises(ValidationError):
+            design.render(doc, "en")
+
+    def test_general_label_changes_only_display_vocabulary(self):
+        from .member_labels import vocabulary
+        for language, label in (("ar", "عضو"), ("fr", "Membre"), ("en", "Member")):
+            self.assertEqual(vocabulary(language)[1]["general"], label)
+        self.assertEqual(s.TIERS["general"], 100)
