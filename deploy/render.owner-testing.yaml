@@ -1,0 +1,41 @@
+# Preparation only. Applying this Blueprint creates PAID resources.
+# Apply only in a NEW ANTHEC-only workspace under the existing owner account.
+# Verify no matching names exist; never attach to or move Tighri resources.
+previews:
+  generation: 'off'
+services:
+  - type: web
+    name: anthec-owner-test-web
+    runtime: docker
+    repo: https://github.com/asccof/ANTHEC
+    branch: main
+    region: frankfurt
+    plan: 0.5c-512mb
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    autoDeployTrigger: 'off'
+    healthCheckPath: /health/
+    preDeployCommand: python manage.py check --deploy --fail-level ERROR && python manage.py migrate --noinput
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: antheec_app.settings.production
+      - key: ANTHEEC_MODE
+        value: owner-testing
+      - key: ANTHEEC_SECRET_KEY
+        sync: false  # owner generates >=50-character secret privately
+      - key: ANTHEEC_DATA_KEY
+        sync: false
+      - key: ANTHEEC_PUBLIC_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: anthec-owner-test-db
+          property: connectionString
+databases:
+  - name: anthec-owner-test-db
+    databaseName: anthec_owner_testing
+    user: anthec_owner_testing
+    region: frankfurt
+    plan: 0.1c-256mb
+    postgresMajorVersion: '16'
+    ipAllowList: []

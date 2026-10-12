@@ -172,7 +172,7 @@ class ContentTests(TestCase):
         response = self.client.get("/health/")
         self.assertEqual(
             response.json(),
-            {"project": "ANTHEEC", "mode": "development", "status": "ok"},
+            {"project": "ANTHEC", "status": "ok"},
         )
 
     def test_security_headers(self):

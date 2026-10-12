@@ -6,3 +6,6 @@ media/
 private_media/
 staticfiles/
 *.sqlite3
+*.dump
+*.backup
+*.fernet

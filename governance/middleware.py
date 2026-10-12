@@ -47,6 +47,12 @@ class PolicyLocaleMiddleware(LocaleMiddleware):
     """Keep resolved API errors stable instead of redirecting into Wagtail pages."""
 
     def process_response(self, request, response):
+        from django.conf import settings
+        if (getattr(settings, "ANTHEEC_OWNER_TESTING", False)
+                and response.status_code == 404 and response.get("X-Robots-Tag")):
+            # The private gate runs before URL resolution. Do not convert its
+            # denials into locale-prefixed Wagtail catch-all redirects.
+            return response
         match = getattr(request, "resolver_match", None)
         if match and match.func.__module__.startswith("governance."):
             return response

@@ -40,3 +40,11 @@ jobs:
       - run: python manage.py seed_policy_prices
       - run: pip check
       - run: python manage.py test content governance --verbosity=2
+      - run: python tools/validate_recovery.py
+        env:
+          CI: 'true'
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --file deploy/Dockerfile --tag anthec-owner-test:ci .

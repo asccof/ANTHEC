@@ -1,11 +1,11 @@
-"""Shared development/CI configuration. Production is deliberately unavailable."""
+"""Shared configuration; owner testing is isolated from public production."""
 import os
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test"}:
-    raise ImproperlyConfigured("Only development and test modes are authorized.")
+if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test", "owner-testing"}:
+    raise ImproperlyConfigured("Public production mode is not authorized.")
 
 INSTALLED_APPS = [
     "governance", "django_otp", "django_otp.plugins.otp_totp",

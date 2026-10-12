@@ -1,5 +1,9 @@
 # Execution ledger
 
+## 2026-10-12 — private Render deployment preparation
+
+Owner authorized preparation on live main `6f9c22e227334d2bf480038cd3bc3e7ccc7afa09`, after PR #23 merged. Branch `eng/private-production-readiness` preserves existing drafts, artwork, certificate wording and POL-01–08. Private settings, non-root Docker/static build, separate PG16 Blueprint, primary-only MFA gate, disabled public workflows/payments/official issuance, disabled ephemeral filesystem uploads and an offline encrypted-backup/isolated CI restore drill are prepared. See PRIVATE_DEPLOYMENT_PREPARATION.md for architecture, current public costs, domain evidence and remaining gates. Render is not connected; no resources/DNS/Tighri changes, merge, paid subscription or deployment performed. Actual ANTHEC.COM RDAP indicates an existing registration; ownership/acquisition price is unresolved. Tests, CI, exact external review, owner acceptance and live recovery are separate milestones; preparation alone does not satisfy them.
+
 ## 2026-10-10 — independent baseline and multilingual CMS increment
 
 Repository: `asccof/ANTHEEC`; main bootstrap: `4df3f6d`. Issue #1; feature branch `eng/001-003-multilingual-foundation`. Repository is public: source attachments and personal/contact data are excluded. No MHIOS files or governance imported.
