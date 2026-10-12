@@ -152,6 +152,13 @@ class PrivateSettingsTests(SimpleTestCase):
         result = self.settings_process()
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_render_generated_database_suffix_is_used_without_widening_namespace(self):
+        result = self.settings_process(
+            {"DATABASE_URL": "postgresql://synthetic:synthetic@localhost/anthec_owner_testing_a1b2"},
+            command="from django.conf import settings as s; "
+                    "assert s.DATABASES['default']['NAME'] == 'anthec_owner_testing_a1b2'")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_missing_secrets_other_database_and_unsafe_origin_fail_closed(self):
         bad = [
             {"DJANGO_SETTINGS_MODULE": "antheec_app.settings.dev"},
@@ -163,6 +170,8 @@ class PrivateSettingsTests(SimpleTestCase):
             {"ANTHEEC_DATA_KEY": "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=\n"},
             {"ANTHEEC_DATA_KEY": " MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="},
             {"DATABASE_URL": "postgresql://synthetic:synthetic@localhost/tighri"},
+            {"DATABASE_URL": "postgresql://synthetic:synthetic@localhost/anthec_owner_testing/tighri"},
+            {"DATABASE_URL": "postgresql://synthetic:synthetic@localhost/anthec_owner_testing.evil"},
             {"DATABASE_URL": "sqlite:///db.sqlite3"}, {"DATABASE_URL": None},
             {"ANTHEEC_PUBLIC_ORIGIN": "http://synthetic.example.invalid"},
             {"ANTHEEC_PUBLIC_ORIGIN": "https://*.example.invalid"},

@@ -46,16 +46,17 @@ WAGTAIL_SITE_NAME = "ANTHEC — private owner testing"
 OTP_TOTP_ISSUER = "ANTHEC owner testing"
 
 database = urlsplit(required("DATABASE_URL"))
+database_name = unquote(database.path.removeprefix("/"))
 if (database.scheme not in {"postgres", "postgresql"} or not database.hostname or
         not database.username or not database.password or database.query or database.fragment or
-        database.path != "/anthec_owner_testing"):
-    raise ImproperlyConfigured("A dedicated anthec_owner_testing PostgreSQL database URL is required.")
+        not re.fullmatch(r"anthec_owner_testing(?:_[a-z0-9]+)?", database_name)):
+    raise ImproperlyConfigured("A dedicated anthec_owner_testing PostgreSQL database URL, optionally Render-suffixed, is required.")
 try:
     database_port = database.port or 5432
 except ValueError as exc:
     raise ImproperlyConfigured("Invalid PostgreSQL port.") from exc
 DATABASES = {"default": {
-    "ENGINE": "django.db.backends.postgresql", "NAME": "anthec_owner_testing",
+    "ENGINE": "django.db.backends.postgresql", "NAME": database_name,
     "USER": unquote(database.username), "PASSWORD": unquote(database.password),
     "HOST": database.hostname, "PORT": database_port, "CONN_MAX_AGE": 60,
     "CONN_HEALTH_CHECKS": True,

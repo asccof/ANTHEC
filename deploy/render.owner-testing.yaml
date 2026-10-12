@@ -37,5 +37,7 @@ databases:
     user: anthec_owner_testing
     region: frankfurt
     plan: 0.1c-256mb
+    diskSizeGB: 1
+    storageAutoscalingEnabled: false
     postgresMajorVersion: '16'
     ipAllowList: []

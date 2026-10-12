@@ -30,7 +30,7 @@ Hobby workspaces; actual account capacity and billing are not yet inspected.
 | Component | Prepared configuration |
 | --- | --- |
 | Web | `anthec-owner-test-web`, Docker, Frankfurt, `0.5c-512mb`, one Gunicorn worker/two threads; non-root UID 10001 |
-| Database | `anthec-owner-test-db`, PG16, `0.1c-256mb`, exact database/user `anthec_owner_testing`; external IP allowlist empty, internal URL, TLS required |
+| Database | `anthec-owner-test-db`, PG16, `0.1c-256mb`, explicit 1 GB disk with storage autoscaling off; `anthec_owner_testing` namespace (optional Render suffix); actual name/user from internal URL; external IP allowlist empty, TLS required |
 | Runtime | `antheec_app.settings.production`, explicit `ANTHEEC_MODE=owner-testing`; public production still rejected |
 | Access | Primary authority only; active account, password, TOTP MFA and authority epoch; no delegate access to this test deployment |
 | Public surface | Login/logout, sanitized health probe and public static code/brand assets; all dynamic content is private; no search indexing/cache |
@@ -121,8 +121,10 @@ payment method, quotas and existing charges are unknown until connection.
 | Optional 2 GiB web instead, if actual memory testing requires it | **31 total** |
 
 No worker, Redis, SMTP or persistent disk is needed in this restricted phase.
-Paid PG includes 1 GB storage; additional storage is $0.30/GB/month. Hobby includes
-5 GB outbound bandwidth and 500 build minutes; listed overages are $0.15/GB and
+Paid PG includes 1 GB storage; additional storage is $0.30/GB/month.
+The Blueprint explicitly fixes storage at 1 GB; omitting disk size would select
+Render's larger Basic-tier default instead and increase the quoted baseline.
+Hobby includes 5 GB outbound bandwidth and 500 build minutes; listed overages are $0.15/GB and
 $5 per additional 1000 build minutes. Two custom domains are included, additional
 ones $0.25/domain/month. These are estimates, not an authorized subscription or
 an account-specific final invoice. 512 MiB is provisional until Render memory and
