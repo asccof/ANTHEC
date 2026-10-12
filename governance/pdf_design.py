@@ -322,7 +322,7 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
             center += txt(validity, 53, 184, 133, 5, 11, fg, direction="ltr", alignment="left")
             if participation.duration:
                 center += txt(("المدة: ", "Durée : ", "Duration: ")[idx]+participation.duration, 53, 190, 133, 5, 10.5, fg)
-            center += txt(("QR تجريبي غير مفعّل", "QR de maquette non actif", "Non-operational design QR")[idx], 22, 192, 29, 7, 7.5, fg, alignment="center")
+            center += txt(("QR تجريبي غير مفعّل", "QR de maquette non actif", "Non-operational design QR")[idx], 106, 172, 80, 5, 9.5, fg, alignment="left")
         def pending_box(x, y, w, h, label):
             return f'<div style="position:absolute;left:{x}mm;top:{y}mm;width:{w}mm;height:{h}mm;border:.22mm dashed #B59A60;background:#FBF8EF"></div>' + txt(label, x+1, y+3, w-2, h-4, 8.5 if rtl else 7.8, "#75623C", "Naskh" if rtl else "IBM", alignment="center")
         if certificate_assets:
