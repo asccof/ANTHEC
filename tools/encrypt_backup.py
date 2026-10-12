@@ -6,6 +6,8 @@ stay on an encrypted private workstation.
 This bounded, whole-file tool is for small owner-test exports, not large backups.
 """
 import argparse
+import base64
+import hmac
 import os
 from pathlib import Path
 from cryptography.fernet import Fernet, InvalidToken
@@ -20,6 +22,9 @@ def transform(source, target, *, decrypt=False):
         raise ValueError("A separate private backup key is required.")
     Fernet(data_key.encode())  # require a valid data key, not a dummy comparison
     cipher = Fernet(key.encode())
+    if hmac.compare_digest(base64.urlsafe_b64decode(key.encode()),
+                           base64.urlsafe_b64decode(data_key.encode())):
+        raise ValueError("Backup and data keys must be cryptographically distinct.")
     source = Path(source)
     limit = MAX_BYTES * 2 if decrypt else MAX_BYTES
     with source.open("rb") as handle:

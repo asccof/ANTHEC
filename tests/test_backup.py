@@ -37,6 +37,11 @@ class BackupTests(unittest.TestCase):
             source.write_bytes(b"synthetic")
             with self.assertRaises(ValueError):
                 MODULE.transform(source, target)
+            # Fernet accepts base64 whitespace; differing text must not permit
+            # the same underlying encryption key to be reused.
+            os.environ["ANTHEC_BACKUP_KEY"] = key + "\n"
+            with self.assertRaises(ValueError):
+                MODULE.transform(source, target)
             os.environ["ANTHEC_BACKUP_KEY"] = ""
             with self.assertRaises(ValueError):
                 MODULE.transform(source, target)
