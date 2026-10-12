@@ -1,6 +1,8 @@
 """Render owner-only testing. Public production and issuance remain unavailable."""
 import os
 import re
+import base64
+import hmac
 from urllib.parse import urlsplit, unquote
 from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
@@ -26,7 +28,9 @@ try:
     Fernet(ANTHEEC_DATA_KEY.encode())
 except (ValueError, TypeError) as exc:
     raise ImproperlyConfigured("A valid private Fernet data key is required.") from exc
-if ANTHEEC_DATA_KEY == "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=":
+if hmac.compare_digest(
+        base64.urlsafe_b64decode(ANTHEEC_DATA_KEY.encode()),
+        base64.urlsafe_b64decode(b"MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=")):
     raise ImproperlyConfigured("The repository test key must never be deployed.")
 
 origin = urlsplit(required("ANTHEEC_PUBLIC_ORIGIN"))

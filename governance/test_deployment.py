@@ -160,6 +160,8 @@ class PrivateSettingsTests(SimpleTestCase):
             {"ANTHEEC_SECRET_KEY": None}, {"ANTHEEC_SECRET_KEY": "a" * 70},
             {"ANTHEEC_DATA_KEY": None}, {"ANTHEEC_DATA_KEY": "invalid"},
             {"ANTHEEC_DATA_KEY": "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="},
+            {"ANTHEEC_DATA_KEY": "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=\n"},
+            {"ANTHEEC_DATA_KEY": " MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="},
             {"DATABASE_URL": "postgresql://synthetic:synthetic@localhost/tighri"},
             {"DATABASE_URL": "sqlite:///db.sqlite3"}, {"DATABASE_URL": None},
             {"ANTHEEC_PUBLIC_ORIGIN": "http://synthetic.example.invalid"},
