@@ -33,6 +33,8 @@ class PDFTests(TestCase):
     def setUp(self):
         self.admin = synthetic_user("synthetic-director", True)
         Authority.objects.create(primary=self.admin)
+        from .test_certificate_assets import approved_test_assets
+        approved_test_assets(self.admin)
         self.request = administrative_request(self.admin)
         self.holder = synthetic_user("synthetic-holder")
         self.other = synthetic_user("synthetic-other")

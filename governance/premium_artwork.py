@@ -4,8 +4,8 @@ import math
 
 THEMES = {
     "general": ("#FBF8EF", "#142E43", "#B69B61", "#194462"),
-    "affiliate": ("#F9F6EB", "#142E43", "#BA9D64", "#087C80"),
-    "advanced": ("#102B42", "#F6F1E4", "#D4BE86", "#7297A7"),
+    "affiliate": ("#145B67", "#FAF3E3", "#D8C395", "#0F4652"),
+    "advanced": ("#49345F", "#FAF3E3", "#D8C395", "#B4A0C0"),
     "accredited": ("#FBF0D2", "#173045", "#B28837", "#153348"),
     "president": ("#071521", "#FAF1D8", "#D6B26A", "#A88844"),
     "vice_president": ("#F7F5EC", "#173045", "#AA8C50", "#193D5B"),

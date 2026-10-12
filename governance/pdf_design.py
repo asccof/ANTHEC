@@ -17,9 +17,10 @@ from weasyprint.urls import URLFetcher, URLFetcherResponse
 from weasyprint.text.fonts import FontConfiguration
 from . import services as s
 from .portraits import CARD_KINDS, portrait_bytes
+from . import certificate_assets as signing, certificate_content as content
 
 ASSETS = Path(__file__).resolve().parent / "document_assets"
-VERSION = "owner-review-v5.0"
+VERSION = "owner-review-v5.1"
 AR = "الجمعية الوطنية للعلاج النفسي والأسري والكوتشينغ"
 FR = "Association Nationale de Thérapie Psychologique, Familiale et Coaching"
 # Working translation submitted for owner content approval, not a registered legal name.
@@ -123,11 +124,11 @@ def render_participation_proof(proof, language="ar", *, bleed=False):
     return _render(None, language, bleed=bleed, participation=proof)
 
 
-def render(doc, language="ar", *, preview=False, bleed=False):
-    return _render(doc, language, preview=preview, bleed=bleed)
+def render(doc, language="ar", *, preview=False, bleed=False, proof=False):
+    return _render(doc, language, preview=preview, bleed=bleed, proof=proof)
 
 
-def _render(doc, language="ar", *, preview=False, bleed=False, participation=None):
+def _render(doc, language="ar", *, preview=False, bleed=False, participation=None, proof=False):
     language = language if language in WORDS else "ar"
     idx = ("ar", "fr", "en").index(language)
     rtl = language == "ar"
@@ -140,7 +141,7 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         credentials = {"token": "", "code": "NOT ISSUED"}
         is_card = False
         category = "participation_design_proof"
-        title = ("شهادة المشاركة", "Certificat de participation", "Certificate of Participation")[idx]
+        title = ("شهادة المشاركة", "Attestation de participation", "Certificate of Participation")[idx]
     else:
         data = s.public_document(doc)
         credentials = s.decrypt(doc.credentials)
@@ -153,6 +154,14 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         if category not in TITLES:
             raise ValidationError("Unsupported approved category")
         title = TITLES[category][idx]
+    certificate_assets = None
+    if not is_card and participation is None:
+        try:
+            certificate_assets = signing.ready_assets(doc)
+        except signing.PendingCertificateAssets:
+            if not (proof or preview):
+                raise
+    signature_pending = not is_card and certificate_assets is None
     fg = THEMES[category][1] if is_card else "#173045"
     accent = THEMES[category][2] if is_card else "#216459"
     width, height = (85.6, 53.98) if is_card else (297, 210)
@@ -274,52 +283,69 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
                       "IBM", alignment="center")
         center += txt(title, 37, 65.5, 223, 20, 30 if rtl else 25, fg,
                       "NaskhB" if rtl else "ClassicB", alignment="center")
-        lead = words[8] if not participation else ("يشهد هذا النموذج بمشاركة", "Ce modèle atteste la participation de", "This design proof records participation by")[idx]
-        center += txt(lead, 44, 89.2, 209, 8, 12, "#216459", "Naskh" if rtl else "IBM", alignment="center")
-        center += txt(doc.subject_name, 42, 99, 213, 23, 32 if rtl else 29, fg,
+        wording = content.CONTENT[category][language]
+        center += txt(wording[0], 43, 88.5, 211, 9, 10.5 if rtl else 9.2, "#216459", "Naskh" if rtl else "IBM", alignment="center")
+        center += txt(doc.subject_name, 42, 99, 213, 21, 32 if rtl else 29, fg,
                       "NaskhB" if rtl else "ClassicB", alignment="center", identity=True)
-        center += rule(99, 124, 99)
+        center += rule(99, 122, 99)
         if participation:
-            scope = participation.activity_title
-            center += txt(scope, 43, 129, 211, 11, 16 if rtl else 14, fg,
+            center += txt(participation.activity_title, 43, 124, 211, 10, 15 if rtl else 13, fg,
                           "NaskhB" if rtl else "IBMB", alignment="center", identity=True)
             center += txt(("المنظم: ", "Organisateur : ", "Organizer: ")[idx]+participation.organizer,
-                          43, 143, 211, 7, 10, fg, alignment="center", identity=True)
-        else:
-            kind = doc.accreditation.kind
-            scopes = {
-                "professional": ("اعتماد مهني جمعوي مرتبط بصفة عضو معتمد", "Accréditation professionnelle associative liée à la qualité de membre accrédité", "Association professional accreditation linked to accredited membership"),
-                "individual": ("اعتماد جمعوي فردي", "Accréditation associative individuelle", "Individual association accreditation"),
-                "institution": ("اعتماد جمعوي لمؤسسة", "Accréditation associative d’une institution", "Institutional association accreditation"),
-                "course": ("اعتماد جمعوي لدورة أو برنامج تكويني", "Accréditation associative d’une formation ou d’un programme", "Association accreditation of a training course or programme"),
-            }
-            if kind not in scopes:
-                raise ValidationError("Recorded accreditation subtype required")
-            center += txt(scopes[kind][idx], 43, 129, 211, 10, 13 if rtl else 11, fg,
-                          "Naskh" if rtl else "IBM", alignment="center", identity=True)
-            center += txt(words[9], 43, 141, 211, 10, 10 if rtl else 8.8, fg,
+                          43, 135, 211, 5, 9.5, fg, alignment="center", identity=True)
+            center += txt(wording[1], 43, 141, 211, 7, 9.5 if rtl else 8.4, fg,
                           "Naskh" if rtl else "IBM", alignment="center")
-        center += img(qr_url, 28, 160, 22, 22, "background:white")
+            center += txt(wording[2], 43, 149, 211, 8, 9 if rtl else 8.2, fg,
+                          "Naskh" if rtl else "IBM", alignment="center")
+        else:
+            center += txt(wording[1], 43, 125, 211, 10, 11.5 if rtl else 9.5, fg,
+                          "Naskh" if rtl else "IBM", alignment="center")
+            center += txt(content.scope(doc.accreditation, language), 43, 136, 211, 6, 11 if rtl else 9.5, fg,
+                          "NaskhB" if rtl else "IBMB", alignment="center")
+            center += txt(wording[2], 43, 144, 211, 11, 10.2 if rtl else 8.8, fg,
+                          "Naskh" if rtl else "IBM", alignment="center")
+        center += img(qr_url, 25, 165, 22, 22, "background:white")
         center += txt(words[3] if not participation else ("مرجع المشاركة: غير صادر", "Référence de participation : non émise", "Participation reference: not issued")[idx],
-                      59, 155, 120, 4.5, 7.2, "#216459")
-        center += txt(str(doc.serial), 59, 161, 120, 4.5, 8, fg, direction="ltr", alignment="left")
+                      53, 159, 133, 4.5, 7.2, "#216459")
+        center += txt(str(doc.serial), 53, 164, 133, 4.5, 8, fg, direction="ltr", alignment="left")
         if not participation:
-            center += txt(credentials["code"], 59, 166, 120, 4.5, 8, fg, direction="ltr", alignment="left")
+            center += txt(credentials["code"], 53, 169, 133, 4.5, 8, fg, direction="ltr", alignment="left")
             issued_label = ("تاريخ الإصدار", "Date d’émission", "Issue date")[idx]
             issued_date = timezone.localdate(doc.issued_at).isoformat() if doc.issued_at else "—"
-            center += txt(issued_label + " :", 59, 172, 46, 4.5, 7.2, "#216459")
-            center += txt(issued_date, 110, 172, 69, 4.5, 8, fg, direction="ltr", alignment="left")
-            center += txt(words[7], 59, 178, 120, 4.5, 7.2, "#216459")
-            center += txt(validity, 59, 183, 120, 4.5, 8, fg, direction="ltr", alignment="left")
+            center += txt(issued_label + " :", 53, 175, 47, 4.5, 7.2, "#216459")
+            center += txt(issued_date, 106, 175, 80, 4.5, 8, fg, direction="ltr", alignment="left")
+            center += txt(words[7], 53, 181, 133, 4.5, 7.2, "#216459")
+            center += txt(validity, 53, 187, 133, 4.5, 8, fg, direction="ltr", alignment="left")
         else:
-            center += txt(("تاريخ النشاط", "Dates de l’activité", "Activity dates")[idx], 59, 168, 120, 4.5, 7.2, "#216459")
-            center += txt(validity, 59, 173, 120, 4.5, 8, fg, direction="ltr", alignment="left")
-            center += txt(("المدة: ", "Durée : ", "Duration: ")[idx]+(participation.duration or "—"), 59, 179, 120, 4.5, 8, fg)
-            center += txt(("QR تجريبي غير مفعّل", "QR de maquette non actif", "Non-operational design QR")[idx], 25, 184, 30, 6, 6.5, fg, alignment="center")
-        center += rule(210, 174, 53)
-        center += txt(words[6], 207, 178, 59, 7, 10, fg,
-                      "Naskh" if rtl else "IBM", alignment="center")
-        center += spec(56, 192, 185, "#216459")
+            center += txt(("تاريخ النشاط", "Dates de l’activité", "Activity dates")[idx], 53, 173, 133, 4.5, 7.2, "#216459")
+            center += txt(validity, 53, 178, 133, 4.5, 8, fg, direction="ltr", alignment="left")
+            if participation.duration:
+                center += txt(("المدة: ", "Durée : ", "Duration: ")[idx]+participation.duration, 53, 184, 133, 4.5, 8, fg)
+            center += txt(("QR تجريبي غير مفعّل", "QR de maquette non actif", "Non-operational design QR")[idx], 22, 188, 29, 6, 6.5, fg, alignment="center")
+        def pending_box(x, y, w, h, label):
+            return f'<div style="position:absolute;left:{x}mm;top:{y}mm;width:{w}mm;height:{h}mm;border:.22mm dashed #B59A60;background:#FBF8EF"></div>' + txt(label, x+1, y+3, w-2, h-4, 6.3 if rtl else 5.8, "#75623C", "Naskh" if rtl else "IBM", alignment="center")
+        if certificate_assets:
+            sig, stamp = certificate_assets
+            signature_url = asset("signature", signing.asset_bytes(sig), "image/png")
+            stamp_url = asset("stamp", signing.asset_bytes(stamp), "image/png")
+            center += img(signature_url, 195, 158, 41, 16, "object-fit:contain")
+            center += img(stamp_url, 242, 156, 22, 18, "object-fit:contain")
+        else:
+            center += pending_box(195, 158, 41, 16, ("بانتظار التوقيع الأصلي", "Signature authentique attendue", "Awaiting authentic signature")[idx])
+            center += pending_box(242, 158, 22, 16, ("بانتظار الطابع الأصلي", "Cachet authentique attendu", "Awaiting authentic stamp")[idx])
+        identity = (doc.signing_snapshot if not participation else {}) or signing.SIGNATORY
+        name = identity.get("ar_name", signing.SIGNATORY["ar_name"]) if rtl else identity.get("latin_name", signing.SIGNATORY["latin_name"])
+        authority_line = ("عن " + AR, "Pour l’" + FR, "For ANTHEC")[idx]
+        center += txt(authority_line, 191, 176, 78, 8, 7 if rtl else 6.3, fg,
+                      "Naskh" if rtl else "IBM", alignment="right" if rtl else "center")
+        center += txt(("الرئيس", "Le Président", "President")[idx], 191, 184, 78, 4, 9 if rtl else 8, fg,
+                      "Naskh" if rtl else "IBM", alignment="right" if rtl else "center")
+        center += txt(name, 191, 188, 78, 6, 13 if rtl else 11.5, fg,
+                      "NaskhB" if rtl else "ClassicB", alignment="right" if rtl else "center")
+        proof_note = ("نموذج للمراجعة — غير موقّع وغير مختوم", "Maquette — non signée et non cachetée", "Review proof — unsigned and unstamped")[idx] if signature_pending else "SPECIMEN / نموذج تجريبي"
+        if participation:
+            proof_note += " / NOT ISSUED"
+        center += txt(proof_note, 43, 193.5, 211, 4, 7.2, "#216459", alignment="center", direction="ltr")
         result = page(center)
     if preview:
         result = result.replace(
@@ -408,5 +434,7 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         "language": language,
         "photo": str(doc.portrait.serial) if is_card else None,
         "font_scale": factor,
+        "signing_status": "pending_authentic_assets" if signature_pending else "approved_raster_assets" if not is_card else "not_applicable",
+        "signing_snapshot": (doc.signing_snapshot if not is_card and participation is None else None),
         "issued_on": timezone.localdate(doc.issued_at).isoformat() if doc.issued_at else None,
     }

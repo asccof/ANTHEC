@@ -389,10 +389,15 @@ def issue(
         )
     )
     portrait = snapshot_for(kind, person)
+    from .certificate_assets import snapshot_for as signing_snapshot_for
+    signature, stamp, signing = signing_snapshot_for(kind)
     doc = Document.objects.create(
         issued_at=timezone.now(),
         subject_name=name,
         portrait=portrait,
+        signature_asset=signature,
+        stamp_asset=stamp,
+        signing_snapshot=signing,
         kind=kind,
         membership=membership,
         accreditation=accreditation,
@@ -405,6 +410,8 @@ def issue(
         credentials=encrypt({"token": token, "code": code}),
     )
     Outbox.objects.create(document=doc)
+    if signing:
+        audit(None, "certificate.signing.bound", doc.serial, signature=str(signature.serial) if signature else None, stamp=str(stamp.serial) if stamp else None, assets_pending=not(signature and stamp))
     return doc
 
 

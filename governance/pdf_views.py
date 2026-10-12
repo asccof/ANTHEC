@@ -145,9 +145,9 @@ def prepare(request, document_id):
         # Reuse localized pending-photo/layout feedback without creating an artifact.
         return HttpResponse(
             {
-                "ar": "تعذر التوليد؛ راجع الصورة المقبولة والتكوين. يلزم إعادة إصدار للوثيقة دون صورة.",
-                "fr": "Génération impossible : vérifiez le portrait approuvé et la mise en page. Réémission requise sans portrait à l’émission.",
-                "en": "Generation unavailable. Check the approved portrait and layout; reissuance is required when the issuance snapshot is missing.",
+                "ar": "تعذر التوليد؛ راجع صورة الإصدار والتكوين والتوقيع والطابع المعتمدين. يلزم إعادة إصدار عند غياب لقطة الإصدار.",
+                "fr": "Génération impossible : vérifiez le portrait, la mise en page, la signature et le cachet approuvés à l’émission. Réémission requise si un instantané manque.",
+                "en": "Generation unavailable. Check approved issuance portrait, layout, signature and stamp; formal reissuance is required when an issuance snapshot is missing.",
             }[language],
             status=409,
         )

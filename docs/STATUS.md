@@ -133,3 +133,12 @@ Draft PR #23 initial head f07fb55065f25a28e135b1631d33eb282e725e49 passed Postgr
 
 
 Head 5c7281bd2197a6daf8b46589614bae8d6322ffde passed PostgreSQL 16 CI 38161729127 (160 application/CMS tests without skips; metadata/system/migration/dependency checks pass) and exact-head Codex review without major findings. Independent regenerated 33-PDF checks again passed dimensions, embedded fonts, text page bounds and 99 digital QR decodes. Final cross-renderer visual comparison exposed a decoration-only difference: SVG gradient-painted leaves/frame details appear filled in MuPDF but partly outlined in Poppler. New vector decoration therefore uses fixed gold paint with explicit highlight veins; the original President raster is unchanged. Updated-head CI/review and cross-renderer proof regeneration remain required before delivery. Physical foil/CMYK approval is not implied.
+
+
+## 2026-10-12 - final color/content/signing refinement of draft PR #23
+
+Verified main 6b6ab8d43d68abcd079caed2a2edf684dd4925b8 and draft head c62110ab6272f593e13faa8bbaec0b35e53c31a3. Owner accepts the artistic direction and authorizes dominant affiliate #145B67 / advanced #49345F fields, final certificate content and authentic presidential signature/stamp integration. Official signatory text is إدريس هلالي / Driss Helali. English institutional denomination remains proposed. Other approved artwork is preserved; general display labels and business rules are unchanged.
+
+Added primary-only encrypted reviewed artwork and additive immutable document signing snapshots using existing POL-04 authority/MFA/re-auth/command/audit controls. No new authorization policy or participation model/route/issuance. Actual images are still pending; proofs carry explicit placeholders and NOT ISSUED participation QR. New unsigned certificate artifact generation fails closed; existing PDF artifacts are not rewritten. Replacements require existing formal reissuance. Professional criteria-fulfillment wording is limited because the current approved schema has no independent assessment finding or detailed scope field. See CERTIFICATE_SIGNATURE_REFINEMENT.md.
+
+Local full suite before the final HTTP-upload regression: 165 tests pass with 18 PostgreSQL-only skips; 19 PDF regressions pass; metadata validator and six tests, Django checks and migration drift pass. Updated complete PostgreSQL CI and exact-head Codex review remain pending at this preparation entry. This is prepared/tested work, not visual approval, deployment or merge.

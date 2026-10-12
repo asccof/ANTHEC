@@ -288,6 +288,37 @@ class Portrait(models.Model):
         return str(self.serial)
 
 
+class CertificateAsset(models.Model):
+    """Private approved raster artwork; approved rows are immutable, never public media."""
+    serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    kind = models.CharField(max_length=10, choices=[("signature", "Signature"), ("stamp", "Stamp")])
+    image = models.TextField()  # Encrypted normalized PNG, no original retained.
+    sha256 = models.CharField(max_length=64, editable=False)
+    state = models.CharField(max_length=10, default="pending", choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected")])
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="uploaded_certificate_assets")
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, related_name="reviewed_certificate_assets")
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(kind__in=["signature", "stamp"]), name="certificate_asset_kind"),
+            models.CheckConstraint(condition=Q(state="pending", reviewed_by__isnull=True, reviewed_at__isnull=True) | Q(state__in=["approved", "rejected"], reviewed_by__isnull=False, reviewed_at__isnull=False), name="certificate_asset_review_evidence"),
+        ]
+
+    def save(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if self.pk:
+            old = type(self).objects.get(pk=self.pk)
+            fields = ("serial", "kind", "image", "sha256", "state", "uploaded_by_id", "reviewed_by_id", "reviewed_at")
+            if old.state != "pending" and any(getattr(old, f) != getattr(self, f) for f in fields):
+                raise ValidationError("Reviewed certificate assets are immutable; upload a replacement")
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.serial)
+
+
 class Document(models.Model):
     serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     issued_at = models.DateTimeField(null=True, editable=False)
@@ -306,10 +337,21 @@ class Document(models.Model):
     subject_name = models.CharField(max_length=200)
     credentials = models.TextField()  # encrypted verification token + printed code
     portrait = models.ForeignKey(Portrait, on_delete=models.PROTECT, null=True)
+    signature_asset = models.ForeignKey(CertificateAsset, on_delete=models.PROTECT, null=True, editable=False, related_name="signature_documents")
+    stamp_asset = models.ForeignKey(CertificateAsset, on_delete=models.PROTECT, null=True, editable=False, related_name="stamp_documents")
+    signing_snapshot = models.JSONField(default=dict, editable=False)
     rendered = models.TextField(blank=True)  # encrypted printable HTML
     rendering_state = models.CharField(max_length=15, default="pending")
     void = models.BooleanField(default=False)
     replaces = models.OneToOneField("self", on_delete=models.PROTECT, null=True)
+
+    def save(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        if self.pk:
+            old = type(self).objects.get(pk=self.pk)
+            if any(getattr(old, f) != getattr(self, f) for f in ("signature_asset_id", "stamp_asset_id", "signing_snapshot")):
+                raise ValidationError("Issuance signing snapshot is immutable; formal reissuance required")
+        super().save(*args, **kwargs)
 
     class Meta:
         constraints = [

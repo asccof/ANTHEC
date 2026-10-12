@@ -82,6 +82,8 @@ def artifact_for(document_id, language="ar"):
         sha256=hashlib.sha256(body).hexdigest(),
         metadata=metadata,
     )
+    if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+        s.audit(None, "certificate.assets.used", doc.serial, signature=str(doc.signature_asset.serial), stamp=str(doc.stamp_asset.serial), signing_snapshot=doc.signing_snapshot, language=language)
     s.audit(
         None,
         "document.pdf.rendered",
