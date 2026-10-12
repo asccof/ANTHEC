@@ -49,11 +49,17 @@ class PolicyLocaleMiddleware(LocaleMiddleware):
     def process_response(self, request, response):
         from django.conf import settings
         if (getattr(settings, "ANTHEEC_OWNER_TESTING", False)
-                and response.status_code == 404 and response.get("X-Robots-Tag")):
+                and getattr(response, "anthec_private_denial", False)):
             # The private gate runs before URL resolution. Do not convert its
             # denials into locale-prefixed Wagtail catch-all redirects.
             return response
         match = getattr(request, "resolver_match", None)
         if match and match.func.__module__.startswith("governance."):
             return response
-        return super().process_response(request, response)
+        result = super().process_response(request, response)
+        if getattr(settings, "ANTHEEC_OWNER_TESTING", False):
+            # LocaleMiddleware can replace the response with a redirect. Keep
+            # the private cache/indexing headers on that replacement as well.
+            result["Cache-Control"] = "no-store, private"
+            result["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        return result

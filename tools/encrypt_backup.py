@@ -1,7 +1,8 @@
 """Offline authenticated backup envelope. Never prints a key or database content.
 
-Use ANTHEC_BACKUP_KEY from an owner-controlled secret manager, separately from
-ANTHEEC_DATA_KEY. Restore output must stay on an encrypted private workstation.
+Supply both ANTHEC_BACKUP_KEY and the original ANTHEEC_DATA_KEY privately from
+the owner's secret manager so separation can be verified. Restore output must
+stay on an encrypted private workstation.
 This bounded, whole-file tool is for small owner-test exports, not large backups.
 """
 import argparse
@@ -14,8 +15,10 @@ MAX_BYTES = 128 * 1024 * 1024
 
 def transform(source, target, *, decrypt=False):
     key = os.environ.get("ANTHEC_BACKUP_KEY", "")
-    if not key or key == os.environ.get("ANTHEEC_DATA_KEY"):
+    data_key = os.environ.get("ANTHEEC_DATA_KEY", "")
+    if not key or not data_key or key == data_key:
         raise ValueError("A separate private backup key is required.")
+    Fernet(data_key.encode())  # require a valid data key, not a dummy comparison
     cipher = Fernet(key.encode())
     source = Path(source)
     limit = MAX_BYTES * 2 if decrypt else MAX_BYTES

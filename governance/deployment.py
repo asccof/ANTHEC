@@ -51,6 +51,12 @@ class OwnerTestingMiddleware:
         response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
         return response
 
+    @staticmethod
+    def denied(message):
+        response = HttpResponseNotFound(message)
+        response.anthec_private_denial = True
+        return response
+
     def restricted_response(self, request):
         path = request.path_info
         if path == "/health/" and request.method in {"GET", "HEAD"}:
@@ -79,12 +85,12 @@ class OwnerTestingMiddleware:
         user = request.user
         if not (user.is_authenticated and user.is_active and
                 Authority.objects.filter(pk=1, primary_id=user.pk).exists()):
-            return HttpResponseNotFound("Private owner testing")
+            return self.denied("Private owner testing")
         if path in {"/security/enroll/", "/security/challenge/"}:
             return self.get_response(request)
         if not user.is_verified() or request.session.get("authority_epoch") != 0:
             return redirect("/security/challenge/")
         if path.startswith(("/members/signup/", "/members/apply/", "/members/renew/",
                             "/registrations/", "/verify/", "/my-documents/")):
-            return HttpResponseNotFound("Unavailable during owner testing")
+            return self.denied("Unavailable during owner testing")
         return self.get_response(request)

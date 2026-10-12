@@ -82,8 +82,10 @@ Pro retains seven. Logical exports are retained by Render for seven days.
 Free PostgreSQL has no managed backup/recovery, so it is not the prepared plan.
 
 `tools/encrypt_backup.py encrypt SOURCE TARGET` wraps a private logical export
-with authenticated Fernet encryption, using `ANTHEC_BACKUP_KEY`. It creates an
-exclusive 0600 output, never prints secrets and rejects shared data/backup keys.
+with authenticated Fernet encryption. Supply **both** `ANTHEC_BACKUP_KEY` and
+the original deployment `ANTHEEC_DATA_KEY` privately from the owner's secret
+manager so their separation can be enforced. It creates an exclusive 0600
+output, never prints secrets and rejects missing, invalid or shared keys.
 `decrypt` similarly creates a new protected output; preserve plaintext only on
 an encrypted owner workstation and remove it after the approved restore drill.
 The small-export tool is bounded to 128 MiB of plaintext; do not use it as a

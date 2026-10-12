@@ -13,7 +13,9 @@ SPEC.loader.exec_module(MODULE)
 
 class BackupTests(unittest.TestCase):
     def test_authenticated_roundtrip_private_permissions_no_overwrite(self):
-        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {"ANTHEC_BACKUP_KEY": Fernet.generate_key().decode()}):
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {
+                "ANTHEC_BACKUP_KEY": Fernet.generate_key().decode(),
+                "ANTHEEC_DATA_KEY": Fernet.generate_key().decode()}):
             source, export, restored = (Path(folder) / n for n in ("source.dump", "export.fernet", "restored.dump"))
             source.write_bytes(b"synthetic-only-encrypted-database-export")
             MODULE.transform(source, export)
@@ -39,6 +41,13 @@ class BackupTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 MODULE.transform(source, target)
             os.environ["ANTHEC_BACKUP_KEY"] = Fernet.generate_key().decode()
+            os.environ["ANTHEEC_DATA_KEY"] = ""
+            with self.assertRaises(ValueError):
+                MODULE.transform(source, target)
+            os.environ["ANTHEEC_DATA_KEY"] = "invalid"
+            with self.assertRaises(ValueError):
+                MODULE.transform(source, target)
+            os.environ["ANTHEEC_DATA_KEY"] = key
             with patch.object(MODULE, "MAX_BYTES", 4), self.assertRaises(ValueError):
                 MODULE.transform(source, target)
             self.assertFalse(target.exists())

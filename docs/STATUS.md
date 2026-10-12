@@ -2,6 +2,8 @@
 
 ## 2026-10-12 — private Render deployment preparation
 
+Initial preparation head `e93b42a` passed PostgreSQL 16 CI 38275837743 (183 application/CMS tests without skips, eight metadata/backup tests, Docker build and isolated export/encryption/restore/decryption drill). Exact-head Codex review identified two P2 findings: a generic noindex header suppressed legitimate owner locale redirects, and backup-key separation could not be checked when the data key was absent. Both are corrected with regression coverage; the corrected final head requires fresh CI and exact-head review. No release approval is inferred from the initial green CI.
+
 Owner authorized preparation on live main `6f9c22e227334d2bf480038cd3bc3e7ccc7afa09`, after PR #23 merged. Branch `eng/private-production-readiness` preserves existing drafts, artwork, certificate wording and POL-01–08. Private settings, non-root Docker/static build, separate PG16 Blueprint, primary-only MFA gate, disabled public workflows/payments/official issuance, disabled ephemeral filesystem uploads and an offline encrypted-backup/isolated CI restore drill are prepared. See PRIVATE_DEPLOYMENT_PREPARATION.md for architecture, current public costs, domain evidence and remaining gates. Render is not connected; no resources/DNS/Tighri changes, merge, paid subscription or deployment performed. Actual ANTHEC.COM RDAP indicates an existing registration; ownership/acquisition price is unresolved. Tests, CI, exact external review, owner acceptance and live recovery are separate milestones; preparation alone does not satisfy them.
 
 ## 2026-10-10 — independent baseline and multilingual CMS increment

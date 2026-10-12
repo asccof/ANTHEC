@@ -32,7 +32,7 @@ class OwnerDeploymentTests(TestCase):
         self.other = synthetic_user("synthetic-other", True)
 
     def test_anonymous_cannot_read_or_register(self):
-        for url in ("/ar/", "/fr/", "/en/", "/admin/", "/security/enroll/",
+        for url in ("/", "/ar/", "/fr/", "/en/", "/admin/", "/security/enroll/",
                     "/members/signup/", "/members/apply/", "/registrations/request/",
                     "/verify/", "/my-documents/1/", "/private-media/secret.png",
                     "/private-certificate-assets/00000000-0000-0000-0000-000000000001/"):
@@ -73,6 +73,14 @@ class OwnerDeploymentTests(TestCase):
         self.admin.is_active = False
         self.admin.save(update_fields=["is_active"])
         self.assertEqual(self.client.get("/admin/").status_code, 404)
+
+    def test_verified_owner_root_redirect_keeps_locale_and_private_headers(self):
+        self.http_login()
+        for language in ("ar", "fr", "en"):
+            response = self.client.get("/", HTTP_ACCEPT_LANGUAGE=language)
+            self.assertRedirects(response, f"/{language}/", fetch_redirect_response=False)
+            self.assertIn("no-store", response["Cache-Control"])
+            self.assertIn("noindex", response["X-Robots-Tag"])
 
     def test_login_throttle_does_not_trust_forwarding_header(self):
         from django.test import RequestFactory

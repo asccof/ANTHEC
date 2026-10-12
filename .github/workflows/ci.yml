@@ -43,6 +43,8 @@ jobs:
       - run: python tools/validate_recovery.py
         env:
           CI: 'true'
+          # Public synthetic fixture from settings.test; never a deployed key.
+          ANTHEEC_DATA_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
   container:
     runs-on: ubuntu-latest
     steps:
