@@ -1,5 +1,17 @@
 # Execution ledger
 
+## 2026-10-12 — private Render deployment preparation
+
+The prepared PostgreSQL disk is explicitly 1 GB with storage autoscaling disabled, matching the $13 monthly baseline; Render's larger default disk would otherwise increase cost. The revised Blueprint passes the official JSON Schema. No service or storage subscription was created.
+
+Head `e5a02f3` passed corrected PostgreSQL/Docker/restore CI 38277825317. Exact-head review identified a Render compatibility P2: Blueprint database names may acquire a generated suffix. Runtime now validates the strict ANTHEC owner-testing namespace including an optional alphanumeric suffix and propagates the actual URL database name instead of targeting a hard-coded name. Tests cover the generated name and reject Tighri/unrelated or malformed names. Fresh final-head CI and exact review remain required.
+
+Head `e48b72a` passed 184 PostgreSQL tests without skips, eight metadata/backup tests, Docker build and isolated restore CI 38277104832. Its external review found an additional P2: the production settings rejected the public fixture key by text rather than decoded key bytes. That check now uses a constant-time decoded-byte comparison and tests accepted whitespace variants. Final corrected-head CI and exact external review remain mandatory; no production/owner acceptance is claimed.
+
+Initial preparation head `e93b42a` passed PostgreSQL 16 CI 38275837743 (183 application/CMS tests without skips, eight metadata/backup tests, Docker build and isolated export/encryption/restore/decryption drill). Exact-head Codex review identified two P2 findings: a generic noindex header suppressed legitimate owner locale redirects, and backup-key separation could not be checked when the data key was absent. Both are corrected with regression coverage; the corrected final head requires fresh CI and exact-head review. No release approval is inferred from the initial green CI.
+
+Owner authorized preparation on live main `6f9c22e227334d2bf480038cd3bc3e7ccc7afa09`, after PR #23 merged. Branch `eng/private-production-readiness` preserves existing drafts, artwork, certificate wording and POL-01–08. Private settings, non-root Docker/static build, separate PG16 Blueprint, primary-only MFA gate, disabled public workflows/payments/official issuance, disabled ephemeral filesystem uploads and an offline encrypted-backup/isolated CI restore drill are prepared. See PRIVATE_DEPLOYMENT_PREPARATION.md for architecture, current public costs, domain evidence and remaining gates. Render is not connected; no resources/DNS/Tighri changes, merge, paid subscription or deployment performed. Actual ANTHEC.COM RDAP indicates an existing registration; ownership/acquisition price is unresolved. Tests, CI, exact external review, owner acceptance and live recovery are separate milestones; preparation alone does not satisfy them.
+
 ## 2026-10-10 — independent baseline and multilingual CMS increment
 
 Repository: `asccof/ANTHEEC`; main bootstrap: `4df3f6d`. Issue #1; feature branch `eng/001-003-multilingual-foundation`. Repository is public: source attachments and personal/contact data are excluded. No MHIOS files or governance imported.

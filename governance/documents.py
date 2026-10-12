@@ -73,6 +73,8 @@ def printable(doc, language="ar"):
 
 @transaction.atomic
 def render_outbox(outbox_id):
+    from .deployment import require_issuance_enabled
+    require_issuance_enabled()
     row = (
         Outbox.objects.select_for_update().select_related("document").get(pk=outbox_id)
     )

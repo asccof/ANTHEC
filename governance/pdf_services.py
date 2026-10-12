@@ -65,6 +65,8 @@ def locked_document(document_id):
 
 @transaction.atomic
 def artifact_for(document_id, language="ar"):
+    from .deployment import require_issuance_enabled
+    require_issuance_enabled()
     language = language if language in pdf_design.WORDS else "ar"
     doc = locked_document(document_id)
     status = s.document_status(doc)

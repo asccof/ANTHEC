@@ -6,7 +6,7 @@ from wagtail import urls as wagtail_urls
 
 
 def health(request):
-    return JsonResponse({"project": "ANTHEEC", "mode": "development", "status": "ok"})
+    return JsonResponse({"project": "ANTHEC", "status": "ok"})
 
 
 urlpatterns = [

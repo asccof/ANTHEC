@@ -131,6 +131,9 @@ def command(action, primary_only=False):
     def decorator(fn):
         @wraps(fn)
         def wrapper(request, *, key, **payload):
+            if action in {"payment.verify", "refund.decide"}:
+                from .deployment import require_payments_enabled
+                require_payments_enabled()
             if not isinstance(key, str) or not key or len(key) > 120:
                 raise ValidationError("Invalid command key")
             with transaction.atomic():
@@ -284,6 +287,8 @@ def change_price(*, actor, tier, amount, starts_at):
 
 
 def create_application(person, tier, previous=None):
+    from .deployment import require_applications_enabled
+    require_applications_enabled()
     if tier not in TIERS or person.verification_notice_at is None:
         raise ValidationError(
             "Valid tier and verification notice acknowledgment required"
@@ -354,6 +359,8 @@ def issue(
     version=1,
     replaces=None
 ):
+    from .deployment import require_issuance_enabled
+    require_issuance_enabled()
     token = secrets.token_urlsafe(32)
     code = secrets.token_hex(8).upper()
     name = (
@@ -595,6 +602,8 @@ def decide_refund(*, actor, payment_id, amount, approved, reason):
 def register(
     activity, person, user, *, guardian_name="", guardian_capacity="", consent=False
 ):
+    from .deployment import require_applications_enabled
+    require_applications_enabled()
     if not user.is_authenticated or not user.is_active:
         raise PermissionDenied("Authenticated applicant required")
     if person.minor:
