@@ -333,8 +333,10 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         else:
             center += pending_box(195, 158, 41, 16, ("بانتظار التوقيع الأصلي", "Signature authentique attendue", "Awaiting authentic signature")[idx])
             center += pending_box(242, 158, 22, 16, ("بانتظار الطابع الأصلي", "Cachet authentique attendu", "Awaiting authentic stamp")[idx])
-        identity = (doc.signing_snapshot if not participation else {}) or signing.SIGNATORY
-        name = identity.get("ar_name", signing.SIGNATORY["ar_name"]) if rtl else identity.get("latin_name", signing.SIGNATORY["latin_name"])
+        identity = (doc.signing_snapshot if not participation else {}) or {}
+        if not all(identity.get(k) for k in ("ar_name", "latin_name")):
+            identity = signing.signatory_identity()
+        name = identity.get("ar_name", "بانتظار هوية الموقّع المعتمدة") if rtl else identity.get("latin_name", "Awaiting approved signatory identity")
         authority_line = ("عن " + AR, "Pour l’" + FR, "For ANTHEC")[idx]
         center += txt(authority_line, 191, 176, 78, 8, 7 if rtl else 6.3, fg,
                       "Naskh" if rtl else "IBM", alignment="right" if rtl else "center")

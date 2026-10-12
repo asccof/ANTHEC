@@ -81,7 +81,7 @@ class CertificateAssetTests(TestCase):
         self.assertFalse(PDFArtifact.objects.exists())
         body, metadata = design.render(doc, "en", proof=True)
         text = PdfReader(io.BytesIO(body)).pages[0].extract_text()
-        self.assertIn("Driss Helali", text); self.assertIn("Awaiting authentic signature", text)
+        self.assertIn("Synthetic President", text); self.assertIn("Awaiting authentic signature", text)
         self.assertEqual(metadata["signing_status"], "pending_authentic_assets")
         self.assertNotIn("criteria", text)
         approved_test_assets(self.admin)
@@ -107,7 +107,7 @@ class CertificateAssetTests(TestCase):
     def test_participation_remains_proof_only_and_names_are_localized(self):
         counts = (Document.objects.count(), CertificateAsset.objects.count())
         proof = design.ParticipationProof("Synthetic Participant", "Synthetic Training", "ANTHEC", "2026-10-12", "2026-10-13", "16 hours - synthetic")
-        for language, name in (("ar", "إدريس هلالي"), ("fr", "Driss Helali"), ("en", "Driss Helali")):
+        for language, name in (("ar", "رئيس تجريبي"), ("fr", "Synthetic President"), ("en", "Synthetic President")):
             body, metadata = design.render_participation_proof(proof, language)
             text = PdfReader(io.BytesIO(body)).pages[0].extract_text()
             if language != "ar": self.assertIn(name, text)

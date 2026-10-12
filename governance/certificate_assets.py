@@ -6,13 +6,22 @@ import io
 import warnings
 from PIL import Image, ImageOps, UnidentifiedImageError
 from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.utils import timezone
 from . import services as s
 from .models import Authority, CertificateAsset
 
 MAX_BYTES = 3 * 1024 * 1024
 CERTIFICATE_KINDS = {"professional_certificate", "accreditation_certificate"}
-SIGNATORY = {"ar_name": "إدريس هلالي", "latin_name": "Driss Helali", "capacity": "president"}
+def signatory_identity():
+    """Owner-supplied protected runtime configuration, never public person data."""
+    value = getattr(settings, "ANTHEEC_CERTIFICATE_SIGNATORY", None)
+    if value is None:
+        return {}
+    if not isinstance(value, dict) or value.get("capacity") != "president" or any(not isinstance(value.get(k), str) or not value[k].strip() or len(value[k]) > 120 for k in ("ar_name", "latin_name")):
+        raise ValidationError("Approved localized signatory configuration required")
+    return {k: value[k].strip() for k in ("ar_name", "latin_name", "capacity")}
+
 
 
 class PendingCertificateAssets(ValidationError):
@@ -83,7 +92,7 @@ def snapshot_for(kind):
     Authority.objects.select_for_update().filter(pk=1).first()
     assets = [CertificateAsset.objects.filter(kind=k, state="approved").order_by("-reviewed_at", "-pk").first() for k in ("signature", "stamp")]
     signature, stamp = assets
-    snapshot = {**SIGNATORY, "signature_sha256": signature.sha256 if signature else None, "stamp_sha256": stamp.sha256 if stamp else None}
+    snapshot = {**signatory_identity(), "signature_sha256": signature.sha256 if signature else None, "stamp_sha256": stamp.sha256 if stamp else None}
     return signature, stamp, snapshot
 
 
@@ -96,6 +105,8 @@ def asset_bytes(row):
 
 def ready_assets(doc):
     snapshot = doc.signing_snapshot or {}
+    if snapshot.get("capacity") != "president" or not all(isinstance(snapshot.get(k), str) and snapshot[k].strip() for k in ("ar_name", "latin_name")):
+        raise PendingCertificateAssets("Approved issuance signatory identity missing; formal reissuance required")
     rows = (doc.signature_asset, doc.stamp_asset)
     if not all(rows):
         raise PendingCertificateAssets("Authentic approved issuance signature/stamp missing; formal reissuance required")
