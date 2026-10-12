@@ -3,7 +3,7 @@
 import io
 from datetime import timedelta
 from unittest.mock import patch
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from pypdf import PdfReader
 from . import services as s, pdf_design as design, pdf_services as pdf
@@ -123,3 +123,14 @@ class CertificateLayoutTests(TestCase):
         doc.signing_snapshot = {**doc.signing_snapshot, "latin_name": "W" * 120}
         with self.assertRaises(design.LayoutError):
             design.render(doc, "en", proof=True)
+
+    @override_settings(ANTHEEC_CERTIFICATE_SIGNATORY=None)
+    def test_missing_private_identity_remains_a_readable_unsigned_preview(self):
+        doc = s.issue("professional_certificate", accreditation=self.accreditation)
+        for language in ("ar", "fr", "en"):
+            with self.subTest(language=language):
+                body, metadata = self.render_checked(
+                    lambda: design.render(doc, language, proof=True),
+                    "professional_certificate", language,
+                )
+                self.assertEqual(metadata["signing_status"], "pending_authentic_assets")

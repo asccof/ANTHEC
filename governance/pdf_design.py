@@ -343,7 +343,10 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
                       "Naskh" if rtl else "IBM", alignment="right" if rtl else "center")
         center += txt(("الرئيس", "Le Président", "President")[idx], 191, 188, 64, 4.5, 10, fg,
                       "Naskh" if rtl else "IBM", alignment="right" if rtl else "center")
-        center += txt(name, 191, 192.5, 64, 6, 14 if rtl else 13, fg,
+        # The unsigned missing-identity notice is longer than a normal name;
+        # keep it readable in the same safe slot without clipping the preview.
+        name_size = (14 if rtl else 13) if identity.get("ar_name" if rtl else "latin_name") else 10.5
+        center += txt(name, 191, 192.5, 64, 6, name_size, fg,
                       "NaskhB" if rtl else "ClassicB", alignment="right" if rtl else "center")
         proof_note = ("نموذج للمراجعة — غير موقّع وغير مختوم", "Maquette — non signée et non cachetée", "Review proof — unsigned and unstamped")[idx] if signature_pending else "SPECIMEN / نموذج تجريبي"
         if participation:
