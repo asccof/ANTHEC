@@ -9,6 +9,12 @@ from .services import decrypt, encrypt, public_document
 
 
 def printable(doc, language="ar"):
+    if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+        # HTML is a non-credential notice only. Certificate credentials and
+        # approved artwork are delivered exclusively by the protected PDF path.
+        lang = language if language in {"ar", "fr", "en"} else "ar"
+        notice = {"ar": "هذه ليست شهادة صادرة أو موقعة. استعمل مسار PDF المحمي؛ التوقيع والطابع المعتمدان عند الإصدار مطلوبان.", "fr": "Ceci n’est pas un certificat émis ou signé. Utilisez le PDF protégé ; signature et cachet approuvés à l’émission sont requis.", "en": "This is not an issued or signed certificate. Use the protected PDF route; approved issuance signature and stamp are required."}[lang]
+        return f'<!doctype html><html lang="{lang}" dir="{"rtl" if lang == "ar" else "ltr"}"><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>ANTHEC - NON-CREDENTIAL NOTICE</title><body><h1>ANTHEC</h1><p>{escape(notice)}</p></body></html>'
     data = public_document(doc)
     credentials = decrypt(doc.credentials)
     # Fragment is never sent in HTTP request URLs/referrers/access logs.
@@ -84,6 +90,7 @@ def render_outbox(outbox_id):
             row.document.save(update_fields=["rendered", "rendering_state"])
         from .pdf_services import artifact_for, InactiveDocument
         from .pdf_design import PendingPhoto, LayoutError
+        from .certificate_assets import PendingCertificateAssets
         from .portraits import CARD_KINDS
 
         if row.document.kind in CARD_KINDS | {
@@ -96,6 +103,9 @@ def render_outbox(outbox_id):
             except PendingPhoto:
                 # HTML stays backward compatible; photo PDFs fail closed until reissue.
                 row.last_error = "pending_photo"
+            except PendingCertificateAssets:
+                row.last_error = "pending_assets"
+                retire_pdf = True  # Immutable missing snapshot cannot heal without reissuance.
             except LayoutError:
                 row.last_error = "pending_layout"
             except InactiveDocument as error:
@@ -103,7 +113,7 @@ def render_outbox(outbox_id):
                 retry_pdf = error.retryable
                 retire_pdf = not error.retryable
         row.state = "retired" if retire_pdf else "failed" if retry_pdf else "rendered"
-        if row.last_error not in {"pending_photo", "pending_layout", "inactive_document"}:
+        if row.last_error not in {"pending_photo", "pending_layout", "pending_assets", "inactive_document"}:
             row.last_error = ""
     except Exception:
         row.state = "failed"

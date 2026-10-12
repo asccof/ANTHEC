@@ -1,0 +1,48 @@
+# Final focused refinement - owner review only
+
+Source: asccof/ANTHEC main 6b6ab8d43d68abcd079caed2a2edf684dd4925b8; continue draft PR #23 from c62110ab6272f593e13faa8bbaec0b35e53c31a3. Owner mandate of 2026-10-12 authorizes color/content/layout refinement and a protected signature/stamp workflow, not merge, deployment or participation issuance.
+
+## Changes
+
+Affiliate dominant field is Deep Petrol Teal #145B67 on both sides; Advanced is Royal Deep Purple #49345F. Champagne/antique gold, portraits, QR quiet zones and composition are retained. Other category backgrounds, President PNG, original emblem/fonts and general display labels are unchanged.
+
+Certificate language is mapped to the current data model. Professional wording omits the unsupported assertion that assessment criteria were independently satisfied: POL-01 links professional accreditation to accredited membership, but Accreditation has no structured assessment finding or precise speciality field. Generic accreditation shows actual professional/individual/institution/course subtype and subject, recorded issue date and validity; an unrecorded detailed scope/decision number is not invented. Participation uses Attestation de participation in French and remains a pure NOT ISSUED proof with a non-operational QR and optional duration. Full AR/FR/EN content comparison belongs to the private owner review package, not the source attachment.
+
+Owner-approved default signatory: [owner-approved Arabic identity in private configuration] / [owner-approved Latin identity in private configuration], President. Arabic/French association names are owner-approved; English header is still a proposed translation, not an official legal denomination. Name/title/association block is localized and distinct from specimen holder names. Raster signature artwork is not represented as a qualified electronic signature.
+
+## Protected artwork using existing authority
+
+CertificateAsset is additive encrypted PNG storage with random UUID, uploaded_by/reviewed_by evidence, SHA-256 and explicit pending/approved/rejected review. Upload, review and replacement audit reuse services.command(primary_only=True): existing primary administration, MFA, session epoch and sensitive-operation reauthentication. No new role, delegation, second-approval policy or accreditation rule is created.
+
+Only original JPEG/PNG single-frame input <=3 MiB, <=16 million pixels, minimum short side 64 / long side 300 pixels is accepted. Metadata is stripped and transparency/aspect ratio preserved without cropping or upscaling; longest dimensions are bounded to 2000. Originals/filenames are not stored. Image content remains encrypted in the protected DB; no public media route. Management: /operations/certificate-assets/. Image access: authenticated/MFA primary-only /private-certificate-assets/<random-uuid>/, no-store/nosniff, view audited. Review choices and previews use the identical capped identifier set.
+
+Reviewed asset rows are immutable through the application workflow. Replacement means a new approved row and a replacement audit, not editing past bytes. Approved issuance commands serialize on existing Authority, choose approved artwork and bind PROTECT FKs, digests and the signatory identity to the new Document. Its signing snapshot cannot be rebound by save; no retrospective assignment to existing records is performed. The model migration leaves legacy records empty/NULL, never guesses their assets.
+
+PDF generation checks approved kinds, stored image integrity and captured digests. Missing signing assets prevent creation of a new certificate PDFArtifact, with retired/pending_assets worker feedback and protected HTTP 409. Explicit ephemeral previews/proofs can display labeled awaiting-authentic-signature/stamp boxes. A ready signed certificate has actual raster assets rather than unresolved placeholders; placement clears reference, dates, signatory name and body. New artifact use is audited with exact asset references/digests. Existing encrypted PDFArtifacts remain immutable; historical unsigned certificate proofs stay archived and can be inspected as marked previews, but are not delivered as a signed edition. No retroactive deletion, rewriting or asset assignment occurs. Signed-artifact replay requires matching approved captured assets and metadata. Adoption of new assets by an old issuance requires the existing controlled reissuance lifecycle. Financial/membership/eligibility and public verification fields are unchanged.
+
+Authentic owner signature/stamp images are not yet available. No imitated signature or invented seal is generated, uploaded or committed. Unit image fixtures are plain colored rectangles, explicitly not imitations and excluded from owner proofs. A primary upload/review workflow is prepared in the draft; it is not deployed or enabled for real operations.
+
+## Gates
+
+All 33 actual-size PDFs / 57 faces in AR/FR/EN must be regenerated and checked for fonts, QR, dimensions, Arabic/numeric handling, safe margins and full text. Owner deliverables include a complete contact sheet, collection, content comparison, pending-assets status and exact-head CI/Codex evidence. Physical cut/duplex/foil/CMYK/PDF-X certification remains unclaimed. Production settings and participation issuance remain disabled. No final visual approval or merge.
+
+Legacy certificate HTML is a non-credential notice containing no holder reference, verification code or QR token. All certificate HTML download requests redirect to the protected PDF endpoint, which rechecks authorization/lifecycle and returns 409 if an artifact is unavailable. Archived encrypted HTML is preserved but never exposed as a current certificate. This closes the unsigned HTML bypass reported by Codex on initial head 986cf7d3acb6a224b83f7701709384ebf999c4d3.
+
+Permanently absent captured assets are terminal worker work: the job retires with pending_assets diagnostics and is excluded from later batches. A new formally reissued Document has a new job and can capture approved assets; no old snapshot is mutated. The 100-unsigned-job regression proves newer work is not starved.
+
+Official identity is supplied via protected runtime configuration ANTHEEC_CERTIFICATE_SIGNATORY_JSON (ar_name, latin_name, capacity=president), and captured in the immutable private issuance snapshot. Missing identity blocks a signed edition. Public tests use synthetic identity; private owner proof generation supplies the exact approved spelling. No owner signature/stamp assets, secret/env files or actual identity are added to public source. Production remains blocked.
+
+
+## 2026-10-12 - focused certificate typography follow-up
+
+Owner accepted the eight card directions in principle and authorized certificate presentation only on existing draft PR #23, baseline 55b855a7ad5c6353cfd297004ccfc4c50a6ea47d. Live main remains 6b6ab8d43d68abcd079caed2a2edf684dd4925b8. Delivered certificate-content comparison was inspected; wording, recorded scope limitations, private signatory configuration and all issuing/access rules remain unchanged.
+
+Baseline: certificate main statement 11.5 pt AR / 9.5 pt FR-EN; legal text 10.2 / 8.8 pt (participation 9 / 8.2); reference and date values 8 pt; labels 7.2 pt. Wide vertical gaps and small lower metadata underused the central area.
+
+Minimum change: main statement 14 / 13 pt, legal text 12 / 11.5 pt, holder 38 / 36 pt, reference/dates 11 pt, metadata labels 9.5 pt. Title 32 / 28 pt; association header 13 / 11.5 pt. Main text spans 223 mm, with shorter central gaps, grouped bottom metadata and clear QR/image slots. Unsigned proof note is lifted above metadata, away from bottom ornament. Signature remains 41 x 16 mm; stamp becomes 24 x 18 mm; authentic assets use the exact same slots as placeholders. Name block stops before the right ornament. Participation non-operational QR caption shares the reference-value row, clearing the bottom-left ornament. No background/logo/font/wording changes.
+
+Certificate-only template version owner-review-v5.2-certificate-typography is recorded in new artifact metadata/version/audit; card VERSION remains owner-review-v5.1. Existing artifacts are not rewritten. Certificate reflow has minimum readable sizes and fixed-text overflow fails explicit layout review, rather than clipping or silently shrinking essential fields. Card reflow is equivalent to its baseline.
+
+Four synthetic layout regressions cover all nine language/type combinations, actual text-line collisions and overflow, text-free QR/signature/stamp slots, signed-image geometry/version capture, rejection of an overlong signatory, and a readable unsigned preview when private identity configuration is absent. Plain image-integrity rectangles remain test-only. Existing protected PDF and certificate-asset regressions are retained. PostgreSQL CI and exact-head Codex review must pass before the follow-up is described as technically validated; visual approval remains the owner's gate.
+
+Owner delivery is focused before/after comparison and nine revised A4 proofs at 300 dpi; previously accepted card proofs are reused unchanged, not unnecessarily regenerated. Production, participation issuance, merging and deployment remain unauthorized. Naskh Arabic visual shaping is retained; the previously reported PDF copy/search ToUnicode limitation is not claimed fixed by typography changes. Physical print acceptance still requires a real print test.

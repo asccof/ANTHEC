@@ -70,24 +70,31 @@ def artifact_for(document_id, language="ar"):
     status = s.document_status(doc)
     if status in {"cancelled", "suspended", "expired"}:
         raise InactiveDocument(status, retryable=retryable_inactive(doc))
+    if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+        from .certificate_assets import ready_assets
+        ready_assets(doc)
     previous = PDFArtifact.objects.filter(document=doc, language=language).first()
     if previous:
+        if doc.kind in {"professional_certificate", "accreditation_certificate"} and (previous.metadata.get("signing_status") != "approved_raster_assets" or previous.metadata.get("signing_snapshot") != doc.signing_snapshot):
+            raise ValidationError("Historical unsigned artifact is archived; formal reissuance required")
         return previous
     body, metadata = pdf_design.render(doc, language)
     row = PDFArtifact.objects.create(
         document=doc,
         language=language,
-        template_version=pdf_design.VERSION,
+        template_version=metadata["template"],
         payload=s.encrypt({"pdf": base64.b64encode(body).decode()}),
         sha256=hashlib.sha256(body).hexdigest(),
         metadata=metadata,
     )
+    if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+        s.audit(None, "certificate.assets.used", doc.serial, signature=str(doc.signature_asset.serial), stamp=str(doc.stamp_asset.serial), signing_snapshot=doc.signing_snapshot, language=language)
     s.audit(
         None,
         "document.pdf.rendered",
         doc.serial,
         language=language,
-        template=pdf_design.VERSION,
+        template=metadata["template"],
     )
     return row
 

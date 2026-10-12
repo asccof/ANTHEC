@@ -96,3 +96,11 @@ OTP_TOTP_THROTTLE_FACTOR = 1
 SESSION_COOKIE_AGE = 3600
 
 ANTHEEC_PUBLIC_ORIGIN = "http://127.0.0.1:8000" # local synthetic documents only
+
+# Approved identity is supplied privately, not committed as actual person data.
+import json as _signatory_json
+try:
+    ANTHEEC_CERTIFICATE_SIGNATORY = _signatory_json.loads(os.environ["ANTHEEC_CERTIFICATE_SIGNATORY_JSON"]) if os.environ.get("ANTHEEC_CERTIFICATE_SIGNATORY_JSON") else None
+except (ValueError, TypeError) as exc:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("Invalid private certificate signatory configuration") from exc

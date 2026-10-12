@@ -1,5 +1,6 @@
 from django.urls import path
 from . import (
+    certificate_asset_views,
     pdf_views,
     portrait_views,
     security,
@@ -10,6 +11,8 @@ from . import (
 )
 
 urlpatterns = [
+    path("operations/certificate-assets/", certificate_asset_views.manage, name="certificate_assets"),
+    path("private-certificate-assets/<uuid:serial>/", certificate_asset_views.image, name="certificate_asset_image"),
     path(
         "my-documents/<int:document_id>/prepare/",
         pdf_views.prepare,

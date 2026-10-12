@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoes
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
@@ -160,6 +160,13 @@ def download(request, document_id):
                 services.authorize(request)
         except (PermissionDenied, ObjectDoesNotExist):
             return HttpResponse(status=404)
+    if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+        # Never expose credential-bearing unsigned HTML, including archived
+        # pre-signature records. The PDF endpoint rechecks access and lifecycle.
+        from django.urls import reverse
+        from .member_labels import vocabulary
+        language, _ = vocabulary(request.GET.get("lang", "ar"))
+        return redirect(reverse("document_pdf", args=[doc.pk])+"?lang="+language)
     html = printable(doc, language=request.GET.get("lang", "ar"))
     response = HttpResponse(html, content_type="text/html; charset=utf-8")
     response["Content-Disposition"] = (

@@ -82,6 +82,11 @@ def download(request, document_id, preview=False):
                     }[lang],
                     status=409,
                 )
+            if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+                from .certificate_assets import ready_assets
+                ready_assets(doc)
+                if artifact.metadata.get("signing_status") != "approved_raster_assets" or artifact.metadata.get("signing_snapshot") != doc.signing_snapshot:
+                    raise ValidationError("Archived unsigned certificate is not a signed edition")
             body = pdf_services.bytes_for(artifact)
     except pdf_design.PendingPhoto:
         return HttpResponse(
@@ -145,9 +150,9 @@ def prepare(request, document_id):
         # Reuse localized pending-photo/layout feedback without creating an artifact.
         return HttpResponse(
             {
-                "ar": "تعذر التوليد؛ راجع الصورة المقبولة والتكوين. يلزم إعادة إصدار للوثيقة دون صورة.",
-                "fr": "Génération impossible : vérifiez le portrait approuvé et la mise en page. Réémission requise sans portrait à l’émission.",
-                "en": "Generation unavailable. Check the approved portrait and layout; reissuance is required when the issuance snapshot is missing.",
+                "ar": "تعذر التوليد؛ راجع صورة الإصدار والتكوين والتوقيع والطابع المعتمدين. يلزم إعادة إصدار عند غياب لقطة الإصدار.",
+                "fr": "Génération impossible : vérifiez le portrait, la mise en page, la signature et le cachet approuvés à l’émission. Réémission requise si un instantané manque.",
+                "en": "Generation unavailable. Check approved issuance portrait, layout, signature and stamp; formal reissuance is required when an issuance snapshot is missing.",
             }[language],
             status=409,
         )

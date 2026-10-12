@@ -134,11 +134,14 @@ class MembershipJourneyTests(TestCase):
                 self.assertNotContains(detail, "PRIVATE-SYNTHETIC")
                 for doc in original:
                     response = self.member.get(f"/my-documents/{doc.pk}/?lang={lang}")
-                    self.assertContains(response, f'lang="{lang}"')
-                    self.assertContains(response, labels[doc.kind])
-                    self.assertContains(response, labels["association_notice"])
                     if doc.kind == "professional_certificate":
-                        self.assertContains(response, labels["professional"])
+                        self.assertEqual(response.status_code, 302)
+                        self.assertIn(f"/my-documents/{doc.pk}/pdf/", response["Location"])
+                        self.assertEqual(self.member.get(response["Location"]).status_code, 409)
+                    else:
+                        self.assertContains(response, f'lang="{lang}"')
+                        self.assertContains(response, labels[doc.kind])
+                        self.assertContains(response, labels["association_notice"])
                     credentials = s.decrypt(doc.credentials)
                     public = Client(enforce_csrf_checks=True)
                     public.get("/verify/?lang=" + lang)

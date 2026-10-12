@@ -26,6 +26,8 @@ class PDFConcurrencyTests(TransactionTestCase):
     def setUp(self):
         self.admin = synthetic_user("synthetic-director", True)
         Authority.objects.create(primary=self.admin)
+        from .test_certificate_assets import approved_test_assets
+        approved_test_assets(self.admin)
         self.person = Person.objects.create(full_name="Synthetic Concurrent Holder")
         raw = io.BytesIO()
         Image.new("RGB", (600, 750), "blue").save(raw, "JPEG")
