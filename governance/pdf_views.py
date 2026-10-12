@@ -82,6 +82,11 @@ def download(request, document_id, preview=False):
                     }[lang],
                     status=409,
                 )
+            if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+                from .certificate_assets import ready_assets
+                ready_assets(doc)
+                if artifact.metadata.get("signing_status") != "approved_raster_assets" or artifact.metadata.get("signing_snapshot") != doc.signing_snapshot:
+                    raise ValidationError("Archived unsigned certificate is not a signed edition")
             body = pdf_services.bytes_for(artifact)
     except pdf_design.PendingPhoto:
         return HttpResponse(

@@ -159,3 +159,18 @@ class CertificateAssetTests(TestCase):
         Document.objects.filter(pk=doc.pk).update(rendered=s.encrypt("ARCHIVED-UNSIGNED-HTML"), rendering_state="ready")
         self.assertEqual(self.client.get(f"/my-documents/{doc.pk}/?lang=fr").status_code, 302)
         doc.refresh_from_db(); self.assertEqual(s.decrypt(doc.rendered), "ARCHIVED-UNSIGNED-HTML")
+
+    def test_historical_unsigned_pdf_is_preserved_but_not_delivered_as_signed(self):
+        holder = synthetic_user("synthetic-legacy-certificate-owner")
+        self.person.user = holder; self.person.save()
+        doc = s.issue("accreditation_certificate", accreditation=self.acc)
+        body, _ = design.render(doc, "en", proof=True)
+        legacy = PDFArtifact.objects.create(document=doc, language="en", template_version="historical-unsigned", payload=s.encrypt({"pdf": base64.b64encode(body).decode()}), sha256=hashlib.sha256(body).hexdigest(), metadata={})
+        with self.assertRaises(a.PendingCertificateAssets): pdf.artifact_for(doc.pk, "en")
+        self.client.force_login(holder)
+        self.assertEqual(self.client.get(f"/my-documents/{doc.pk}/pdf/?lang=en").status_code, 409)
+        self.assertEqual(self.client.get(f"/my-documents/{doc.pk}/preview/?lang=en").status_code, 200)
+        approved_test_assets(self.admin)
+        self.assertEqual(self.client.get(f"/my-documents/{doc.pk}/pdf/?lang=en").status_code, 409)
+        legacy.refresh_from_db(); self.assertEqual(pdf.bytes_for(legacy), body)
+        self.assertEqual(PDFArtifact.objects.count(), 1)

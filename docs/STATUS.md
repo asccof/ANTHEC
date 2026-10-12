@@ -145,3 +145,6 @@ Local full suite before the final HTTP-upload regression: 165 tests pass with 18
 
 
 Initial signing-refinement head 986cf7d3acb6a224b83f7701709384ebf999c4d3 passed PostgreSQL CI 38228323455. Codex found a P1 unsigned-HTML bypass: credential-bearing legacy HTML could be downloaded even when PDF generation required approved assets. Certificate HTML is now a non-credential notice without identifiers/codes/tokens, its download route redirects to protected PDF, and missing-assets outbox work remains failed/pending_assets. Archived HTML/PDF bytes are preserved. Added a holder HTTP/worker regression proving 409 with no unsigned credential delivery. Updated-head CI/Codex review required.
+
+
+The same signed-edition gate also covers cached legacy certificate PDF delivery/replay: approved captured asset pairs and matching signing metadata are required. Historical unsigned bytes remain archived unchanged, with explicit marked preview and formal reissuance for adoption. Added a legacy PDF regression proving 409 before/after asset replacement, 200 marked preview and unchanged archived payload. No membership/accreditation status or public verification policy change.
