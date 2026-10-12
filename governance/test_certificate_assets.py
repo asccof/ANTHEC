@@ -147,7 +147,7 @@ class CertificateAssetTests(TestCase):
                 self.assertNotIn(value, notice)
         outbox = Outbox.objects.get(document=doc)
         render_outbox(outbox.pk); outbox.refresh_from_db()
-        self.assertEqual(outbox.state, "failed")
+        self.assertEqual(outbox.state, "retired")
         self.assertEqual(outbox.last_error, "pending_assets")
         self.assertFalse(PDFArtifact.objects.exists())
         self.client.force_login(holder)
@@ -174,3 +174,17 @@ class CertificateAssetTests(TestCase):
         self.assertEqual(self.client.get(f"/my-documents/{doc.pk}/pdf/?lang=en").status_code, 409)
         legacy.refresh_from_db(); self.assertEqual(pdf.bytes_for(legacy), body)
         self.assertEqual(PDFArtifact.objects.count(), 1)
+
+    def test_unsigned_jobs_retire_and_do_not_consume_later_worker_batches(self):
+        from django.core.management import call_command
+        from .models import Outbox
+        for version in range(1, 101):
+            s.issue("accreditation_certificate", accreditation=self.acc, version=version)
+        call_command("render_policy_documents", limit=100, stdout=io.StringIO())
+        self.assertEqual(Outbox.objects.filter(state="retired", last_error="pending_assets").count(), 100)
+        attempts = list(Outbox.objects.order_by("pk").values_list("attempts", flat=True))
+        approved_test_assets(self.admin)
+        current = s.issue("accreditation_certificate", accreditation=self.acc, version=101)
+        call_command("render_policy_documents", limit=1, stdout=io.StringIO())
+        self.assertEqual(PDFArtifact.objects.filter(document=current).count(), 3)
+        self.assertEqual(list(Outbox.objects.order_by("pk").values_list("attempts", flat=True))[:100], attempts)

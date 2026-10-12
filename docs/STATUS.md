@@ -148,3 +148,6 @@ Initial signing-refinement head 986cf7d3acb6a224b83f7701709384ebf999c4d3 passed 
 
 
 The same signed-edition gate also covers cached legacy certificate PDF delivery/replay: approved captured asset pairs and matching signing metadata are required. Historical unsigned bytes remain archived unchanged, with explicit marked preview and formal reissuance for adoption. Added a legacy PDF regression proving 409 before/after asset replacement, 200 marked preview and unchanged archived payload. No membership/accreditation status or public verification policy change.
+
+
+Codex review of d7899ebc43850da8071dda7f1f34d0833ecd76b8 identified a P2 permanent-retry gap for immutable missing signing snapshots. Those jobs now retire with pending_assets diagnostics, preserving records while excluding them from later worker batches; formal reissuance creates new work. Added the 100-old-jobs boundary regression. PostgreSQL run 38229756099 also exposed an older journey expectation of credential-bearing certificate HTML; the regression now verifies protected-PDF redirect and 409 pending assets while preserving the existing public verification/renewal checks. Updated-head CI/Codex evidence is required.

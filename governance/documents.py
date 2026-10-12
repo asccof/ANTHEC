@@ -105,7 +105,7 @@ def render_outbox(outbox_id):
                 row.last_error = "pending_photo"
             except PendingCertificateAssets:
                 row.last_error = "pending_assets"
-                retry_pdf = True
+                retire_pdf = True  # Immutable missing snapshot cannot heal without reissuance.
             except LayoutError:
                 row.last_error = "pending_layout"
             except InactiveDocument as error:
