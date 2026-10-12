@@ -9,6 +9,12 @@ from .services import decrypt, encrypt, public_document
 
 
 def printable(doc, language="ar"):
+    if doc.kind in {"professional_certificate", "accreditation_certificate"}:
+        # HTML is a non-credential notice only. Certificate credentials and
+        # approved artwork are delivered exclusively by the protected PDF path.
+        lang = language if language in {"ar", "fr", "en"} else "ar"
+        notice = {"ar": "هذه ليست شهادة صادرة أو موقعة. استعمل مسار PDF المحمي؛ التوقيع والطابع المعتمدان عند الإصدار مطلوبان.", "fr": "Ceci n’est pas un certificat émis ou signé. Utilisez le PDF protégé ; signature et cachet approuvés à l’émission sont requis.", "en": "This is not an issued or signed certificate. Use the protected PDF route; approved issuance signature and stamp are required."}[lang]
+        return f'<!doctype html><html lang="{lang}" dir="{"rtl" if lang == "ar" else "ltr"}"><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>ANTHEC - NON-CREDENTIAL NOTICE</title><body><h1>ANTHEC</h1><p>{escape(notice)}</p></body></html>'
     data = public_document(doc)
     credentials = decrypt(doc.credentials)
     # Fragment is never sent in HTTP request URLs/referrers/access logs.
@@ -99,6 +105,7 @@ def render_outbox(outbox_id):
                 row.last_error = "pending_photo"
             except PendingCertificateAssets:
                 row.last_error = "pending_assets"
+                retry_pdf = True
             except LayoutError:
                 row.last_error = "pending_layout"
             except InactiveDocument as error:

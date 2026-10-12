@@ -133,3 +133,29 @@ class CertificateAssetTests(TestCase):
         self.assertEqual(response.status_code, 302)
         row.refresh_from_db(); self.assertEqual(row.state, "approved")
         self.assertTrue(Audit.objects.filter(action="certificate.asset.approved", subject=str(row.serial)).exists())
+
+    def test_unsigned_legacy_html_is_never_a_certificate_download(self):
+        from .documents import printable, render_outbox
+        from .models import Outbox
+        holder = synthetic_user("synthetic-certificate-owner")
+        self.person.user = holder; self.person.save()
+        doc = s.issue("accreditation_certificate", accreditation=self.acc)
+        credentials = s.decrypt(doc.credentials)
+        for language in ("ar", "fr", "en"):
+            notice = printable(doc, language)
+            for value in (credentials["token"], credentials["code"], str(doc.serial), "<svg"):
+                self.assertNotIn(value, notice)
+        outbox = Outbox.objects.get(document=doc)
+        render_outbox(outbox.pk); outbox.refresh_from_db()
+        self.assertEqual(outbox.state, "failed")
+        self.assertEqual(outbox.last_error, "pending_assets")
+        self.assertFalse(PDFArtifact.objects.exists())
+        self.client.force_login(holder)
+        response = self.client.get(f"/my-documents/{doc.pk}/?lang=en")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(f"/my-documents/{doc.pk}/pdf/", response["Location"])
+        self.assertEqual(self.client.get(response["Location"]).status_code, 409)
+        # A historical encrypted HTML snapshot is preserved but never delivered.
+        Document.objects.filter(pk=doc.pk).update(rendered=s.encrypt("ARCHIVED-UNSIGNED-HTML"), rendering_state="ready")
+        self.assertEqual(self.client.get(f"/my-documents/{doc.pk}/?lang=fr").status_code, 302)
+        doc.refresh_from_db(); self.assertEqual(s.decrypt(doc.rendered), "ARCHIVED-UNSIGNED-HTML")
