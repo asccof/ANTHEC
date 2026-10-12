@@ -31,3 +31,18 @@ Legacy certificate HTML is a non-credential notice containing no holder referenc
 Permanently absent captured assets are terminal worker work: the job retires with pending_assets diagnostics and is excluded from later batches. A new formally reissued Document has a new job and can capture approved assets; no old snapshot is mutated. The 100-unsigned-job regression proves newer work is not starved.
 
 Official identity is supplied via protected runtime configuration ANTHEEC_CERTIFICATE_SIGNATORY_JSON (ar_name, latin_name, capacity=president), and captured in the immutable private issuance snapshot. Missing identity blocks a signed edition. Public tests use synthetic identity; private owner proof generation supplies the exact approved spelling. No owner signature/stamp assets, secret/env files or actual identity are added to public source. Production remains blocked.
+
+
+## 2026-10-12 - focused certificate typography follow-up
+
+Owner accepted the eight card directions in principle and authorized certificate presentation only on existing draft PR #23, baseline 55b855a7ad5c6353cfd297004ccfc4c50a6ea47d. Live main remains 6b6ab8d43d68abcd079caed2a2edf684dd4925b8. Delivered certificate-content comparison was inspected; wording, recorded scope limitations, private signatory configuration and all issuing/access rules remain unchanged.
+
+Baseline: certificate main statement 11.5 pt AR / 9.5 pt FR-EN; legal text 10.2 / 8.8 pt (participation 9 / 8.2); reference and date values 8 pt; labels 7.2 pt. Wide vertical gaps and small lower metadata underused the central area.
+
+Minimum change: main statement 14 / 13 pt, legal text 12 / 11.5 pt, holder 38 / 36 pt, reference/dates 11 pt, metadata labels 9.5 pt. Title 32 / 28 pt; association header 13 / 11.5 pt. Main text spans 223 mm, with shorter central gaps, grouped bottom metadata and clear QR/image slots. Unsigned proof note is lifted above metadata, away from bottom ornament. Signature remains 41 x 16 mm; stamp becomes 24 x 18 mm; authentic assets use the exact same slots as placeholders. Name block stops before the right ornament. No background/logo/font/wording changes.
+
+Certificate-only template version owner-review-v5.2-certificate-typography is recorded in new artifact metadata/version/audit; card VERSION remains owner-review-v5.1. Existing artifacts are not rewritten. Certificate reflow has minimum readable sizes and fixed-text overflow fails explicit layout review, rather than clipping or silently shrinking essential fields. Card reflow is equivalent to its baseline.
+
+Three synthetic layout regressions cover all nine language/type combinations, actual text-line collisions and overflow, text-free QR/signature/stamp slots, signed-image geometry/version capture, and rejection of an overlong signatory. Plain image-integrity rectangles remain test-only. Existing protected PDF and certificate-asset regressions are retained. PostgreSQL CI and exact-head Codex review must pass before the follow-up is described as technically validated; visual approval remains the owner's gate.
+
+Owner delivery is focused before/after comparison and nine revised A4 proofs at 300 dpi; previously accepted card proofs are reused unchanged, not unnecessarily regenerated. Production, participation issuance, merging and deployment remain unauthorized. Naskh Arabic visual shaping is retained; the previously reported PDF copy/search ToUnicode limitation is not claimed fixed by typography changes. Physical print acceptance still requires a real print test.

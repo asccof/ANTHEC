@@ -82,7 +82,7 @@ def artifact_for(document_id, language="ar"):
     row = PDFArtifact.objects.create(
         document=doc,
         language=language,
-        template_version=pdf_design.VERSION,
+        template_version=metadata["template"],
         payload=s.encrypt({"pdf": base64.b64encode(body).decode()}),
         sha256=hashlib.sha256(body).hexdigest(),
         metadata=metadata,
@@ -94,7 +94,7 @@ def artifact_for(document_id, language="ar"):
         "document.pdf.rendered",
         doc.serial,
         language=language,
-        template=pdf_design.VERSION,
+        template=metadata["template"],
     )
     return row
 

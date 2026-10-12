@@ -154,3 +154,10 @@ Codex review of d7899ebc43850da8071dda7f1f34d0833ecd76b8 identified a P2 permane
 
 
 Head 36b6e483b28ad538640ece6806c6b93f87e98d6a passed PostgreSQL CI 38231258660. Codex identified actual signatory text in public source contrary to AGENTS data boundaries. Identity now comes from protected owner-provided runtime configuration and is captured immutably; public tests use synthetic identity, while private owner proofs must retain the approved actual spelling. Updated-head CI/Codex required. The local execution environment disconnected before this correction; remote edits continue with exact-head leases, and refreshed private proof/report rendering and persistent delivery remain pending until the environment reconnects. No history rewrite, merge, deployment or participation activation.
+
+
+## 2026-10-12 - certificate typography only / draft PR #23
+
+Owner accepts card artistic direction in principle; final certificate visual acceptance remains pending. Continue verified 55b855a7ad5c6353cfd297004ccfc4c50a6ea47d without changing approved card artwork, content, fees, validity, permissions or issuance. Increased certificate body/legal/holder/reference/date sizes, tightened central spacing and aligned QR/signature/stamp areas; preserved authentic-asset pending state and pure NOT ISSUED participation proofs. New certificate template version is recorded on new artifacts; cached historical bytes and card version remain unchanged.
+
+Baseline metadata validator, six metadata tests, Django checks and migration drift pass locally. Initial focused PDF/asset/access/journey suite: 44 tests pass with six PostgreSQL-only skips on SQLite; final three layout tests pass after the added bounded typography guard. Full PostgreSQL CI and exact-head Codex review for this follow-up remain pending at drafting; their final evidence belongs in PR #23 and the owner report. This is not final visual approval or physical print certification. No merge, deployment or production/participation activation.
