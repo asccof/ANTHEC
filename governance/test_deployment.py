@@ -83,13 +83,33 @@ class OwnerDeploymentTests(TestCase):
             self.assertIn("noindex", response["X-Robots-Tag"])
 
     def test_login_throttle_does_not_trust_forwarding_header(self):
-        from django.test import RequestFactory
-        middleware = OwnerTestingMiddleware(lambda r: HttpResponse("login"))
-        for i in range(11):
-            request = RequestFactory().post("/admin/login/", HTTP_X_FORWARDED_FOR=str(i))
-            response = middleware(request)
-            self.assertEqual(response.status_code, 200 if i < 10 else 429)
-        self.assertEqual(RateBucket.objects.count(), 2)
+        from django.test import Client
+        from django.utils import timezone
+        client = Client(enforce_csrf_checks=True)
+        client.get("/admin/login/")
+        token = client.cookies[settings.CSRF_COOKIE_NAME].value
+        # The same Render ingress peer must not impose an unintended ten-
+        # request ceiling; forged forwarding headers cannot create new buckets.
+        with patch("governance.deployment.timezone.now", return_value=timezone.now()):
+            for i in range(51):
+                response = client.post("/admin/login/", {}, HTTP_X_CSRFTOKEN=token,
+                                       REMOTE_ADDR="10.0.0.1", HTTP_X_FORWARDED_FOR=str(i))
+                self.assertEqual(response.status_code, 200 if i < 50 else 429)
+            self.assertIn("no-store", response["Cache-Control"])
+            self.assertIn("noindex", response["X-Robots-Tag"])
+        self.assertEqual(RateBucket.objects.count(), 1)
+        self.assertEqual(RateBucket.objects.get().count, 51)
+
+    def test_invalid_csrf_requests_do_not_exhaust_owner_login_budget(self):
+        from django.test import Client
+        client = Client(enforce_csrf_checks=True)
+        for _ in range(60):
+            self.assertEqual(client.post("/admin/login/", {}).status_code, 403)
+        self.assertFalse(RateBucket.objects.exists())
+        client.get("/admin/login/")
+        token = client.cookies[settings.CSRF_COOKIE_NAME].value
+        self.assertEqual(client.post("/admin/login/", {}, HTTP_X_CSRFTOKEN=token).status_code, 200)
+        self.assertEqual(RateBucket.objects.get().count, 1)
 
     def test_commands_and_renderer_fail_before_any_write(self):
         request = administrative_request(self.admin)

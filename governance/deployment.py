@@ -62,23 +62,6 @@ class OwnerTestingMiddleware:
         if path == "/health/" and request.method in {"GET", "HEAD"}:
             return self.get_response(request)
         if path == "/admin/login/":
-            if request.method == "POST":
-                from .services import digest
-                window = int(timezone.now().timestamp() // 300)
-                # Peer-IP bucket + global ceiling: independent of attacker-
-                # supplied forwarding headers. No usernames or IPs in audits.
-                keys = [(digest(f"private-login:{request.META.get('REMOTE_ADDR', '')}:{window}"), 10),
-                        (digest(f"private-login-global:{window}"), 50)]
-                limited = False
-                with transaction.atomic():
-                    for key, ceiling in keys:
-                        bucket, _ = RateBucket.objects.get_or_create(key=key)
-                        bucket = RateBucket.objects.select_for_update().get(pk=bucket.pk)
-                        bucket.count += 1
-                        bucket.save(update_fields=["count"])
-                        limited = limited or bucket.count > ceiling
-                if limited:
-                    return HttpResponse("Try again later", status=429)
             return self.get_response(request)
         if path == "/admin/logout/":
             return self.get_response(request)
@@ -94,3 +77,23 @@ class OwnerTestingMiddleware:
                             "/registrations/", "/verify/", "/my-documents/")):
             return self.denied("Unavailable during owner testing")
         return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        # CsrfViewMiddleware precedes this hook. Rejected CSRF requests never
+        # consume the budget. Render's REMOTE_ADDR is a shared ingress peer,
+        # not a client identity; use only the explicit global ceiling and do
+        # not trust client-supplied forwarding headers.
+        if (not getattr(settings, "ANTHEEC_OWNER_TESTING", False) or
+                request.path_info != "/admin/login/" or request.method != "POST"):
+            return None
+        from .services import digest
+        window = int(timezone.now().timestamp() // 300)
+        key = digest(f"private-login-global:{window}")
+        with transaction.atomic():
+            bucket, _ = RateBucket.objects.get_or_create(key=key)
+            bucket = RateBucket.objects.select_for_update().get(pk=bucket.pk)
+            bucket.count += 1
+            bucket.save(update_fields=["count"])
+        if bucket.count > 50:
+            return HttpResponse("Try again later", status=429)
+        return None
