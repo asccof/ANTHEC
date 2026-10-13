@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.base import ContentFile
 from django.http import HttpResponse
-from django.test import TestCase, SimpleTestCase, override_settings
+from django.test import Client, TestCase, SimpleTestCase, override_settings
 from .deployment import OwnerTestingMiddleware, DisabledMediaStorage
 from .models import Authority, Delegation, Document, Application, Payment, RateBucket
 from .tests import synthetic_user, administrative_request
@@ -44,6 +44,28 @@ class OwnerDeploymentTests(TestCase):
         self.assertEqual(self.client.post("/members/signup/", {}).status_code, 404)
         self.assertEqual(self.client.get("/health/").json(), {"project": "ANTHEC", "status": "ok"})
         self.assertEqual(self.client.get("/admin/login/").status_code, 200)
+
+    def test_mfa_html_policy_and_https_form_csrf_in_all_languages(self):
+        # The HTML policy overrides the HTTP header in real browsers.
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.admin)
+        for language in ("ar", "fr", "en"):
+            for path in ("/security/enroll/", "/security/challenge/"):
+                with self.subTest(language=language, path=path):
+                    url = path + "?lang=" + language
+                    response = client.get(url, secure=True)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, '<meta name="referrer" content="same-origin">')
+                    self.assertNotContains(response, 'content="no-referrer"')
+                    token = client.cookies[settings.CSRF_COOKIE_NAME].value
+                    payload = {"csrfmiddlewaretoken": token, "password": "invalid-synthetic-password", "code": ""}
+                    response = client.post(url, payload, secure=True,
+                                           HTTP_REFERER="https://testserver" + url)
+                    self.assertEqual(response.status_code, 200)
+                    # A valid token must still fail for a foreign source.
+                    response = client.post(url, payload, secure=True,
+                                           HTTP_ORIGIN="https://foreign.example.invalid")
+                    self.assertEqual(response.status_code, 403)
 
     def test_no_delegate_or_unbootstrapped_superuser_access(self):
         Delegation.objects.create(user=self.other, active=True, epoch=1)
