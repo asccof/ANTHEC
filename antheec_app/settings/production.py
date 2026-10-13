@@ -71,7 +71,9 @@ CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 3600  # staged; no subdomain/preload commitment
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
-SECURE_REFERRER_POLICY = "no-referrer"
+# Same-origin HTTPS form submissions need a non-opaque Origin/Referer for CSRF.
+# Suppress referrers to other origins while preserving same-origin validation.
+SECURE_REFERRER_POLICY = "same-origin"
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 MIDDLEWARE = list(MIDDLEWARE)  # noqa: F405
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
