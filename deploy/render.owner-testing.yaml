@@ -15,7 +15,7 @@ services:
     dockerContext: .
     autoDeployTrigger: 'off'
     healthCheckPath: /health/
-    preDeployCommand: python manage.py check --deploy --fail-level ERROR && python manage.py migrate --noinput
+    preDeployCommand: python deploy/predeploy.py
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: antheec_app.settings.production
