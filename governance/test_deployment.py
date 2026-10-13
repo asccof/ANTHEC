@@ -163,6 +163,7 @@ class PrivateSettingsTests(SimpleTestCase):
             "assert not s.DEBUG and s.ANTHEEC_OWNER_TESTING; "
             "assert s.ALLOWED_HOSTS == ['synthetic.example.invalid']; "
             "assert s.SESSION_COOKIE_SECURE and s.CSRF_COOKIE_SECURE; "
+            "assert s.SECURE_REFERRER_POLICY == 'same-origin'; "
             "assert s.DATABASES['default']['OPTIONS']['sslmode'] == 'require'; "
             "assert s.EMAIL_BACKEND.endswith('dummy.EmailBackend'); "
             "assert not s.WHITENOISE_AUTOREFRESH and not s.WHITENOISE_USE_FINDERS"],
