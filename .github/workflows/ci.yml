@@ -35,7 +35,7 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: python manage.py check
       - run: python manage.py makemigrations --check --dry-run
-      - run: python manage.py migrate --noinput
+      - run: python deploy/predeploy.py
       - run: python manage.py seed_demo
       - run: python manage.py seed_policy_prices
       - run: pip check
