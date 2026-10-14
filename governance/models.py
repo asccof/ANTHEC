@@ -462,3 +462,35 @@ class PDFArtifact(models.Model):
                 name="supported_pdf_language",
             ),
         ]
+
+
+class PartnershipRequest(models.Model):
+    organization = models.CharField(max_length=200)
+    contact_email = models.EmailField()
+    message = models.TextField()
+    notice_acknowledged = models.BooleanField(default=False)
+    state = models.CharField(max_length=12, default="submitted")
+    created_at = models.DateTimeField(auto_now_add=True)
+    fixture_key = models.CharField(max_length=60, null=True, unique=True, editable=False)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(state__in=["submitted", "approved", "rejected"]), name="partnership_request_state")]
+
+
+class Partner(models.Model):
+    request = models.OneToOneField(PartnershipRequest, on_delete=models.PROTECT)
+    name_ar = models.CharField(max_length=200)
+    name_fr = models.CharField(max_length=200)
+    name_en = models.CharField(max_length=200)
+    summary_ar = models.TextField(blank=True)
+    summary_fr = models.TextField(blank=True)
+    summary_en = models.TextField(blank=True)
+    website = models.URLField(blank=True)
+    state = models.CharField(max_length=12, default="active")
+    public_visible = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(state__in=["active", "suspended", "cancelled"]), name="partner_state"),
+            models.CheckConstraint(condition=Q(public_visible=False) | Q(state="active"), name="partner_public_active"),
+        ]

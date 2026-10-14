@@ -40,3 +40,10 @@ def return_to_website_menu():
     }[locale()], str)()
     url = lazy(lambda: "/" + locale() + "/", str)()
     return MenuItem(label, url, icon_name="home", order=100)
+
+
+@hooks.register("register_admin_menu_item")
+def partnership_menu():
+    from .partner_labels import vocabulary as partner_vocabulary
+    label=lazy(lambda: partner_vocabulary(get_language().split("-")[0])[1]["administration"], str)()
+    return MenuItem(label, reverse("partnership_register"), icon_name="group", order=920)

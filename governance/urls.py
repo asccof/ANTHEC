@@ -8,9 +8,15 @@ from . import (
     institutional_views,
     member_views,
     membership_admin_views,
+    partner_views,
 )
 
 urlpatterns = [
+    path("partners/", partner_views.listing, name="partners"),
+    path("partners/request/", partner_views.request_partnership, name="partnership_request"),
+    path("operations/partners/", partner_views.register, name="partnership_register"),
+    path("operations/partners/requests/<int:request_id>/", partner_views.review, name="partnership_review"),
+    path("operations/partners/<int:partner_id>/", partner_views.detail, name="partner_detail"),
     path("operations/certificate-assets/", certificate_asset_views.manage, name="certificate_assets"),
     path("private-certificate-assets/<uuid:serial>/", certificate_asset_views.image, name="certificate_asset_image"),
     path(
