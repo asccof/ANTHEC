@@ -67,11 +67,13 @@ class HonoraryNavigationTests(TestCase):
 
     def test_shared_navigation_and_admin_menu_languages(self):
         from .wagtail_hooks import return_to_website_menu
+        item = return_to_website_menu()
         for lang in ('ar','fr','en'):
             with translation.override(lang):
                 html=render_to_string('governance/navigation.html',{'language':lang,'user':self.admin})
                 self.assertIn('href="/'+lang+'/"',html)
                 self.assertIn('href="/admin/"',html)
-                self.assertEqual(return_to_website_menu().url,'/'+lang+'/')
+                self.assertEqual(str(item.url),'/'+lang+'/')
+                self.assertIn(str(item.label), html)
         html=render_to_string('governance/navigation.html',{'language':'ar','user':self.holder})
         self.assertNotIn('href="/admin/"',html)

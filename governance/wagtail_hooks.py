@@ -28,8 +28,15 @@ def membership_menu():
 
 @hooks.register("register_admin_menu_item")
 def return_to_website_menu():
-    language = get_language().split("-")[0]
-    if language not in {"ar", "fr", "en"}:
-        language = "ar"
-    label = {"ar": "العودة إلى واجهة الموقع", "fr": "Retour au site", "en": "Return to website"}[language]
-    return MenuItem(label, "/" + language + "/", icon_name="home", order=100)
+    # Wagtail caches menu items; resolve locale when the item is rendered.
+    def locale():
+        language = get_language().split("-")[0]
+        return language if language in {"ar", "fr", "en"} else "ar"
+
+    label = lazy(lambda: {
+        "ar": "العودة إلى واجهة الموقع",
+        "fr": "Retour au site",
+        "en": "Return to website",
+    }[locale()], str)()
+    url = lazy(lambda: "/" + locale() + "/", str)()
+    return MenuItem(label, url, icon_name="home", order=100)
