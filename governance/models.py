@@ -153,6 +153,7 @@ class Accreditation(models.Model):
 
 
 class Activity(models.Model):
+    fixture_key = models.CharField(max_length=60, null=True, unique=True)
     title = models.CharField(max_length=200)
     starts_on = models.DateField()
     ends_on = models.DateField()

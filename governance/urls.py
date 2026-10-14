@@ -10,9 +10,15 @@ from . import (
     membership_admin_views,
     partner_views,
     accreditation_views,
+    activity_views,
 )
 
 urlpatterns = [
+    path("activities/", activity_views.listing, name="activity_list"),
+    path("activities/<int:activity_id>/", activity_views.participate, name="activity_participate"),
+    path("operations/activities/", activity_views.register, name="activity_admin_register"),
+    path("operations/activities/<int:activity_id>/", activity_views.detail, name="activity_admin_detail"),
+    path("operations/activities/registrations/<int:registration_id>/", activity_views.admission, name="activity_admission"),
     path("operations/accreditation/", accreditation_views.register, name="accreditation_register"),
     path("operations/accreditation/<int:case_id>/", accreditation_views.detail, name="accreditation_case"),
     path("partners/", partner_views.listing, name="partners"),

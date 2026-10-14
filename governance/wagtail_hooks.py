@@ -54,3 +54,10 @@ def accreditation_menu():
     from .accreditation_labels import vocabulary as case_vocabulary
     label = lazy(lambda: case_vocabulary(get_language().split("-")[0])[1]["title"], str)()
     return MenuItem(label, reverse("accreditation_register"), icon_name="doc-full", order=930)
+
+
+@hooks.register("register_admin_menu_item")
+def activity_menu():
+    from .activity_labels import vocabulary as activity_vocabulary
+    label=lazy(lambda:activity_vocabulary(get_language().split("-")[0])[1]["administration"],str)()
+    return MenuItem(label,reverse("activity_admin_register"),icon_name="date",order=940)
