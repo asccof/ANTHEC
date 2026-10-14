@@ -1,0 +1,13 @@
+# ADR-017 — activity, participation and attendance interfaces
+
+Status: prepared for exact-head review, 2026-10-14. Authority: POL-04/05/06/07/08 and owner authorization to continue from independent assessment to event interfaces.
+
+Add bounded administrative activity configuration, admission review and attendance interfaces plus an authenticated participant/guardian request form in AR/FR/EN. Activity titles and guardian consent are explicitly supplied content; no event age policy, fee, legal consent template or external delivery is invented. The participant selector is restricted to the current adult profile and eligible dependants; no participant list or guardian evidence is public. Minor consent captures the existing service's guardian identity, capacity, timestamp, text and version. No identity-file upload is introduced.
+
+Recent administrative MFA, authority epoch, CSRF, audit and replay protection apply to configuration and decisions. Admission/cancellation/check-in retain the existing guarded transactional commands and document-status rules. Acceptance requires capacity and issues an invitation atomically; attendance requires an active nonvoid invitation and is unique per registration. Owner-testing blocks requests and invitation issuance server-side; administrative rejection/cancellation and synthetic previews remain available.
+
+Once any request exists, dates and minor eligibility/consent conditions are immutable through configuration; a changed activity requires a separate record. Capacity may not fall below confirmed admissions. Registration locks the current Activity and Person before validating and snapshotting, serializing new requests with configuration so stale forms cannot authorize old conditions. Existing participant/activity uniqueness remains the duplicate guard.
+
+The manually invoked owner-testing fixture command creates two clearly synthetic activities, adult and guardian/minor pending requests. A synthetic adult account has an unusable password and no staff powers or private-site access. No invitation, attendance, payment, credentials, notifications, real-person data, resource or plan change is created. End-to-end real hosting issuance/attendance remains unavailable under trial restrictions; automated isolated tests exercise that path. No official launch or legal/security readiness is claimed.
+
+Small privacy follow-up to PR32: case final approval retains its specific private reason only in the encrypted case audit snapshot; the shared accreditation audit uses a neutral case reference. A regression assertion covers this without changing direct accreditation command semantics.

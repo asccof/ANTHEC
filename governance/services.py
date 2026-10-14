@@ -610,31 +610,33 @@ def register(
 ):
     from .deployment import require_applications_enabled
     require_applications_enabled()
-    if not user.is_authenticated or not user.is_active:
-        raise PermissionDenied("Authenticated applicant required")
-    if person.minor:
-        if (
-            person.guardian_id != user.pk
-            or not activity.allows_minors
-            or consent is not True
-            or not isinstance(guardian_name, str)
-            or not isinstance(guardian_capacity, str)
-            or not guardian_name.strip()
-            or not guardian_capacity.strip()
-            or len(guardian_name) > 200
-            or len(guardian_capacity) > 100
-            or not activity.consent_text.strip()
-            or not activity.consent_version.strip()
-        ):
-            raise ValidationError(
-                "Eligible activity and legal guardian explicit consent required"
-            )
-    elif person.user_id != user.pk:
-        raise PermissionDenied("Own participant profile required")
-    if person.verification_notice_at is None:
-        raise ValidationError("Verification notice acknowledgment required")
     with transaction.atomic():
-        Person.objects.select_for_update().get(pk=person.pk)
+        # Snapshot the current activity conditions under the same lock as edits.
+        activity = Activity.objects.select_for_update().get(pk=activity.pk)
+        person = Person.objects.select_for_update().get(pk=person.pk)
+        if not user.is_authenticated or not user.is_active:
+            raise PermissionDenied("Authenticated applicant required")
+        if person.minor:
+            if (
+                person.guardian_id != user.pk
+                or not activity.allows_minors
+                or consent is not True
+                or not isinstance(guardian_name, str)
+                or not isinstance(guardian_capacity, str)
+                or not guardian_name.strip()
+                or not guardian_capacity.strip()
+                or len(guardian_name) > 200
+                or len(guardian_capacity) > 100
+                or not activity.consent_text.strip()
+                or not activity.consent_version.strip()
+            ):
+                raise ValidationError(
+                    "Eligible activity and legal guardian explicit consent required"
+                )
+        elif person.user_id != user.pk:
+            raise PermissionDenied("Own participant profile required")
+        if person.verification_notice_at is None:
+            raise ValidationError("Verification notice acknowledgment required")
         if Registration.objects.filter(activity=activity, person=person).exists():
             raise Conflict("Participant already registered")
         return Registration.objects.create(
