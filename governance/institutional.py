@@ -5,7 +5,8 @@ from django.core.exceptions import ValidationError
 from .models import InstitutionalRole, Person
 from .services import command, issue, audit, Conflict
 
-ROLES = {"president", "vice_president", "founder"}
+ROLES = {"president", "vice_president", "founder", "honorary"}
+PERMANENT_ROLES = {"founder", "honorary"}
 
 
 @command("institutional.grant")
@@ -36,13 +37,13 @@ def grant(
         end = date.fromisoformat(ends_on) if ends_on else None
     except (TypeError, ValueError):
         raise ValidationError("Explicit legal dates required")
-    if role == "founder":
+    if role in PERMANENT_ROLES:
         if end or replaces_role_id:
             raise ValidationError(
-                "Founder designation is permanent; replace its document instead"
+                "This designation is permanent; replace its document instead"
             )
         if InstitutionalRole.objects.filter(person=person, role=role).exists():
-            raise Conflict("Founder designation already recorded")
+            raise Conflict("Permanent designation already recorded")
     elif end is None or end <= start:
         raise ValidationError("Explicit recorded legal office end required")
     previous = None
@@ -58,7 +59,7 @@ def grant(
             raise Conflict("Replace a matching, unreplaced office record")
     # Only duplicate/overlapping grants to the same person+role are constrained.
     # Global office headcounts are not invented by this implementation.
-    if role != "founder":
+    if role not in PERMANENT_ROLES:
         overlaps = InstitutionalRole.objects.filter(
             person=person,
             role=role,
@@ -106,14 +107,14 @@ def change_state(*, actor, role_id, state, reason):
         or not reason.strip()
     ):
         raise ValidationError("Documented state decision required")
-    if state == "terminated" and row.role == "founder":
-        raise ValidationError("Permanent founder designation has no office term")
+    if state == "terminated" and row.role in PERMANENT_ROLES:
+        raise ValidationError("Permanent designation has no office term")
     if row.state == "terminated" or (
-        row.role != "founder" and row.state == "cancelled" and state != "terminated"
+        row.role not in PERMANENT_ROLES and row.state == "cancelled" and state != "terminated"
     ):
         raise Conflict("New recorded office appointment required")
     # A renewed/reactivated period must not coexist with an overlapping office grant.
-    if state == "active" and row.role != "founder":
+    if state == "active" and row.role not in PERMANENT_ROLES:
         if (
             InstitutionalRole.objects.filter(
                 person=row.person,

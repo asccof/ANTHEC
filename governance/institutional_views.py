@@ -107,7 +107,7 @@ def detail(request, role_id):
     documents = row.document_set.order_by("version")
     decision = DecisionForm(
         labels=ctx["labels"],
-        founder=row.role == "founder",
+        founder=row.role in {"founder", "honorary"},
         initial={"key": uuid.uuid4(), "state": row.state},
     )
     replacement = ReplacementForm(
@@ -128,7 +128,7 @@ def detail(request, role_id):
                 request.POST,
                 labels=ctx["labels"],
                 **(
-                    {"founder": row.role == "founder"}
+                    {"founder": row.role in {"founder", "honorary"}}
                     if action == "state"
                     else {"documents": documents}
                 )

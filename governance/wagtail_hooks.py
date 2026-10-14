@@ -24,3 +24,19 @@ def membership_menu():
     return MenuItem(
         label, reverse("membership_admin_register"), icon_name="group", order=910
     )
+
+
+@hooks.register("register_admin_menu_item")
+def return_to_website_menu():
+    # Wagtail caches menu items; resolve locale when the item is rendered.
+    def locale():
+        language = get_language().split("-")[0]
+        return language if language in {"ar", "fr", "en"} else "ar"
+
+    label = lazy(lambda: {
+        "ar": "العودة إلى واجهة الموقع",
+        "fr": "Retour au site",
+        "en": "Return to website",
+    }[locale()], str)()
+    url = lazy(lambda: "/" + locale() + "/", str)()
+    return MenuItem(label, url, icon_name="home", order=100)

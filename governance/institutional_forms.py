@@ -23,7 +23,7 @@ class GrantForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["person_id"].queryset = Person.objects.order_by("pk")
         self.fields["role"].choices = [
-            (role, labels[role]) for role in ["president", "vice_president", "founder"]
+            (role, labels[role]) for role in ["president", "vice_president", "founder", "honorary"]
         ]
         self.fields["replaces_role_id"].queryset = InstitutionalRole.objects.filter(
             role__in=["president", "vice_president"], state__in=["active", "suspended"]
