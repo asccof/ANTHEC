@@ -482,6 +482,12 @@ def approve_membership(*, actor, application_id, reason):
 def approve_accreditation(
     *, actor, kind, person_id, subject_name, starts_on, ends_on, reason
 ):
+    return _issue_independent_accreditation(actor=actor, kind=kind, person_id=person_id,
+        subject_name=subject_name, starts_on=starts_on, ends_on=ends_on, reason=reason)
+
+
+def _issue_independent_accreditation(*, actor, kind, person_id, subject_name, starts_on, ends_on, reason):
+    """Shared issuance inside an authorized command transaction only."""
     start = date.fromisoformat(starts_on)
     end = date.fromisoformat(ends_on)
     if (

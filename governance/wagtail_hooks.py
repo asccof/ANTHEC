@@ -47,3 +47,10 @@ def partnership_menu():
     from .partner_labels import vocabulary as partner_vocabulary
     label=lazy(lambda: partner_vocabulary(get_language().split("-")[0])[1]["administration"], str)()
     return MenuItem(label, reverse("partnership_register"), icon_name="group", order=920)
+
+
+@hooks.register("register_admin_menu_item")
+def accreditation_menu():
+    from .accreditation_labels import vocabulary as case_vocabulary
+    label = lazy(lambda: case_vocabulary(get_language().split("-")[0])[1]["title"], str)()
+    return MenuItem(label, reverse("accreditation_register"), icon_name="doc-full", order=930)
