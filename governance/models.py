@@ -494,3 +494,26 @@ class Partner(models.Model):
             models.CheckConstraint(condition=Q(state__in=["active", "suspended", "cancelled"]), name="partner_state"),
             models.CheckConstraint(condition=Q(public_visible=False) | Q(state="active"), name="partner_public_active"),
         ]
+
+
+class AccreditationCase(models.Model):
+    """Restricted independent assessment; never a public verification record."""
+    kind = models.CharField(max_length=20)
+    person = models.ForeignKey(Person, on_delete=models.PROTECT, null=True, blank=True)
+    subject_name = models.CharField(max_length=200, blank=True)
+    starts_on = models.DateField()
+    ends_on = models.DateField()
+    private_payload = models.TextField()
+    state = models.CharField(max_length=20, default="draft")
+    accreditation = models.OneToOneField(Accreditation, on_delete=models.PROTECT, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    fixture_key = models.CharField(max_length=60, null=True, unique=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(kind__in=["individual", "institution", "course"]), name="case_kind"),
+            models.CheckConstraint(condition=Q(state__in=["draft", "reviewed", "rejected", "approved"]), name="case_state"),
+            models.CheckConstraint(condition=Q(ends_on__gt=models.F("starts_on")), name="case_dates"),
+            models.CheckConstraint(condition=(Q(kind="individual", person__isnull=False, subject_name="") | (~Q(kind="individual") & Q(person__isnull=True) & ~Q(subject_name=""))), name="case_subject"),
+            models.CheckConstraint(condition=(Q(state="approved", accreditation__isnull=False) | (~Q(state="approved") & Q(accreditation__isnull=True))), name="case_approval_link"),
+        ]

@@ -1,0 +1,9 @@
+# ADR-016 — restricted independent assessment casework
+
+Status: prepared for exact-head review, 2026-10-14. Authority: POL-01/04/05/06/08 and owner's current incremental implementation approval.
+
+Independent individual/institution/course assessment needs administrative casework separate from membership accreditation and public verification. Only authorized MFA sessions may read it; writes require recent reauthentication, CSRF and replay-protected commands. Criteria, assessment, optional internal quote and latest decision reason are encrypted using the existing data-key mechanism. Audit events retain actor, time, case ID and state, and encrypted private assessment snapshots, preserving review reasons without plaintext assessment or quote text. No actual criteria or fee schedule is committed. Files are not accepted in this increment; protected upload/scanning/storage readiness remains future work.
+
+Drafts may be saved or assessed/rejected. Completed assessment grants no right. A final authorized approval uses the same independent subject/duration/notice validation and issuance helper as the existing accreditation command, atomically links the case to one accreditation, and preserves document policy. A rejected or approved case cannot be edited. Owner-testing prohibits issuance server-side even if a client forges the disabled operation. No payment instruction, fee collection, new membership or public case lookup is introduced. Annual individual/institution and configured course validity remain governed by POL-01; the existing final issuance service remains the source of issuance rules.
+
+Synthetic fixtures are idempotent and run manually only in owner-testing. They do not create accreditation or documents. Deployment and owner acceptance evidence must be recorded separately after review. Event UI, document upload, operational criteria/fees and legal/security readiness are not claimed complete.
