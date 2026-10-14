@@ -14,6 +14,7 @@
   </nav><nav aria-label="Membership">
     <a href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}طلب الانخراط{% elif page.locale.language_code == 'fr' %}Demande d’adhésion{% else %}Membership application{% endif %}</a>
     <a href="{% url 'member_home' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}فضاء العضو{% elif page.locale.language_code == 'fr' %}Espace membre{% else %}Member area{% endif %}</a>
+  <a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}الشركاء{% elif page.locale.language_code == 'fr' %}Partenaires{% else %}Partners{% endif %}</a>
   </nav></header>
   <main>{% block content %}{% endblock %}</main>
 </body>

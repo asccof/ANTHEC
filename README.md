@@ -1,5 +1,7 @@
 # ANTHEEC
 
+> Current completion evidence: [2026-10-14 completeness register](docs/COMPLETENESS_REVIEW.md). Historical preparation descriptions below are not current acceptance status. Approved policies remain authoritative.
+
 Independent institutional platform. Synthetic development only; production, real-person/clinical data, paid services and external delivery remain blocked.
 
 ## Current authority and scope

@@ -1,5 +1,7 @@
 # ANTHEEC implementation backlog
 
+> Current completion evidence: [2026-10-14 completeness register](COMPLETENESS_REVIEW.md). Historical preparation descriptions below are not current acceptance status. Approved policies remain authoritative.
+
 Current authority: approved POL-01–08 in APPROVED_POLICIES.md / SRC-08. No milestone authorizes production or real-person data.
 
 | Task | GitHub | State / next gate |

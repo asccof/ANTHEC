@@ -1,5 +1,7 @@
 # ANTHEEC current domain contracts
 
+> Current completion evidence: [2026-10-14 completeness register](COMPLETENESS_REVIEW.md). Historical preparation descriptions below are not current acceptance status. Approved policies remain authoritative.
+
 Version 1.0, 2026-10-10. Institutional rules are APPROVED_POLICIES.md (SRC-08). Engineering details below implement those rules and are identified as technical choices. Earlier contract versions in Git history were proposals and are superseded wherever inconsistent. Original acceptance AC-01–14/T01–12 remains tracked; service tests alone do not establish complete platform acceptance.
 
 ## Aggregates and invariants
