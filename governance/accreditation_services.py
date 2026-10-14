@@ -74,7 +74,7 @@ def approve(*, actor, case_id, reason):
     if row.state != "reviewed" or not payload.get("criteria") or not payload.get("assessment"):
         raise ValidationError("Completed assessment required")
     result = _issue_independent_accreditation(actor=actor, kind=row.kind, person_id=row.person_id,
-        subject_name=row.subject_name, starts_on=row.starts_on.isoformat(), ends_on=row.ends_on.isoformat(), reason=reason)
+        subject_name=row.subject_name, starts_on=row.starts_on.isoformat(), ends_on=row.ends_on.isoformat(), reason=f"Independent assessment case {row.pk} approved")
     row.state = "approved"
     row.accreditation_id = result["accreditation"]
     row.save(update_fields=["state", "accreditation"])

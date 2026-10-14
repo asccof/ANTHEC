@@ -88,13 +88,16 @@ class AccreditationCaseTests(TestCase):
     def test_approval_reuses_issuance_and_is_replay_safe(self):
         pk=self.create(); self.review(pk)
         key=str(uuid.uuid4())
-        result=service.approve(self.request,key=key,case_id=pk,reason='Synthetic approval')
-        self.assertEqual(service.approve(self.request,key=key,case_id=pk,reason='Synthetic approval'),result)
+        result=service.approve(self.request,key=key,case_id=pk,reason='PRIVATE-APPROVAL-REASON')
+        self.assertEqual(service.approve(self.request,key=key,case_id=pk,reason='PRIVATE-APPROVAL-REASON'),result)
         row=AccreditationCase.objects.get(pk=pk)
         self.assertEqual(row.state,'approved')
         self.assertEqual(row.accreditation_id,result['accreditation'])
         self.assertIsNone(row.accreditation.membership_id)
         self.assertEqual(Document.objects.count(),1)
+        self.assertNotIn('PRIVATE-APPROVAL-REASON',str(list(Audit.objects.values('reason','details'))))
+        final=Audit.objects.get(action='accreditation.case.approved')
+        self.assertEqual(decrypt(final.details['private_payload'])['reason'],'PRIVATE-APPROVAL-REASON')
         with self.assertRaises(ValidationError): self.review(pk)
         with self.assertRaises(ValidationError): service.approve(self.request,key=str(uuid.uuid4()),case_id=pk,reason='Synthetic')
 

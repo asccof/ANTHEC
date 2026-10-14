@@ -36,7 +36,7 @@ class DecisionForm(LabelForm):
     reason=forms.CharField(max_length=3000,widget=forms.Textarea)
     def __init__(self,*args,**kwargs):
         labels=kwargs['labels']; super().__init__(*args,**kwargs)
-        self.fields['operation'].label=labels['reason']
+        self.fields['operation'].label=labels['decision']
         self.fields['operation'].choices=[(x,labels[x]) for x in ('accept','reject','cancel')]
 
 class CheckinForm(forms.Form):
