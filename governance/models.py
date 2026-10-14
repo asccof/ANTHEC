@@ -204,6 +204,7 @@ class InstitutionalRole(models.Model):
             ("president", "President"),
             ("vice_president", "Vice-President"),
             ("founder", "Founding Member"),
+            ("honorary", "Honorary Member"),
         ],
     )
     starts_on = models.DateField()
@@ -217,7 +218,7 @@ class InstitutionalRole(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=(
-                    Q(role="founder", ends_on__isnull=True)
+                    Q(role__in=["founder", "honorary"], ends_on__isnull=True)
                     | Q(
                         role__in=["president", "vice_president"],
                         ends_on__isnull=False,
@@ -237,6 +238,7 @@ class InstitutionalRole(models.Model):
                 condition=Q(role="founder"),
                 name="one_founder_designation",
             ),
+            models.UniqueConstraint(fields=["person"], condition=Q(role="honorary"), name="one_honorary_designation"),
         ]
 
 

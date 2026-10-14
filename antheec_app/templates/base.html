@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="{% static 'site.css' %}">
 </head>
 <body>
+  {% include "governance/navigation.html" with language=page.locale.language_code %}
   <header><strong>ANTHEEC</strong><nav aria-label="Languages">
     {% for version in language_versions %}<a href="{{ version.url }}" lang="{{ version.locale.language_code }}" hreflang="{{ version.locale.language_code }}" {% if version.pk == page.pk %}aria-current="page"{% endif %}>{{ version.locale.get_display_name }}</a>{% endfor %}
   </nav><nav aria-label="Membership">

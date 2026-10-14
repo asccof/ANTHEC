@@ -54,6 +54,7 @@ def verify(request):
             "president_card",
             "vice_president_card",
             "founder_card",
+            "honorary_card",
             "membership_card",
             "gold_card",
             "professional_certificate",

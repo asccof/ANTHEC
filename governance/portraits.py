@@ -18,6 +18,7 @@ CARD_KINDS = {
     "president_card",
     "vice_president_card",
     "founder_card",
+    "honorary_card",
 }
 
 

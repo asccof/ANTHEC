@@ -24,3 +24,12 @@ def membership_menu():
     return MenuItem(
         label, reverse("membership_admin_register"), icon_name="group", order=910
     )
+
+
+@hooks.register("register_admin_menu_item")
+def return_to_website_menu():
+    language = get_language().split("-")[0]
+    if language not in {"ar", "fr", "en"}:
+        language = "ar"
+    label = {"ar": "العودة إلى واجهة الموقع", "fr": "Retour au site", "en": "Return to website"}[language]
+    return MenuItem(label, "/" + language + "/", icon_name="home", order=100)
