@@ -93,3 +93,25 @@ class InvitationOutputTests(TestCase):
             self.assertIn(vocabulary(language)[1]["cancelled"], printable(self.doc, language))
             self.assertIn(vocabulary(language)[1]["active"], printable(replacement, language))
         self.assertEqual(Document.objects.count(), 2)
+
+    def test_qr_browser_result_localized_while_json_contract_stays_stable(self):
+        credentials = s.decrypt(self.doc.credentials)
+        public = Client(enforce_csrf_checks=True)
+        for language in ("ar", "fr", "en"):
+            url = f"/verify/?lang={language}"
+            self.assertEqual(public.get(url).status_code, 200)
+            payload = {"token": credentials["token"], "csrfmiddlewaretoken": public.cookies["csrftoken"].value}
+            response = public.post(url, payload, HTTP_ACCEPT="text/html,application/xhtml+xml")
+            self.assertContains(response, f'lang="{language}"')
+            for key in ("type", "activity invitation", "invitation", "valid_until", "active"):
+                self.assertContains(response, vocabulary(language)[1][key])
+            for private in (credentials["token"], credentials["code"], "PRIVATE-GUARDIAN", "PRIVATE-CONSENT", "PRIVATE-CONTACT", "<script>"):
+                self.assertNotContains(response, private)
+            self.assertContains(response, "&lt;script&gt;")
+            self.assertIn("no-store", response["Cache-Control"])
+            machine = public.post(url, payload, HTTP_ACCEPT="application/json")
+            self.assertEqual(machine.json(), s.public_document(self.doc))
+        self.registration.state = "cancelled"; self.registration.save(update_fields=["state"])
+        for language in ("ar", "fr", "en"):
+            response = public.post(f"/verify/?lang={language}", payload, HTTP_ACCEPT="text/html")
+            self.assertContains(response, vocabulary(language)[1]["cancelled"])
