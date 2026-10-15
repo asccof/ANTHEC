@@ -258,7 +258,7 @@ def delegate(*, actor, user_id, active, reason):
 
 
 @command("price.change")
-def change_price(*, actor, tier, amount, starts_at):
+def change_price(*, actor, tier, amount, starts_at, reason=""):
     from django.utils.dateparse import parse_datetime
 
     moment = parse_datetime(starts_at)
@@ -270,6 +270,7 @@ def change_price(*, actor, tier, amount, starts_at):
         or tier in {"founder", "honorary"}
         or amount < 0
         or moment < timezone.now()
+        or len(reason) > 3000
     ):
         raise ValidationError("Invalid prospective price")
     price = Price.objects.create(
@@ -279,6 +280,7 @@ def change_price(*, actor, tier, amount, starts_at):
         actor,
         "price.changed",
         price.pk,
+        reason,
         tier=tier,
         amount=str(amount),
         starts_at=starts_at,
