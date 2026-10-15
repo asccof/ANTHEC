@@ -1,8 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>{{ page.title }}</h1>
-{% for block in page.body %}
-  {% if block.block_type == 'heading' %}<h2>{{ block.value }}</h2>
-  {% elif block.block_type == 'paragraph' %}<p>{{ block.value|linebreaksbr }}</p>{% endif %}
-{% endfor %}
+{% if is_site_home %}
+<section class="hero"><div class="shell hero-grid"><div class="hero-copy">
+  <p class="eyebrow">{{ public_labels.eyebrow }}</p><h1>{{ public_labels.hero }}</h1><p class="hero-intro">{{ public_labels.intro }}</p>
+  <div class="hero-actions"><a class="button button-gold" href="#membership">{{ public_labels.explore }}</a>
+  {% if owner_testing %}<span class="button button-muted" aria-disabled="true">{{ public_labels.closed }}</span>{% else %}<a class="button button-outline" href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{{ public_labels.apply }}</a>{% endif %}</div>
+</div><div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-monogram">A<span>ANTHEC</span></div><div class="art-caption">{{ public_labels.footer }}</div></div></div></section>
+<section id="about" class="section shell"><div class="section-heading"><p class="eyebrow">ANTHEC</p><h2>{{ public_labels.pathways }}</h2></div>
+<article class="editorial-panel"><h3>{{ page.title }}</h3>{% for block in page.body %}{% if block.block_type == 'heading' %}<h4>{{ block.value }}</h4>{% elif block.block_type == 'paragraph' %}<p>{{ block.value|linebreaksbr }}</p>{% endif %}{% endfor %}</article></section>
+<section id="membership" class="section membership-section"><div class="shell"><div class="section-heading"><p class="eyebrow">{{ public_labels.memberships }}</p><h2>{{ public_labels.memberships }}</h2><p>{{ public_labels.membership_intro }}</p></div>
+<div class="membership-grid">{% for item in membership_prices %}<article class="membership-card{% if item.featured %} featured{% endif %}"><span class="card-index">0{{ forloop.counter }}</span><h3>{{ item.name }}</h3><p class="price">{% if item.amount != None %}<strong>{{ item.amount }}</strong><span>{{ public_labels.annual }}</span>{% else %}{{ public_labels.unconfigured }}{% endif %}</p><p>{% if item.featured %}{{ public_labels.level3 }}{% else %}{{ public_labels.other_tiers }}{% endif %}</p></article>{% endfor %}</div>
+<aside class="permanent-note"><h3>{{ public_labels.permanent }}</h3><p>{{ public_labels.permanent_detail }}</p></aside>
+</div></section>
+<section id="accreditation" class="section shell"><div class="section-heading"><p class="eyebrow">{{ public_labels.accreditation }}</p><h2>{{ public_labels.accreditation }}</h2><p>{{ public_labels.private_terms }}</p></div>
+<div class="three-grid"><article class="service-card"><span class="card-index">01</span><h3>{{ public_labels.individual }}</h3><p>{{ public_labels.one_year }}</p></article><article class="service-card"><span class="card-index">02</span><h3>{{ public_labels.institution }}</h3><p>{{ public_labels.one_year }}</p></article><article class="service-card"><span class="card-index">03</span><h3>{{ public_labels.course }}</h3><p>{{ public_labels.course_term }}</p></article></div><p class="policy-note">{{ public_labels.not_licence }}</p>
+</section>
+<section class="section collaboration-section"><div class="shell"><div class="section-heading"><p class="eyebrow">{{ public_labels.participate }}</p><h2>{{ public_labels.participate }}</h2></div><div class="two-grid"><article class="collaboration-card"><h3>{{ public_labels.activities }}</h3><p>{{ public_labels.activities_detail }}</p><a class="text-link" href="{% url 'activity_list' %}?lang={{ page.locale.language_code }}">{{ public_labels.activities }}</a></article><article class="collaboration-card"><h3>{{ public_labels.partners }}</h3><p>{{ public_labels.partners_detail }}</p><a class="text-link" href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a><a class="text-link" href="{% url 'partnership_request' %}?lang={{ page.locale.language_code }}">{{ public_labels.partnership_request }}</a></article></div></div></section>
+<section id="privacy" class="section shell privacy-panel"><div><p class="eyebrow">{{ public_labels.privacy }}</p><h2>{{ public_labels.privacy }}</h2></div><p>{{ public_labels.privacy_detail }}</p></section>
+{% else %}
+<article class="section shell editorial-page"><p class="eyebrow">{{ public_labels.editorial }}</p><h1>{{ page.title }}</h1>{% for block in page.body %}{% if block.block_type == 'heading' %}<h2>{{ block.value }}</h2>{% elif block.block_type == 'paragraph' %}<p>{{ block.value|linebreaksbr }}</p>{% endif %}{% endfor %}</article>
+{% endif %}
 {% endblock %}
