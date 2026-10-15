@@ -42,6 +42,7 @@ class InvitationOutputTests(TestCase):
                 self.assertContains(response, f'lang="{lang}" dir="{"rtl" if lang == "ar" else "ltr"}"')
                 for key in ("invitation", "activity invitation", "valid_until", "active"):
                     self.assertContains(response, labels[key])
+                self.assertContains(response, {"ar": "نوع الدعوة", "fr": "Type d’invitation", "en": "Invitation type"}[lang] + ": ")
                 self.assertContains(response, "&lt;script&gt;alert(1)&lt;/script&gt;")
                 self.assertContains(response, str(self.doc.serial))
                 self.assertContains(response, credentials["code"])
