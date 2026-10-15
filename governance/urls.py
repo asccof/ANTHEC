@@ -11,9 +11,12 @@ from . import (
     partner_views,
     accreditation_views,
     activity_views,
+    operations_views,
 )
 
 urlpatterns = [
+    path("operations/directors/", operations_views.directors, name="director_register"),
+    path("operations/pricing/", operations_views.pricing, name="pricing_register"),
     path("activities/", activity_views.listing, name="activity_list"),
     path("activities/<int:activity_id>/", activity_views.participate, name="activity_participate"),
     path("operations/activities/", activity_views.register, name="activity_admin_register"),

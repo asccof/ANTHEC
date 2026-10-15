@@ -224,3 +224,14 @@ PR32 exact head 958b5f4e0bf5c5c19645e35c8fea47e56adeda86 passed PostgreSQL/conta
 Branch eng/events-management-ui prepares activity configuration, participation/guardian forms, admission decisions and attendance interfaces. Existing conditions are protected after requests, current conditions locked during registration, capacity and invitation validity preserved. Nine targeted synthetic interface tests passed. Requests/invitations remain blocked in owner-testing; manual seed_activity_demo creates two synthetic pending requests and an unusable-password nonstaff synthetic participant account, never a document/payment. Exact-head review/CI/deployment and owner acceptance are pending. Actual consent templates/event conditions, file evidence, real hosting invitation/attendance acceptance and legal/security readiness remain unfinished.
 
 Final local event increment suite: 218 tests passed, with 18 PostgreSQL-only skips. Follow-up privacy assertion ensures the independent case final approval reason remains encrypted rather than copied to the shared plaintext accreditation audit; targeted case/activity tests cover the final change. Exact-head CI/review still required.
+
+
+## 2026-10-15 — PR33 accepted; operational director/pricing screens prepared
+
+Owner reports successful private activity/request test after PR33 deployment b0132b0c08ed087dcd6c07da8cf4da2361023d9b, CI 38593183235 and completed Codex review. Issued invitation/attendance remains untested live because issuance is disabled. Owner explicitly authorizes director/pricing interfaces followed by multilingual public presentation.
+
+Branch eng/directors-pricing-ui prepares primary-only director management and prospective versioned price changes using existing commands, explicit confirmation and recent MFA. Protected primary/superuser targets excluded; revoked epochs remain invalid; old quotes are unchanged. Optional price decision reason is audited. No prices or privileges change at deployment. Manual seed_operations_demo creates one unusable-password, unprivileged synthetic candidate only.
+
+Local execution is unavailable due environment connection failure. No local test pass is claimed. New synthetic acceptance tests and all existing metadata/system/drift/PostgreSQL/recovery/container checks must pass CI, followed by exact-head Codex review before authorized private deployment. Public site work follows in a separate bounded increment. No launch, delivery, real-person data, plan/resource or Tighri change.
+
+PR34 review found an active-target requirement enforced only in the view. Follow-up moves that validation into the existing locked delegation service, removes the stale view check and adds direct-service/JSON rejection plus inactive revocation regression coverage. No local pass claimed; final-head CI/review required.

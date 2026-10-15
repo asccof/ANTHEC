@@ -1,0 +1,11 @@
+{% extends 'governance/member_base.html' %}
+{% block content %}<section><h2>{{ labels.directors }}</h2><p>{{ labels.primary_notice }}</p>
+{% if owner_testing %}<p>{{ labels.testing }}</p>{% endif %}
+<p>{{ labels.primary }}: {{ primary.get_username }}</p>
+<table><thead><tr><th>{{ labels.user }}</th><th>{{ labels.state }}</th><th>{{ labels.epoch }}</th></tr></thead><tbody>
+{% for row in rows %}<tr><td>{{ row.user.get_username }}</td><td>{{ row.display_state }}</td><td>{{ row.epoch }}</td></tr>
+{% empty %}<tr><td colspan="3">{{ labels.empty }}</td></tr>{% endfor %}</tbody></table>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.save }}</button></form>
+<a href="{% url 'security_challenge' %}?lang={{ language }}">{{ labels.reauth }}</a>
+<h3>{{ labels.history }}</h3>{% for event in history %}<p>{{ event.created_at|date:'c' }} — {{ event.subject }} — {{ event.reason|linebreaksbr }}</p>{% endfor %}
+</section>{% endblock %}

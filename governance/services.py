@@ -216,6 +216,8 @@ def delegate(*, actor, user_id, active, reason):
     target = get_user_model().objects.select_for_update().get(pk=user_id)
     if target.is_superuser:
         raise ValidationError("Delegates cannot be Django superusers")
+    if active and not target.is_active:
+        raise ValidationError("Active target account required")
     row, _ = Delegation.objects.get_or_create(user=target)
     row.active = bool(active)
     row.epoch += 1
@@ -258,7 +260,7 @@ def delegate(*, actor, user_id, active, reason):
 
 
 @command("price.change")
-def change_price(*, actor, tier, amount, starts_at):
+def change_price(*, actor, tier, amount, starts_at, reason=""):
     from django.utils.dateparse import parse_datetime
 
     moment = parse_datetime(starts_at)
@@ -270,6 +272,7 @@ def change_price(*, actor, tier, amount, starts_at):
         or tier in {"founder", "honorary"}
         or amount < 0
         or moment < timezone.now()
+        or len(reason) > 3000
     ):
         raise ValidationError("Invalid prospective price")
     price = Price.objects.create(
@@ -279,6 +282,7 @@ def change_price(*, actor, tier, amount, starts_at):
         actor,
         "price.changed",
         price.pk,
+        reason,
         tier=tier,
         amount=str(amount),
         starts_at=starts_at,

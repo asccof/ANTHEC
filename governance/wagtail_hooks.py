@@ -61,3 +61,21 @@ def activity_menu():
     from .activity_labels import vocabulary as activity_vocabulary
     label=lazy(lambda:activity_vocabulary(get_language().split("-")[0])[1]["administration"],str)()
     return MenuItem(label,reverse("activity_admin_register"),icon_name="date",order=940)
+
+
+class PrimaryDirectorMenuItem(MenuItem):
+    def is_shown(self, request):
+        from .models import Authority
+        return request.user.is_authenticated and Authority.objects.filter(pk=1, primary_id=request.user.pk).exists()
+
+@hooks.register("register_admin_menu_item")
+def director_menu():
+    from .operations_labels import vocabulary as operations_vocabulary
+    label = lazy(lambda: operations_vocabulary(get_language().split("-")[0])[1]["directors"], str)()
+    return PrimaryDirectorMenuItem(label, reverse("director_register"), icon_name="group", order=950)
+
+@hooks.register("register_admin_menu_item")
+def pricing_menu():
+    from .operations_labels import vocabulary as operations_vocabulary
+    label = lazy(lambda: operations_vocabulary(get_language().split("-")[0])[1]["pricing"], str)()
+    return MenuItem(label, reverse("pricing_register"), icon_name="list-ul", order=960)
