@@ -24,14 +24,7 @@ def printable(doc, language="ar"):
     link = (
         settings.ANTHEEC_PUBLIC_ORIGIN
         + "/verify/"
-        + (
-            "?lang=" + language
-            if doc.institutional_role_id
-            or doc.membership_id
-            or doc.accreditation_id
-            and doc.accreditation.membership_id
-            else ""
-        )
+        + "?lang=" + language
         + "#"
         + credentials["token"]
     )
@@ -59,16 +52,19 @@ def printable(doc, language="ar"):
             for k, v in data.items()
         )
         return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{background};padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["association_notice"])}</p><p>{escape(labels["demo"])}</p></body></html>'
-    title = {
-        "gold_card": "بطاقة عضوية ذهبية",
-        "professional_certificate": "شهادة اعتماد مهني جمعوي",
-        "membership_card": "بطاقة عضوية",
-        "accreditation_certificate": "شهادة اعتماد",
-        "invitation": "دعوة شخصية",
-    }[doc.kind]
-    bg = "#f7e3a0" if doc.kind == "gold_card" else "#ffffff"
-    rows = "".join(f"<p>{escape(k)}: {escape(str(v))}</p>" for k, v in data.items())
-    return f"""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{bg};padding:30px}}svg{{width:150px;height:150px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>رمز التحقق: {escape(credentials['code'])}</p>{svg}<p>للاطلاع على الحالة الحالية امسح QR أو أدخل المرجع ورمز التحقق.</p><p>نموذج تطوير ببيانات اصطناعية فقط. الاعتماد جمعوي وليس ترخيصًا حكوميًا.</p></body></html>"""
+    if doc.kind == "invitation":
+        from .invitation_labels import vocabulary as invitation_vocabulary
+
+        language, labels = invitation_vocabulary(language)
+        title = labels["invitation"]
+        direction = "rtl" if language == "ar" else "ltr"
+        rows = "".join(
+            f"<p>{escape(labels[k])}: {escape(display_value(labels, k, v))}</p>"
+            for k, v in data.items()
+        )
+        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["demo"])}</p></body></html>'
+    raise ValueError("Unsupported HTML document kind")
+
 
 
 @transaction.atomic

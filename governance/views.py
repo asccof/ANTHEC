@@ -58,12 +58,17 @@ def verify(request):
             "membership_card",
             "gold_card",
             "professional_certificate",
+            "invitation",
         }
         and "text/html" in request.headers.get("Accept", "")
     ):
         from .member_labels import vocabulary as member_vocabulary
 
-        language, labels = member_vocabulary(request.GET.get("lang", "ar"))
+        if data["document_type"] == "invitation":
+            from .invitation_labels import vocabulary as result_vocabulary
+        else:
+            result_vocabulary = member_vocabulary
+        language, labels = result_vocabulary(request.GET.get("lang", "ar"))
         return render(
             request,
             "governance/institutional_verification.html",
