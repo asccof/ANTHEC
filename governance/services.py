@@ -216,6 +216,8 @@ def delegate(*, actor, user_id, active, reason):
     target = get_user_model().objects.select_for_update().get(pk=user_id)
     if target.is_superuser:
         raise ValidationError("Delegates cannot be Django superusers")
+    if active and not target.is_active:
+        raise ValidationError("Active target account required")
     row, _ = Delegation.objects.get_or_create(user=target)
     row.active = bool(active)
     row.epoch += 1

@@ -39,8 +39,6 @@ def directors(request):
         if form.is_valid():
             data = form.cleaned_data
             try:
-                if data["decision"] == "grant" and not data["user"].is_active:
-                    raise ValidationError("Active target account required")
                 services.delegate(request, key=str(data["key"]), user_id=data["user"].pk,
                                   active=data["decision"] == "grant", reason=data["reason"])
                 return redirect(reverse("director_register") + "?lang=" + ctx["language"])

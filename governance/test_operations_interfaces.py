@@ -3,7 +3,7 @@ import uuid
 from datetime import timedelta
 from io import StringIO
 from django.contrib.auth.models import Permission
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.management import call_command, CommandError
 from django.test import TestCase, Client, override_settings
 from django.utils import timezone
@@ -127,3 +127,18 @@ class OperationalInterfaceTests(TestCase):
         user=get_user_model().objects.get(username="synthetic-director-candidate-v1")
         self.assertFalse(user.has_usable_password());self.assertFalse(user.is_staff);self.assertFalse(user.is_superuser)
         self.assertFalse(Delegation.objects.exists());self.assertEqual(Price.objects.count(),6)
+
+    def test_inactive_grant_is_blocked_in_locked_service_and_json(self):
+        self.target.is_active=False; self.target.save(update_fields=["is_active"])
+        with self.assertRaises(ValidationError):
+            services.delegate(self.request,key=str(uuid.uuid4()),user_id=self.target.pk,active=True,reason="Synthetic inactive grant")
+        self.http_login()
+        data=dict(key=str(uuid.uuid4()),user_id=self.target.pk,active=True,reason="Synthetic inactive grant")
+        self.assertEqual(self.client.post("/operations/delegate/",data,content_type="application/json").status_code,400)
+        self.assertFalse(Delegation.objects.exists())
+        self.assertFalse(self.target.groups.filter(name="ANTHEEC operational directors").exists())
+        self.target.is_active=True; self.target.save(update_fields=["is_active"])
+        self.grant()
+        self.target.is_active=False; self.target.save(update_fields=["is_active"])
+        services.delegate(self.request,key=str(uuid.uuid4()),user_id=self.target.pk,active=False,reason="Synthetic inactive revoke")
+        self.assertFalse(Delegation.objects.get(user=self.target).active)
