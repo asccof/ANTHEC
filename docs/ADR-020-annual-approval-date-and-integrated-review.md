@@ -1,0 +1,13 @@
+# ADR-020 — final annual approval dates and integrated readiness evidence
+
+Status: prepared for exact-head CI/review, 2026-10-15. Authority: POL-01/02/04/05/06/07/08 and owner's approved comprehensive review after PR34/35 private UI acceptance.
+
+Two new regression tests failed on the accepted baseline: delayed independent institution-case approval retained its old proposed term, and direct individual approval similarly retained an arbitrary prior year. This can consume validity or create an expired annual right before final administrative approval, contrary to POL-02. The three other joined synthetic journeys passed on that baseline: case/certificate/PDF/verification/state/reissue, guest/guardian/invitation/attendance/cancellation, and the owner-only navigation/closed-write matrix.
+
+The existing shared independent issuance helper now derives individual/institution annual dates from the server's final approval date using the already-approved year/leap-day calculation. Submitted annual proposals still require an internally consistent one-year period; they cannot backdate or defer the final right. Courses preserve their explicitly approved duration. Case approval copies the issued effective dates to the case and records proposed plus effective dates in its restricted audit event. Existing private assessment/reasons remain encrypted. AR/FR/EN screens explain the rule. Existing issued rights and artifacts are not migrated or rewritten.
+
+All writes remain within the existing authority/MFA/replay transaction, and the owner-testing issuance gate remains unchanged. Invalid issuance still rolls back the case/right/document together. No official operation, authentic signature, personal record, public launch, DNS, resource/plan, backup restore or Tighri action is authorized by these tests. Plain synthetic image-integrity rectangles are used only in isolated signed-artifact tests.
+
+The readiness report distinguishes isolated automated evidence, owner-accepted enabled UI, hosted disabled paths and unverified operational/legal/security gates. It explicitly identifies incomplete FR/EN invitation output, real hosted issuance/restore acceptance, key custody/rotation, final content and optional scope. It does not claim historical OOM root cause, legal/security readiness or every release feature complete.
+
+Final local checks and exact-head PostgreSQL CI/Codex evidence must be recorded before merge/private publication. The reviewed source tree must match the published tree; later workflow evidence belongs in the PR conversation to avoid changing an already-tested commit merely to update acceptance wording.

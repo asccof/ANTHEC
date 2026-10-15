@@ -512,6 +512,10 @@ def _issue_independent_accreditation(*, actor, kind, person_id, subject_name, st
     person = Person.objects.get(pk=person_id) if person_id else None
     if person and person.verification_notice_at is None:
         raise ValidationError("Verification notice required")
+    if kind != "course":
+        # POL-02: a reviewed draft cannot consume or defer the issued annual term.
+        start = today()
+        end = year_after(start)
     row = Accreditation.objects.create(
         kind=kind,
         person=person,

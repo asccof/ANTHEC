@@ -1,6 +1,8 @@
 # Approved policy execution and gap plan
 
-> Current completion evidence: [2026-10-14 completeness register](COMPLETENESS_REVIEW.md). Historical preparation descriptions below are not current acceptance status. Approved policies remain authoritative.
+> Current joined-path/release evidence: [readiness review](RELEASE_READINESS_REVIEW.md).
+
+> Current completion evidence: [2026-10-15 completeness register](COMPLETENESS_REVIEW.md). Historical preparation descriptions below are not current acceptance status. Approved policies remain authoritative.
 
 Verified starting main: 97f16322a41318c9e5163ef8c18c986c1a68caa5. PR #2 delivered bounded CMS; PR #4 delivered proposed contracts. Both are merged, not repeated. Source SRC-08 and owner continuation now approve POL-01–08 and override conflicting proposals. Issue #13 tracks this increment; #12 must no longer describe those eight policies as awaiting approval.
 

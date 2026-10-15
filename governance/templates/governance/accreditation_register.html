@@ -1,4 +1,4 @@
 {% extends 'governance/member_base.html' %}
-{% block content %}<section><h2>{{ labels.title }}</h2><p>{{ labels.files }}</p>{% if owner_testing %}<p>{{ labels.blocked }}</p>{% endif %}
+{% block content %}<section><h2>{{ labels.title }}</h2><p>{{ labels.files }}</p><p>{{ labels.annual_notice }}</p>{% if owner_testing %}<p>{{ labels.blocked }}</p>{% endif %}
 {% for row in rows %}<p><a href="{% url 'accreditation_case' row.pk %}?lang={{ language }}">#{{ row.pk }} — {{ row.display_subject }}</a> — {{ row.display_state }}</p>{% empty %}<p>{{ labels.empty }}</p>{% endfor %}
 <h3>{{ labels.create }}</h3><form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.create }}</button></form></section>{% endblock %}
