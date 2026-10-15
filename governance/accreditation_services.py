@@ -1,7 +1,7 @@
 """Private case decisions reuse the existing atomic accreditation issuance rules."""
 from datetime import date
 from django.core.exceptions import ValidationError
-from .models import AccreditationCase, Person
+from .models import AccreditationCase, Accreditation, Person
 from .services import command, audit, encrypt, decrypt, year_after, _issue_independent_accreditation
 
 
@@ -73,10 +73,16 @@ def approve(*, actor, case_id, reason):
     payload = decrypt(row.private_payload)
     if row.state != "reviewed" or not payload.get("criteria") or not payload.get("assessment"):
         raise ValidationError("Completed assessment required")
+    proposed_start, proposed_end = row.starts_on, row.ends_on
     result = _issue_independent_accreditation(actor=actor, kind=row.kind, person_id=row.person_id,
         subject_name=row.subject_name, starts_on=row.starts_on.isoformat(), ends_on=row.ends_on.isoformat(), reason=f"Independent assessment case {row.pk} approved")
     row.state = "approved"
     row.accreditation_id = result["accreditation"]
-    row.save(update_fields=["state", "accreditation"])
-    audit(actor, "accreditation.case.approved", row.pk, accreditation=row.accreditation_id, private_payload=encrypt({"reason":reason}))
+    issued = Accreditation.objects.get(pk=row.accreditation_id)
+    row.starts_on, row.ends_on = issued.starts_on, issued.ends_on
+    row.save(update_fields=["state", "accreditation", "starts_on", "ends_on"])
+    audit(actor, "accreditation.case.approved", row.pk, accreditation=row.accreditation_id,
+        proposed_starts_on=proposed_start.isoformat(), proposed_ends_on=proposed_end.isoformat(),
+        effective_starts_on=row.starts_on.isoformat(), effective_ends_on=row.ends_on.isoformat(),
+        private_payload=encrypt({"reason":reason}))
     return {"case": row.pk, **result}

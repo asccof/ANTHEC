@@ -1,63 +1,65 @@
-# ANTHEEC
+# ANTHEC
 
-> Current completion evidence: [2026-10-14 completeness register](docs/COMPLETENESS_REVIEW.md). Historical preparation descriptions below are not current acceptance status. Approved policies remain authoritative.
+Independent association platform, currently a **private owner-only synthetic trial**. Current completion evidence: [readiness review](docs/RELEASE_READINESS_REVIEW.md), [completeness register](docs/COMPLETENESS_REVIEW.md) and [execution history](docs/STATUS.md). Owner-approved [POL-01–08](docs/APPROVED_POLICIES.md) remain authoritative. Legacy internal package names use ANTHEEC; the current displayed acronym is ANTHEC.
 
-Independent institutional platform. Synthetic development only; production, real-person/clinical data, paid services and external delivery remain blocked.
+## Current behavior and boundaries
 
-## Current authority and scope
+The owner has accepted enabled membership/review screens, institutional/honorary designation screens, partnership review, independent assessment, activity/request review, director/pricing screens and AR/FR/EN presentation. This is **not** acceptance of the disabled financial/issuance/attendance path on hosting, real data, final editorial/legal content or a public launch.
 
-Owner-approved POL-01–08: [policy register](docs/APPROVED_POLICIES.md). These supersede conflicting historical proposals. Third-tier membership approval/renewal atomically grants linked annual professional accreditation and separate gold card/certificate. [Current contracts](docs/DOMAIN_CONTRACTS.md), [phased gaps](docs/POLICY_EXECUTION.md) and [execution evidence](docs/STATUS.md) distinguish tested services from full platform acceptance.
+Implemented services include append-only prospective prices/fixed quotes, verified cash/transfer, exemptions/refund decisions, membership/renewal, linked third-tier professional accreditation, independent assessments, institutional roles, authority/delegation/MFA/revocation, guardian consent/admission/capacity/attendance and controlled partner visibility. Independent criteria/notes/fees remain private. Assessment and partnership do not implicitly grant membership or administrative authority.
 
-Implemented core: versioned prices/fixed quotes, verified cash/transfer, exemptions/refunds, membership/renewal, linked and independent accreditation decisions, encrypted printable documents/outbox, QR or reference+code verification, guardian consent/admission/capacity and unique attendance, primary/delegated directors and MFA. Finished end-user/admin forms, private assessment/upload workflow, optional directory, complete CMS translations/partners and legal/security/restore acceptance remain tracked in issues #5–10. Artifacts are development printable HTML, not production PDF templates.
+The document system includes approved artwork and protected encrypted card/certificate PDF artifacts with immutable photo/signature/stamp snapshots, reference/QR/additional-code verification, replacement history and status propagation. Raster signing assets are not a PKI digital signature. Invitation output still has an Arabic HTML fallback; complete FR/EN invitation output is a recorded gap. Participation certificates remain NOT ISSUED design proofs. See [premium documents](docs/PREMIUM_DOCUMENTS.md) and [readiness matrix](docs/RELEASE_READINESS_REVIEW.md).
 
-## Local development (Python 3.12)
+On the deployed owner-testing service, only the verified active primary sees dynamic data. Registration/applications/renewal, payment/refund execution, document issuance/PDF generation/outbox processing, official verification and external delivery remain blocked. Settings reject public production mode. No new paid resource, plan change, real-person/clinical data, external delivery, DNS change or Tighri modification is implied by this repository or current review.
+
+## Operational entry points
+
+Log in at `/admin/login/`, complete password + authenticator verification, then use the administrative menu or return-to-site navigation. Sensitive writes require recent reauthentication at `/security/challenge/` (five minutes). Never send credentials, TOTP secrets, recovery codes or signing assets in chat or commit them.
+
+| Path | Access / purpose |
+|---|---|
+| `/ar/`, `/fr/`, `/en/` | Owner-only trial presentation; existing manual CMS revisions/translations preserved |
+| `/operations/membership/` | Membership review and finance/rights controls, with live trial guards |
+| `/operations/institutional/` | Recorded office terms and free permanent founder/honorary designations |
+| `/operations/accreditation/` | Private independent casework; annual effective dates derive from final approval, course dates remain explicit |
+| `/operations/activities/` | Configuration, admission, guardian evidence and invitation-based attendance controls |
+| `/operations/partners/` | Proposal review and hidden/localized partner records |
+| `/operations/directors/` | Primary-only delegation management; the primary cannot be replaced here |
+| `/operations/pricing/` | Prospective membership price versions, fixed prior quotes |
+| `/operations/portraits/`, `/operations/certificate-assets/` | Restricted immutable issuance assets; protected synthetic testing only |
+| `/members/`, `/my-documents/`, `/verify/` | Isolated-test member/document/verification paths; their protected live actions remain disabled |
+
+Optional `seed_partner_demo`, `seed_accreditation_demo`, `seed_activity_demo` and `seed_operations_demo` commands are idempotent **owner-testing-only** fixtures invoked manually, never automatic deployment hooks. They do not approve rights, issue documents, collect funds or send credentials. The operations fixture creates only an unusable-password, unprivileged synthetic candidate.
+
+## Local synthetic development (Python 3.12)
+
+Use a separate development database and an `example.invalid` identity. Never load a deployed database or real records into development. Install exact pinned dependencies and supply a newly generated private `ANTHEEC_DATA_KEY` through secure local configuration; retain it separately from any export. Test settings already contain a clearly synthetic key for disposable test databases.
 
 ```sh
 python -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-python manage.py migrate
-python manage.py seed_demo
-python manage.py seed_policy_prices
-python manage.py createsuperuser --username synthetic-primary --email primary@example.invalid
-python manage.py bootstrap_authority synthetic-primary
+python manage.py migrate --settings=antheec_app.settings.dev
+python manage.py seed_demo --settings=antheec_app.settings.dev
+python manage.py seed_policy_prices --settings=antheec_app.settings.dev
+python manage.py createsuperuser --username synthetic-primary --email primary@example.invalid --settings=antheec_app.settings.dev
+python manage.py bootstrap_authority synthetic-primary --settings=antheec_app.settings.dev
+python manage.py runserver 127.0.0.1:8000 --settings=antheec_app.settings.dev
 ```
 
-Set `ANTHEEC_DATA_KEY` privately to a newly generated Fernet key (32 bytes, URL-safe base64), and retain it securely for this synthetic database. Do not commit or print it to logs. Missing key fails document issuance atomically; encryption rotation/backup recovery remains a readiness gate. Test settings supply an explicitly synthetic fixture key.
+Business commands remain CSRF-protected JSON POSTs at `/operations/<action>/` as well as bounded forms. Current authority, confirmed MFA, epoch and recent reauthentication are enforced in the service boundary; unrelated Django permissions do not establish authority. Do not create delegates as superusers. Synthetic fixtures do not replace identity verification or recovery procedures for real operations.
 
-```sh
-python manage.py runserver 127.0.0.1:8000
-```
-
-Open `/ar/`, `/fr/`, `/en/` and `/admin/`. The designated primary must enroll a TOTP authenticator at `/security/enroll/`, confirm password+factor, and save the displayed one-use recovery codes privately. Password+factor challenge is at `/security/challenge/`; sensitive commands require reauthentication within five minutes. Primary assignment cannot be changed through a web endpoint. Do not create operational directors as Django superusers: appoint/revoke them with the primary-only delegated command.
-
-Business commands are JSON POSTs to `/operations/<action>/` with a unique `key`; allowed action/payload definitions are in `governance/services.py` and `governance/views.py`. They require authenticated, MFA-verified current primary/delegation and CSRF. This is a service/API increment, not finished application forms. Managed synthetic profiles and activities are test/development fixtures; enrollment UI remains pending. `/registrations/request/` accepts only the account's own profile or explicit guardian consent for its minor. `/verify/` exposes only allowlisted document fields after valid QR token or reference+code. `/my-documents/<id>/` permits holder/guardian or recently reauthenticated director. No public media/document filesystem route exists.
-
-```sh
-python manage.py render_policy_documents --limit 100
-```
-
-The local worker renders/retries encrypted printable jobs, preserving serials; it sends nothing externally. Production settings deliberately raise an error. Protected backups, archive/retention, private file scanning, complete recovery and independent security/legal review are prerequisites to real data.
-
-## Validation
+## Validation and readiness
 
 ```sh
 python tools/validate_baseline.py
 python -m unittest discover -s tests -v
 pip check
-python manage.py check
-python manage.py makemigrations --check --dry-run
+python manage.py check --settings=antheec_app.settings.test
+python manage.py makemigrations --check --dry-run --settings=antheec_app.settings.test
 python manage.py test content governance --settings=antheec_app.settings.test
 ```
 
-SQLite runs local acceptance tests; three concurrency tests intentionally require PostgreSQL. CI uses PostgreSQL 16. To test against a local instance set `ANTHEEC_DB_ENGINE=postgresql`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT`. PostgreSQL evidence must come from actual CI, not SQLite. Original source attachments/private criteria are excluded from this public repository; source hashes preserve traceability. No MHIOS code or governance is imported.
+Local SQLite is not PostgreSQL lock evidence. CI runs the full suite on disposable PostgreSQL 16, metadata/system/drift/dependency checks, container/runtime validation and authenticated synthetic export/restore/decryption in a distinct database. Exact-head CI/review and tested-tree verification precede authorized merges/private deploys.
 
-## Institutional cards (owner-authorized Phase 1)
-
-Protected AR/FR/EN administration: `/operations/institutional/`. Existing MFA-authorized directors grant recorded office terms or permanent free founder cards, record decisions and reissue documents. Institutional cards confer no platform privileges. See [Phase 1 contract and traceability](docs/INSTITUTIONAL_CARDS_PHASE1.md). Six concurrency tests now require PostgreSQL.
-
-## Membership interfaces (Phase 2)
-
-Synthetic self-service entry: `/members/signup/`, `/members/login/`, `/members/`, `/members/profile/`, `/members/apply/`. Add `?lang=ar|fr|en`. Accounts receive no administrative permissions. Previously recorded persons must request deliberate account linking; names/emails never establish identity. See [Phase 2 package map and boundaries](docs/MEMBERSHIP_INTERFACES_PHASE2.md).
-
-Prepared Phase 2 administration: `/operations/membership/` (MFA-authorized directors), `/operations/membership/identities/` (documented linkage to an unlinked existing Person). Member records: `/members/applications/<id>/`, `/members/renew/`, `/members/documents/`, with AR/FR/EN labels. Refund decisions record authorization; no bank transfer or external delivery executes. Phase 2 acceptance status is tracked in issue #17 and its draft PRs; availability of mandatory external review blocks merge.
+[Release readiness](docs/RELEASE_READINESS_REVIEW.md) separates implemented and owner-accepted trial behavior from invitation localization, real hosted issuance/restore/key/capacity evidence, optional scope, final content and independent legal/privacy/security gates. Existing memory observations do not prove the historical OOM allocation root cause fixed. Historical preparation documents remain traceable but do not override the current evidence register or owner authorization. Original private source attachments and detailed criteria are excluded; hashes preserve traceability. No MHIOS code or governance is imported.
