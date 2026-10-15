@@ -3,19 +3,30 @@
 <html lang="{{ page.locale.language_code }}" dir="{% if page.locale.language_code == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ page.title }} | ANTHEEC</title>
+  <title>{{ page.seo_title|default:page.title }} | ANTHEC</title>
   <meta name="description" content="{{ page.search_description }}">
+  <meta name="referrer" content="same-origin">
   <link rel="stylesheet" href="{% static 'site.css' %}">
 </head>
 <body>
-  {% include "governance/navigation.html" with language=page.locale.language_code %}
-  <header><strong>ANTHEEC</strong><nav aria-label="Languages">
-    {% for version in language_versions %}<a href="{{ version.url }}" lang="{{ version.locale.language_code }}" hreflang="{{ version.locale.language_code }}" {% if version.pk == page.pk %}aria-current="page"{% endif %}>{{ version.locale.get_display_name }}</a>{% endfor %}
-  </nav><nav aria-label="Membership">
-    <a href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}طلب الانخراط{% elif page.locale.language_code == 'fr' %}Demande d’adhésion{% else %}Membership application{% endif %}</a>
-    <a href="{% url 'member_home' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}فضاء العضو{% elif page.locale.language_code == 'fr' %}Espace membre{% else %}Member area{% endif %}</a>
-  <a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{% if page.locale.language_code == 'ar' %}الشركاء{% elif page.locale.language_code == 'fr' %}Partenaires{% else %}Partners{% endif %}</a>
-  </nav></header>
-  <main>{% block content %}{% endblock %}</main>
-</body>
-</html>
+<a class="skip-link" href="#main-content">{{ public_labels.skip }}</a>
+{% include "governance/navigation.html" with language=page.locale.language_code %}
+<div class="utility-bar"><div class="shell utility-inner">
+  {% if owner_testing %}<span class="trial-dot">{{ public_labels.testing }}</span>{% else %}<span>{{ public_labels.eyebrow }}</span>{% endif %}
+  <nav class="language-nav" aria-label="{{ public_labels.languages }}">
+  {% for version in language_versions %}<a href="{{ version.url }}" lang="{{ version.locale.language_code }}" hreflang="{{ version.locale.language_code }}" {% if version.pk == page.pk %}aria-current="page"{% endif %}>{{ version.locale.get_display_name }}</a>{% endfor %}
+  </nav>
+</div></div>
+<header class="site-header"><div class="shell header-inner">
+  <div class="brand">{% if localized_home_url %}<a href="{{ localized_home_url }}">{% endif %}<strong>ANTHEC</strong><span>{{ public_labels.name }}</span>{% if localized_home_url %}</a>{% endif %}</div>
+  <nav class="main-nav" aria-label="{{ public_labels.nav }}">
+    {% if localized_home_url %}<a href="{{ localized_home_url }}#about">{{ public_labels.about }}</a><a href="{{ localized_home_url }}#membership">{{ public_labels.memberships }}</a><a href="{{ localized_home_url }}#accreditation">{{ public_labels.accreditation }}</a>{% endif %}
+    <a href="{% url 'activity_list' %}?lang={{ page.locale.language_code }}">{{ public_labels.activities }}</a>
+    <a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a>
+    {% if owner_testing %}<a class="nav-pill" href="/admin/">{{ public_labels.admin_area }}</a>{% else %}<a class="nav-pill" href="{% url 'member_home' %}?lang={{ page.locale.language_code }}">{{ public_labels.member_area }}</a>{% endif %}
+  </nav>
+</div></header>
+{% if owner_testing %}<aside class="trial-notice shell" role="note"><strong>{{ public_labels.testing }}</strong><p>{{ public_labels.testing_detail }}</p></aside>{% endif %}
+<main id="main-content" tabindex="-1">{% block content %}{% endblock %}</main>
+<footer class="site-footer"><div class="shell footer-inner"><div><strong>ANTHEC</strong><p>{{ public_labels.name }}</p><small>{{ public_labels.footer }}</small></div><nav aria-label="{{ public_labels.nav }}"><a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a>{% if localized_home_url %}<a href="{{ localized_home_url }}#privacy">{{ public_labels.privacy }}</a>{% endif %}</nav></div></footer>
+</body></html>

@@ -235,3 +235,12 @@ Branch eng/directors-pricing-ui prepares primary-only director management and pr
 Local execution is unavailable due environment connection failure. No local test pass is claimed. New synthetic acceptance tests and all existing metadata/system/drift/PostgreSQL/recovery/container checks must pass CI, followed by exact-head Codex review before authorized private deployment. Public site work follows in a separate bounded increment. No launch, delivery, real-person data, plan/resource or Tighri change.
 
 PR34 review found an active-target requirement enforced only in the view. Follow-up moves that validation into the existing locked delegation service, removes the stale view check and adds direct-service/JSON rejection plus inactive revocation regression coverage. No local pass claimed; final-head CI/review required.
+
+
+## 2026-10-15 — multilingual presentation prepared (stacked after PR34)
+
+Owner authorizes the public-facing presentation as the next private-test increment. Branch eng/multilingual-presentation stacks after the reviewed director/pricing work; it must not merge before PR34 is accepted by CI/review and merged. No owner acceptance of either new interface is assumed.
+
+Prepared responsive navy/gold/teal AR/FR/EN landing sections and semantic navigation, corrected ANTHEC wordmark, effective public membership prices, accreditation rule summaries, activities/partner entry points and privacy/trial notices. Existing CMS records and card/certificate artwork remain unchanged. Public prices exclude future/free-designation overrides and all internal accreditation fees or application quotes. Owner-testing hides signup action and preserves the anonymous gate.
+
+Six new synthetic presentation tests cover localized sections, active public price scope, private record exclusion, trial gates, editable child pages and absent-price behavior. Existing CMS revision/translation/draft/XSS tests remain authoritative. Local environment is unavailable: no local pass or visual screenshot claimed. Exact-head PostgreSQL CI/recovery/container and Codex review required before private publication; desktop/mobile/language owner acceptance follows. Final editorial/contact/legal content and readiness remain pending.
