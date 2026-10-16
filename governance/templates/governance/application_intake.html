@@ -1,0 +1,1 @@
+<section><h2>{{ labels.applicant_capacity }}</h2><p>{{ declared_capacity|default:'—' }}</p>{% if app.capacity_other %}<p>{{ app.capacity_other }}</p>{% endif %}<p>{{ labels.profession }}: {{ app.profession_snapshot|default:'—' }}</p><p>{{ labels.capacity_notice }}</p></section>

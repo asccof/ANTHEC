@@ -34,6 +34,16 @@ def localized(view):
 def context(request):
     language, labels = vocabulary(request.GET.get("lang", "ar"))
     return {
+        "submit_label": labels.get(
+            {
+                "/members/signup/": "signup",
+                "/members/login/": "login",
+                "/members/profile/": "save_profile",
+                "/members/apply/": "submit_application",
+                "/members/renew/": "renew",
+                "/members/password/": "change_password",
+            }.get(request.path, "save")
+        ),
         "language": language,
         "labels": labels,
         "direction": "rtl" if language == "ar" else "ltr",
@@ -214,7 +224,16 @@ def profile(request):
     ctx = context(request)
     person = Person.objects.filter(user=request.user).first()
     initial = (
-        {k: getattr(person, k) for k in ("full_name", "contact", "directory_consent")}
+        {
+            k: getattr(person, k)
+            for k in (
+                "full_name",
+                "contact",
+                "phone",
+                "profession",
+                "directory_consent",
+            )
+        }
         if person
         else {}
     )
@@ -262,6 +281,8 @@ def apply(request):
                 member_services.submit_application(
                     request.user,
                     tier=form.cleaned_data["tier"],
+                    applicant_capacity=form.cleaned_data["applicant_capacity"],
+                    capacity_other=form.cleaned_data["capacity_other"],
                     key=str(form.cleaned_data["key"]),
                 )
                 return go(request, "member_home")
@@ -333,6 +354,14 @@ def application_detail(request, application_id):
         else Document.objects.none()
     )
     ctx.update(
+        declared_capacity=ctx["labels"].get(
+            (
+                "capacity_option_other"
+                if app.applicant_capacity == "other"
+                else "capacity_" + app.applicant_capacity
+            ),
+            "—",
+        ),
         app=app,
         tier=ctx["labels"][app.tier],
         state=ctx["labels"].get(app.state, app.state),

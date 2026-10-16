@@ -145,15 +145,32 @@ class MemberTests(TestCase):
 
     def test_application_quote_idempotency_duplicate_and_ownership(self):
         self.profile()
-        result = m.submit_application(self.user, tier="accredited", key="application")
+        result = m.submit_application(
+            self.user,
+            applicant_capacity="interested",
+            tier="accredited",
+            key="application",
+        )
         self.assertEqual(
             result,
-            m.submit_application(self.user, tier="accredited", key="application"),
+            m.submit_application(
+                self.user,
+                applicant_capacity="interested",
+                tier="accredited",
+                key="application",
+            ),
         )
         with self.assertRaises(s.Conflict):
-            m.submit_application(self.user, tier="general", key="application")
+            m.submit_application(
+                self.user,
+                applicant_capacity="interested",
+                tier="general",
+                key="application",
+            )
         with self.assertRaises(s.Conflict):
-            m.submit_application(self.user, tier="general", key="other")
+            m.submit_application(
+                self.user, applicant_capacity="interested", tier="general", key="other"
+            )
         app = Application.objects.get()
         self.assertEqual(str(app.quote), "3000.00")
         self.assertEqual(app.state, "submitted")
@@ -176,6 +193,8 @@ class MemberTests(TestCase):
         data = dict(
             key=str(uuid.uuid4()),
             full_name="Synthetic Own",
+            phone="+212600000001",
+            profession="Synthetic coach",
             contact="own@example.invalid",
         )
         self.assertEqual(self.client.post("/members/profile/", data).status_code, 400)
@@ -191,7 +210,12 @@ class MemberTests(TestCase):
         self.assertEqual(
             self.client.post(
                 "/members/apply/",
-                {"key": str(uuid.uuid4()), "tier": "affiliate", "person_id": other.pk},
+                {
+                    "key": str(uuid.uuid4()),
+                    "tier": "affiliate",
+                    "applicant_capacity": "coach",
+                    "person_id": other.pk,
+                },
             ).status_code,
             302,
         )

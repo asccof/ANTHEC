@@ -218,6 +218,14 @@ def detail(request, application_id):
         | Q(action="document.replaced", subject__in=[str(d.pk) for d in documents])
     ).order_by("pk")
     ctx.update(
+        declared_capacity=ctx["labels"].get(
+            (
+                "capacity_option_other"
+                if app.applicant_capacity == "other"
+                else "capacity_" + app.applicant_capacity
+            ),
+            "—",
+        ),
         app=app,
         term=term,
         tier=ctx["labels"][app.tier],

@@ -7,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 from . import services as s
 from .models import Person, Command, Application, Membership
+from .intake import validate_capacity, validate_phone
 
 
 def member_command(action):
@@ -46,7 +47,9 @@ def member_command(action):
 
 
 @member_command("member.profile")
-def update_profile(*, user, full_name, contact, directory_consent, notice):
+def update_profile(
+    *, user, full_name, contact, directory_consent, notice, phone=None, profession=None
+):
     if (
         not isinstance(full_name, str)
         or not full_name.strip()
@@ -57,6 +60,14 @@ def update_profile(*, user, full_name, contact, directory_consent, notice):
         or notice is not True
     ):
         raise ValidationError("Profile and explicit verification notice required")
+    if phone is not None:
+        validate_phone(phone)
+    if profession is not None and (
+        not isinstance(profession, str)
+        or not profession.strip()
+        or len(profession) > 200
+    ):
+        raise ValidationError("Profession or field of study required")
     person, created = Person.objects.get_or_create(
         user=user, defaults={"full_name": full_name.strip()}
     )
@@ -65,6 +76,10 @@ def update_profile(*, user, full_name, contact, directory_consent, notice):
         raise PermissionDenied("Managed identity requires administrative correction")
     person.full_name = full_name.strip()
     person.contact = contact
+    if phone is not None:
+        person.phone = phone.strip()
+    if profession is not None:
+        person.profession = profession.strip()
     person.directory_consent = directory_consent
     if person.verification_notice_at is None:
         person.verification_notice_at = timezone.now()
@@ -72,6 +87,8 @@ def update_profile(*, user, full_name, contact, directory_consent, notice):
         update_fields=[
             "full_name",
             "contact",
+            "phone",
+            "profession",
             "directory_consent",
             "verification_notice_at",
         ]
@@ -87,7 +104,10 @@ def update_profile(*, user, full_name, contact, directory_consent, notice):
 
 
 @member_command("member.application")
-def submit_application(*, user, tier):
+def submit_application(*, user, tier, applicant_capacity, capacity_other=""):
+    applicant_capacity, capacity_other = validate_capacity(
+        applicant_capacity, capacity_other
+    )
     person = Person.objects.select_for_update().get(user=user)
     if person.minor or person.guardian_id:
         raise PermissionDenied("Managed membership requires administrative review")
@@ -96,7 +116,19 @@ def submit_application(*, user, tier):
     if Membership.objects.filter(application__person=person).exists():
         raise s.Conflict("Use renewal of existing membership")
     app = s.create_application(person, tier)
-    s.audit(user, "member.application.submitted", app.pk, tier=tier)
+    app.applicant_capacity = applicant_capacity
+    app.capacity_other = capacity_other
+    app.profession_snapshot = person.profession
+    app.save(
+        update_fields=["applicant_capacity", "capacity_other", "profession_snapshot"]
+    )
+    s.audit(
+        user,
+        "member.application.submitted",
+        app.pk,
+        tier=tier,
+        applicant_capacity=applicant_capacity,
+    )
     return {"application": app.pk}
 
 
@@ -121,6 +153,12 @@ def submit_renewal(*, user, membership_id):
     if Application.objects.filter(previous=previous, state="approved").exists():
         raise s.Conflict("Select latest approved term")
     app = s.create_application(person, previous.application.tier, previous=previous)
+    app.applicant_capacity = previous.application.applicant_capacity
+    app.capacity_other = previous.application.capacity_other
+    app.profession_snapshot = person.profession
+    app.save(
+        update_fields=["applicant_capacity", "capacity_other", "profession_snapshot"]
+    )
     s.audit(
         user, "member.renewal.submitted", app.pk, previous=previous.pk, tier=app.tier
     )

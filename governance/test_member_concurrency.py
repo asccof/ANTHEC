@@ -60,7 +60,7 @@ class ConcurrentMemberTests(TransactionTestCase):
         )
         result = self.run_concurrently(
             lambda user, index: m.submit_application(
-                user, key=str(index), tier="general"
+                user, key=str(index), tier="general", applicant_capacity="interested"
             )
         )
         self.assertEqual(sorted(r[0] for r in result), ["conflict", "ok"])

@@ -63,6 +63,8 @@ class MembershipJourneyTests(TestCase):
                 {
                     "full_name": "Synthetic Journey",
                     "contact": "journey@example.invalid",
+                    "phone": "+212600000001",
+                    "profession": "Synthetic coach",
                     "notice": "on",
                 },
             ).status_code,
@@ -70,7 +72,9 @@ class MembershipJourneyTests(TestCase):
         )
         self.assertEqual(
             self.form_post(
-                self.member, "/members/apply/?lang=ar", {"tier": tier}
+                self.member,
+                "/members/apply/?lang=ar",
+                {"tier": tier, "applicant_capacity": "coach"},
             ).status_code,
             302,
         )
@@ -136,8 +140,12 @@ class MembershipJourneyTests(TestCase):
                     response = self.member.get(f"/my-documents/{doc.pk}/?lang={lang}")
                     if doc.kind == "professional_certificate":
                         self.assertEqual(response.status_code, 302)
-                        self.assertIn(f"/my-documents/{doc.pk}/pdf/", response["Location"])
-                        self.assertEqual(self.member.get(response["Location"]).status_code, 409)
+                        self.assertIn(
+                            f"/my-documents/{doc.pk}/pdf/", response["Location"]
+                        )
+                        self.assertEqual(
+                            self.member.get(response["Location"]).status_code, 409
+                        )
                     else:
                         self.assertContains(response, f'lang="{lang}"')
                         self.assertContains(response, labels[doc.kind])
@@ -156,6 +164,8 @@ class MembershipJourneyTests(TestCase):
                     )
                     self.assertContains(response, labels[doc.kind])
                     self.assertNotContains(response, "journey@example.invalid")
+                    self.assertNotContains(response, "+212600000001")
+                    self.assertNotContains(response, "Synthetic coach")
                     if doc.kind == "professional_certificate":
                         self.assertContains(response, labels["professional"])
             self.assertEqual(
@@ -165,6 +175,8 @@ class MembershipJourneyTests(TestCase):
                 302,
             )
             renewal = Application.objects.get(previous=first)
+            self.assertEqual(renewal.applicant_capacity, "coach")
+            self.assertEqual(renewal.profession_snapshot, "Synthetic coach")
             early = self.approve(renewal)
             self.assertEqual(early.starts_on, first.ends_on)
             self.assertEqual(early.ends_on, date(2028, 10, 10))
@@ -265,7 +277,9 @@ class MembershipJourneyTests(TestCase):
         )
         self.assertEqual(
             self.form_post(
-                self.member, "/members/apply/", {"tier": "founder"}
+                self.member,
+                "/members/apply/",
+                {"tier": "founder", "applicant_capacity": "interested"},
             ).status_code,
             302,
         )
@@ -339,6 +353,8 @@ class MembershipJourneyTests(TestCase):
                 {
                     "full_name": "Synthetic Corrected",
                     "contact": "corrected@example.invalid",
+                    "phone": "+212600000002",
+                    "profession": "Synthetic updated coach",
                     "notice": "on",
                 },
             ).status_code,

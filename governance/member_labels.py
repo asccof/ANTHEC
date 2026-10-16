@@ -3,6 +3,72 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "capacity_therapeutic_coach": (
+        "كوتش معالج",
+        "Coach thérapeute",
+        "Therapeutic coach",
+    ),
+    "capacity_psychological_guide": (
+        "مرشد نفسي",
+        "Accompagnant psychologique",
+        "Psychological guide",
+    ),
+    "capacity_psychological_counsellor": (
+        "مستشار نفسي",
+        "Conseiller psychologique",
+        "Psychological counsellor",
+    ),
+    "phone": (
+        "هاتف التواصل الإداري",
+        "Téléphone de contact administratif",
+        "Administrative contact phone",
+    ),
+    "profession": (
+        "المهنة أو التخصص أو مجال الدراسة",
+        "Profession, spécialité ou domaine d’études",
+        "Profession, specialism or field of study",
+    ),
+    "applicant_capacity": (
+        "الصفة التي تتقدم بها للانخراط",
+        "Qualité déclarée du demandeur",
+        "Declared applicant capacity",
+    ),
+    "capacity_other": (
+        "توضيح الصفة الأخرى",
+        "Précisez l’autre qualité",
+        "Specify other capacity",
+    ),
+    "capacity_other_hint": (
+        "املأ هذا الحقل فقط عند اختيار أخرى.",
+        "À remplir uniquement si vous choisissez Autre.",
+        "Complete this field only when selecting Other.",
+    ),
+    "capacity_notice": (
+        "صفة مصرح بها تخضع للمراجعة؛ لا تمنح اعتمادًا أو ترخيصًا أو صلاحيات إدارية.",
+        "Déclaration soumise à examen ; aucun agrément, permis ou droit administratif automatique.",
+        "Self-declared and subject to review; grants no accreditation, licence or administrative rights.",
+    ),
+    "capacity_psychologist": ("أخصائي نفسي", "Psychologue", "Psychologist"),
+    "capacity_psychotherapist": ("معالج نفسي", "Psychothérapeute", "Psychotherapist"),
+    "capacity_family_counsellor": (
+        "مستشار أسري",
+        "Conseiller familial",
+        "Family counsellor",
+    ),
+    "capacity_coach": ("كوتش", "Coach", "Coach"),
+    "capacity_student": ("طالب", "Étudiant", "Student"),
+    "capacity_interested": (
+        "مستفيد / مهتم",
+        "Bénéficiaire / personne intéressée",
+        "Beneficiary / interested person",
+    ),
+    "save_profile": ("حفظ الملف", "Enregistrer le profil", "Save profile"),
+    "submit_application": (
+        "إرسال طلب الانخراط",
+        "Envoyer la demande d’adhésion",
+        "Submit membership application",
+    ),
+    "capacity_option_other": ("أخرى", "Autre", "Other"),
     "professional": (
         "اعتماد مهني",
         "Accréditation professionnelle",
