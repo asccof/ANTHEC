@@ -82,6 +82,15 @@ class Person(models.Model):
 
 
 class Application(models.Model):
+    intake_version = models.PositiveSmallIntegerField(default=0)
+    address_category = models.CharField(max_length=16, blank=True)
+    correspondence_address = models.TextField(blank=True)
+    professional_address = models.TextField(blank=True)
+    residential_address = models.TextField(blank=True)
+    intake_portrait = models.ForeignKey(
+        "Portrait", on_delete=models.PROTECT, null=True, related_name="applications"
+    )
+
     applicant_capacity = models.CharField(max_length=24, blank=True)
     capacity_other = models.CharField(max_length=200, blank=True)
     profession_snapshot = models.CharField(max_length=200, blank=True)

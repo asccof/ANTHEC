@@ -400,6 +400,8 @@ def issue(
         )
     )
     portrait = snapshot_for(kind, person)
+    if membership and membership.application.intake_version and replaces is None:
+        portrait = membership.application.intake_portrait
     from .certificate_assets import snapshot_for as signing_snapshot_for
     signature, stamp, signing = signing_snapshot_for(kind)
     doc = Document.objects.create(
@@ -428,6 +430,9 @@ def issue(
 
 @command("membership.approve")
 def approve_membership(*, actor, application_id, reason):
+    # Portrait replacement also locks Person before pending Application rows.
+    person_id = Application.objects.values_list("person_id", flat=True).get(pk=application_id)
+    Person.objects.select_for_update().get(pk=person_id)
     app = (
         Application.objects.select_for_update(of=("self",))
         .select_related("person", "previous")
@@ -435,6 +440,10 @@ def approve_membership(*, actor, application_id, reason):
     )
     if app.state != "submitted" or not reason.strip():
         raise Conflict("Pending application and approval reason required")
+    if app.intake_version:
+        from .models import Portrait
+        if not app.intake_portrait_id or not Portrait.objects.filter(pk=app.intake_portrait_id, person_id=app.person_id, state="approved").exists():
+            raise ValidationError("Approve the application portrait before membership approval")
     paid = app.payment_set.aggregate(total=Sum("amount"))["total"] or Decimal("0")
     refunded = Refund.objects.filter(payment__application=app, approved=True).aggregate(
         total=Sum("amount")

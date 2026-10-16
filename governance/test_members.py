@@ -1,3 +1,7 @@
+from .intake_test_support import intake_payload
+from django.core.files.uploadedfile import SimpleUploadedFile
+import base64
+
 """Synthetic account/profile/submission boundary regressions."""
 
 from io import StringIO
@@ -149,6 +153,7 @@ class MemberTests(TestCase):
         self.profile()
         result = m.submit_application(
             self.user,
+            **intake_payload(),
             applicant_capacity="interested",
             tier="accredited",
             key="application",
@@ -157,6 +162,7 @@ class MemberTests(TestCase):
             result,
             m.submit_application(
                 self.user,
+                **intake_payload(),
                 applicant_capacity="interested",
                 tier="accredited",
                 key="application",
@@ -165,13 +171,18 @@ class MemberTests(TestCase):
         with self.assertRaises(s.Conflict):
             m.submit_application(
                 self.user,
+                **intake_payload(),
                 applicant_capacity="interested",
                 tier="general",
                 key="application",
             )
         with self.assertRaises(s.Conflict):
             m.submit_application(
-                self.user, applicant_capacity="interested", tier="general", key="other"
+                self.user,
+                **intake_payload(),
+                applicant_capacity="interested",
+                tier="general",
+                key="other",
             )
         app = Application.objects.get()
         self.assertEqual(str(app.quote), "3000.00")
@@ -217,6 +228,18 @@ class MemberTests(TestCase):
                     "tier": "affiliate",
                     "applicant_capacity": "coach",
                     "person_id": other.pk,
+                    "address_category": "professional",
+                    "correspondence_address": "Synthetic office",
+                    "same_address": "on",
+                    "photo_consent": "on",
+                    "photo": __import__(
+                        "django.core.files.uploadedfile",
+                        fromlist=["SimpleUploadedFile"],
+                    ).SimpleUploadedFile(
+                        "synthetic.png",
+                        base64.b64decode(intake_payload()["image_data"]),
+                        content_type="image/png",
+                    ),
                 },
             ).status_code,
             302,

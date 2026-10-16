@@ -273,14 +273,33 @@ def apply(request):
     if not person or not person.phone or not person.profession:
         return go(request, "member_profile")
     form = ApplicationForm(
-        request.POST if request.method == "POST" else None, labels=ctx["labels"]
+        request.POST if request.method == "POST" else None,
+        request.FILES or None,
+        labels=ctx["labels"],
     )
     status = 200
     if request.method == "POST":
         if form.is_valid():
             try:
+                import base64
+                from .portraits import normalize
+
                 member_services.submit_application(
                     request.user,
+                    image_data=base64.b64encode(
+                        normalize(form.cleaned_data["photo"])
+                    ).decode(),
+                    photo_consent=form.cleaned_data["photo_consent"],
+                    **{
+                        k: form.cleaned_data[k]
+                        for k in (
+                            "address_category",
+                            "correspondence_address",
+                            "professional_address",
+                            "residential_address",
+                            "same_address",
+                        )
+                    },
                     tier=form.cleaned_data["tier"],
                     applicant_capacity=form.cleaned_data["applicant_capacity"],
                     capacity_other=form.cleaned_data["capacity_other"],
