@@ -6,6 +6,7 @@ from django.contrib.auth.forms import (
     PasswordChangeForm,
 )
 from .services import TIERS
+from .intake import CAPACITIES, validate_capacity, validate_phone
 
 
 def label_fields(form, labels):
@@ -43,16 +44,38 @@ class CommandForm(forms.Form):
 class ProfileForm(CommandForm):
     full_name = forms.CharField(max_length=200)
     contact = forms.EmailField(required=False)
+    phone = forms.CharField(max_length=32, validators=[validate_phone])
+    profession = forms.CharField(max_length=200)
     directory_consent = forms.BooleanField(required=False)
     notice = forms.BooleanField(required=True)
 
 
 class ApplicationForm(CommandForm):
     tier = forms.ChoiceField(choices=[])
+    applicant_capacity = forms.ChoiceField(choices=[])
+    capacity_other = forms.CharField(max_length=200, required=False)
 
     def __init__(self, *args, labels, **kwargs):
         super().__init__(*args, labels=labels, **kwargs)
         self.fields["tier"].choices = [(k, labels[k]) for k in TIERS]
+        self.labels = labels
+        self.fields["applicant_capacity"].choices = [("", "---------")] + [
+            (k, labels["capacity_option_other" if k == "other" else "capacity_" + k])
+            for k in CAPACITIES
+        ]
+        self.fields["applicant_capacity"].help_text = labels["capacity_notice"]
+        self.fields["capacity_other"].help_text = labels["capacity_other_hint"]
+
+    def clean(self):
+        data = super().clean()
+        if data.get("applicant_capacity"):
+            try:
+                validate_capacity(
+                    data["applicant_capacity"], data.get("capacity_other", "")
+                )
+            except forms.ValidationError:
+                self.add_error("capacity_other", self.labels["capacity_other_hint"])
+        return data
 
 
 class RenewalForm(CommandForm):

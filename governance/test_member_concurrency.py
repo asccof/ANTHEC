@@ -41,6 +41,8 @@ class ConcurrentMemberTests(TransactionTestCase):
                 user,
                 key=str(index),
                 full_name="Synthetic",
+                phone="+212600000001",
+                profession="Synthetic coach",
                 contact="",
                 directory_consent=False,
                 notice=True,
@@ -54,13 +56,15 @@ class ConcurrentMemberTests(TransactionTestCase):
             self.user,
             key="profile",
             full_name="Synthetic",
+            phone="+212600000001",
+            profession="Synthetic coach",
             contact="",
             directory_consent=False,
             notice=True,
         )
         result = self.run_concurrently(
             lambda user, index: m.submit_application(
-                user, key=str(index), tier="general"
+                user, key=str(index), tier="general", applicant_capacity="interested"
             )
         )
         self.assertEqual(sorted(r[0] for r in result), ["conflict", "ok"])

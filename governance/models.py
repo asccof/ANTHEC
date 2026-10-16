@@ -74,12 +74,17 @@ class Person(models.Model):
     )
     full_name = models.CharField(max_length=200)
     contact = models.EmailField(blank=True)
+    phone = models.CharField(max_length=32, blank=True)
+    profession = models.CharField(max_length=200, blank=True)
     minor = models.BooleanField(default=False)
     directory_consent = models.BooleanField(default=False)
     verification_notice_at = models.DateTimeField(null=True)
 
 
 class Application(models.Model):
+    applicant_capacity = models.CharField(max_length=24, blank=True)
+    capacity_other = models.CharField(max_length=200, blank=True)
+    profession_snapshot = models.CharField(max_length=200, blank=True)
     person = models.ForeignKey(Person, on_delete=models.PROTECT)
     tier = models.CharField(max_length=20)
     state = models.CharField(max_length=20, default="submitted")
