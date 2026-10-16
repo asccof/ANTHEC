@@ -23,6 +23,8 @@ class MemberTests(TestCase):
         data = dict(
             key=str(uuid.uuid4()),
             full_name="Synthetic Member",
+            phone="+212600000001",
+            profession="Synthetic coach",
             contact="synthetic@example.invalid",
             directory_consent=False,
             notice=True,

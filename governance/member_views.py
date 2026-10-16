@@ -269,7 +269,8 @@ def profile(request):
 @localized
 def apply(request):
     ctx = context(request)
-    if not Person.objects.filter(user=request.user).exists():
+    person = Person.objects.filter(user=request.user).first()
+    if not person or not person.phone or not person.profession:
         return go(request, "member_profile")
     form = ApplicationForm(
         request.POST if request.method == "POST" else None, labels=ctx["labels"]

@@ -109,6 +109,9 @@ def submit_application(*, user, tier, applicant_capacity, capacity_other=""):
         applicant_capacity, capacity_other
     )
     person = Person.objects.select_for_update().get(user=user)
+    validate_phone(person.phone)
+    if not person.profession.strip():
+        raise ValidationError("Complete the private profile before applying")
     if person.minor or person.guardian_id:
         raise PermissionDenied("Managed membership requires administrative review")
     if Application.objects.filter(person=person, state="submitted").exists():

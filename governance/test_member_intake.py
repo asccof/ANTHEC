@@ -170,3 +170,34 @@ class IntakeTests(TestCase):
             browser.post("/verify/", {}, HTTP_ORIGIN="http://testserver").status_code,
             403,
         )
+
+    def test_legacy_profile_completion_required_for_new_application_but_not_renewal(
+        self,
+    ):
+        from datetime import date
+        from .models import Membership
+
+        person = Person.objects.get(user=self.user)
+        person.phone = person.profession = ""
+        person.save(update_fields=["phone", "profession"])
+        response = self.client.get("/members/apply/?lang=fr")
+        self.assertRedirects(response, "/members/profile/?lang=fr")
+        with self.assertRaises(ValidationError):
+            m.submit_application(
+                self.user,
+                key="incomplete",
+                tier="general",
+                applicant_capacity="interested",
+            )
+        self.assertFalse(Application.objects.exists())
+        # Legacy membership records are intentionally not backfilled or blocked.
+        legacy = s.create_application(person, "general")
+        legacy.state = "approved"
+        legacy.save(update_fields=["state"])
+        term = Membership.objects.create(
+            application=legacy, starts_on=date(2026, 1, 1), ends_on=date(2027, 1, 1)
+        )
+        result = m.submit_renewal(self.user, key="legacy-renew", membership_id=term.pk)
+        renewal = Application.objects.get(pk=result["application"])
+        self.assertEqual(renewal.applicant_capacity, "")
+        self.assertEqual(renewal.profession_snapshot, "")
