@@ -1,13 +1,14 @@
 """Self-service commands lock the authenticated account, never grant admin rights."""
 
 from functools import wraps
+import uuid
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
 from . import services as s
 from .models import Person, Command, Application, Membership
-from .intake import validate_capacity, validate_phone
+from .intake import validate_capacity, validate_phone, validate_addresses
 
 
 def member_command(action):
@@ -104,7 +105,33 @@ def update_profile(
 
 
 @member_command("member.application")
-def submit_application(*, user, tier, applicant_capacity, capacity_other=""):
+def submit_application(
+    *,
+    user,
+    tier,
+    applicant_capacity,
+    capacity_other="",
+    address_category,
+    correspondence_address="",
+    professional_address="",
+    residential_address="",
+    same_address=False,
+    image_data,
+    photo_consent
+):
+    (
+        address_category,
+        correspondence_address,
+        professional_address,
+        residential_address,
+    ) = validate_addresses(
+        address_category,
+        correspondence_address,
+        professional_address,
+        residential_address,
+        same_address,
+    )
+
     applicant_capacity, capacity_other = validate_capacity(
         applicant_capacity, capacity_other
     )
@@ -118,12 +145,40 @@ def submit_application(*, user, tier, applicant_capacity, capacity_other=""):
         raise s.Conflict("Pending application already exists")
     if Membership.objects.filter(application__person=person).exists():
         raise s.Conflict("Use renewal of existing membership")
+    from . import portraits
+
+    result = portraits.upload_portrait(
+        user,
+        key="intake-" + str(uuid.uuid4()),
+        person_id=person.pk,
+        image_data=image_data,
+        consent=photo_consent,
+    )
+    from .models import Portrait
+
+    photo = Portrait.objects.get(serial=result["portrait"])
     app = s.create_application(person, tier)
+    app.intake_version = 1
+    app.intake_portrait = photo
+    app.address_category = address_category
+    app.correspondence_address = correspondence_address
+    app.professional_address = professional_address
+    app.residential_address = residential_address
     app.applicant_capacity = applicant_capacity
     app.capacity_other = capacity_other
     app.profession_snapshot = person.profession
     app.save(
-        update_fields=["applicant_capacity", "capacity_other", "profession_snapshot"]
+        update_fields=[
+            "applicant_capacity",
+            "capacity_other",
+            "profession_snapshot",
+            "intake_version",
+            "intake_portrait",
+            "address_category",
+            "correspondence_address",
+            "professional_address",
+            "residential_address",
+        ]
     )
     s.audit(
         user,

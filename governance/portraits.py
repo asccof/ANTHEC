@@ -92,6 +92,8 @@ def upload_portrait(*, user, person_id, image_data, consent):
         uploaded_by=user,
         image=s.encrypt({"jpeg": base64.b64encode(clean).decode()}),
     )
+    from .models import Application
+    Application.objects.filter(person=person, state="submitted", intake_version=1).update(intake_portrait=row)
     s.audit(
         user,
         "portrait.uploaded",

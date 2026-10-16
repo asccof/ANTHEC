@@ -3,6 +3,52 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "intake_photo_notice": (
+        "يلزم قبول الصورة قبل اعتماد الطلب. عند رفضها، ارفع صورة بديلة من صفحة الصورة.",
+        "Le portrait doit être approuvé avant l’adhésion. En cas de refus, téléversez un remplacement depuis Portrait.",
+        "The portrait must be approved before membership approval. If rejected, upload a replacement from Portrait.",
+    ),
+    "photo_pending": ("بانتظار المراجعة", "En attente de révision", "Pending review"),
+    "photo_approved": ("مقبولة", "Approuvé", "Approved"),
+    "photo_rejected": ("مرفوضة", "Refusé", "Rejected"),
+    "photo": ("الصورة", "Photographie", "Photograph"),
+    "photo_consent": (
+        "الموافقة على الصورة",
+        "Consentement au portrait",
+        "Portrait consent",
+    ),
+    "address_category": (
+        "نوع عنوان مقدم الطلب",
+        "Catégorie d’adresse",
+        "Applicant address category",
+    ),
+    "address_professional": ("مهني", "Professionnel", "Professional"),
+    "address_beneficiary": ("مستفيد", "Bénéficiaire", "Beneficiary"),
+    "correspondence_address": (
+        "عنوان المراسلة",
+        "Adresse de correspondance",
+        "Correspondence address",
+    ),
+    "professional_address": (
+        "العنوان المهني",
+        "Adresse professionnelle",
+        "Professional address",
+    ),
+    "residential_address": (
+        "عنوان السكن",
+        "Adresse de résidence",
+        "Residential address",
+    ),
+    "same_address": (
+        "العنوان المهني هو عنوان المراسلة",
+        "Même adresse professionnelle et de correspondance",
+        "Professional address matches correspondence address",
+    ),
+    "address_required": (
+        "أكمل العناوين الخاصة بالنوع المختار فقط.",
+        "Renseignez uniquement les adresses de la catégorie choisie.",
+        "Complete only the addresses for the selected category.",
+    ),
     "capacity_therapeutic_coach": (
         "كوتش معالج",
         "Coach thérapeute",

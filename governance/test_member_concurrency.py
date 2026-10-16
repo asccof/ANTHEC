@@ -1,3 +1,4 @@
+from .intake_test_support import intake_payload
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from unittest import skipUnless
@@ -64,7 +65,11 @@ class ConcurrentMemberTests(TransactionTestCase):
         )
         result = self.run_concurrently(
             lambda user, index: m.submit_application(
-                user, key=str(index), tier="general", applicant_capacity="interested"
+                user,
+                **intake_payload(),
+                key=str(index),
+                tier="general",
+                applicant_capacity="interested"
             )
         )
         self.assertEqual(sorted(r[0] for r in result), ["conflict", "ok"])

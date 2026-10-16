@@ -283,3 +283,8 @@ Baseline main 1fa6d72c8b8c56f06c8474e951c8a6fdfde5fefd (PR38). Owner approves se
 Initial focused suite passed 22 tests, metadata validator and 10 metadata tests passed, Django system/migration-drift and dependency checks passed. Full local suite and PostgreSQL CI are pending; no full-suite pass is claimed yet. Browser probe automation was unavailable because this environment has no installed Chromium binary; the owner's actual local-browser correction result and CSRF middleware positive/negative tests are recorded separately.
 
 PR39 Codex identified a migrated-profile bypass: an existing account could apply without completing blank new phone/profession fields. Follow-up enforces completion at browser and command boundaries, preserving legacy blank-compatible renewals, with a regression test. New-head checks/re-review required.
+
+
+## 2026-10-16 — application portrait and private addresses
+
+Owner authorized portrait upload at application time plus correspondence/professional addresses for professionals and residential address only for beneficiaries. Bounded implementation and regression coverage prepared on eng/application-photo-addresses from main 603a074; see ADR-022. New self-service approval waits for accepted application portrait, with atomic upload and protected first issuance. Existing requests/renewals and issued snapshots remain compatible. CI, review, merge, local owner acceptance and deployment are separate milestones, not implied by preparation. Private host gates/costs and Tighri untouched.

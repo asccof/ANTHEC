@@ -6,7 +6,7 @@ from django.contrib.auth.forms import (
     PasswordChangeForm,
 )
 from .services import TIERS
-from .intake import CAPACITIES, validate_capacity, validate_phone
+from .intake import CAPACITIES, validate_capacity, validate_phone, validate_addresses
 
 
 def label_fields(form, labels):
@@ -51,6 +51,20 @@ class ProfileForm(CommandForm):
 
 
 class ApplicationForm(CommandForm):
+    address_category = forms.ChoiceField(choices=[])
+    correspondence_address = forms.CharField(
+        max_length=1000, required=False, widget=forms.Textarea
+    )
+    same_address = forms.BooleanField(required=False)
+    professional_address = forms.CharField(
+        max_length=1000, required=False, widget=forms.Textarea
+    )
+    residential_address = forms.CharField(
+        max_length=1000, required=False, widget=forms.Textarea
+    )
+    photo = forms.FileField()
+    photo_consent = forms.BooleanField()
+
     tier = forms.ChoiceField(choices=[])
     applicant_capacity = forms.ChoiceField(choices=[])
     capacity_other = forms.CharField(max_length=200, required=False)
@@ -59,6 +73,16 @@ class ApplicationForm(CommandForm):
         super().__init__(*args, labels=labels, **kwargs)
         self.fields["tier"].choices = [(k, labels[k]) for k in TIERS]
         self.labels = labels
+        self.fields["address_category"].choices = [("", "---------")] + [
+            (k, labels["address_" + k]) for k in ("professional", "beneficiary")
+        ]
+        from .portrait_labels import LABELS
+
+        photo_labels = next(v for v in LABELS.values() if v["photo"] == labels["photo"])
+        self.fields["photo"].help_text = (
+            photo_labels["notice"] + " " + labels["intake_photo_notice"]
+        )
+        self.fields["photo_consent"].label = photo_labels["consent"]
         self.fields["applicant_capacity"].choices = [("", "---------")] + [
             (k, labels["capacity_option_other" if k == "other" else "capacity_" + k])
             for k in CAPACITIES
@@ -75,6 +99,17 @@ class ApplicationForm(CommandForm):
                 )
             except forms.ValidationError:
                 self.add_error("capacity_other", self.labels["capacity_other_hint"])
+        if data.get("address_category"):
+            try:
+                validate_addresses(
+                    data["address_category"],
+                    data.get("correspondence_address", ""),
+                    data.get("professional_address", ""),
+                    data.get("residential_address", ""),
+                    data.get("same_address", False),
+                )
+            except forms.ValidationError:
+                self.add_error(None, self.labels["address_required"])
         return data
 
 

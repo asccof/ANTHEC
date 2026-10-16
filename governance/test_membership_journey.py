@@ -1,3 +1,6 @@
+import base64
+from django.core.files.uploadedfile import SimpleUploadedFile
+from .intake_test_support import intake_payload
 from datetime import date
 from io import StringIO
 from unittest.mock import patch
@@ -41,6 +44,17 @@ class MembershipJourneyTests(TestCase):
             payload["key"] = str(form["key"].value())
         if action:
             payload["action"] = action
+        if url.startswith("/members/apply/"):
+            payload.update(
+                address_category="beneficiary",
+                residential_address="Synthetic residence",
+                photo_consent="on",
+                photo=SimpleUploadedFile(
+                    "synthetic.png",
+                    base64.b64decode(intake_payload()["image_data"]),
+                    content_type="image/png",
+                ),
+            )
         return client.post(url, payload)
 
     def create_app(self, tier="accredited"):
@@ -86,6 +100,16 @@ class MembershipJourneyTests(TestCase):
         )
 
     def approve(self, app):
+        if app.intake_portrait_id and app.intake_portrait.state == "pending":
+            from .portraits import review_portrait
+
+            review_portrait(
+                administrative_request(self.admin),
+                key=str(uuid.uuid4()),
+                portrait_id=app.intake_portrait_id,
+                decision="approved",
+                reason="Synthetic portrait accepted",
+            )
         if app.quote:
             self.assertEqual(
                 self.admin_post(

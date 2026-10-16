@@ -1,3 +1,5 @@
+from .intake_test_support import intake_payload
+
 """Synthetic owner-approved intake and browser verification boundary checks."""
 
 from io import StringIO
@@ -34,6 +36,7 @@ class IntakeTests(TestCase):
             with self.subTest(value=value):
                 result = m.submit_application(
                     self.user,
+                    **intake_payload(),
                     key=value,
                     tier="affiliate",
                     applicant_capacity=value,
@@ -51,6 +54,7 @@ class IntakeTests(TestCase):
             with self.subTest(value=value), self.assertRaises(ValidationError):
                 m.submit_application(
                     self.user,
+                    **intake_payload(),
                     key=str(uuid.uuid4()),
                     tier="general",
                     applicant_capacity=value,
@@ -62,6 +66,7 @@ class IntakeTests(TestCase):
     ):
         result = m.submit_application(
             self.user,
+            **intake_payload(),
             key="apply",
             tier="general",
             applicant_capacity="psychological_counsellor",
@@ -118,6 +123,7 @@ class IntakeTests(TestCase):
         self.assertFalse(Application.objects.exists())
         result = m.submit_application(
             self.user,
+            **intake_payload(),
             key="other",
             tier="general",
             applicant_capacity="other",
@@ -185,6 +191,7 @@ class IntakeTests(TestCase):
         with self.assertRaises(ValidationError):
             m.submit_application(
                 self.user,
+                **intake_payload(),
                 key="incomplete",
                 tier="general",
                 applicant_capacity="interested",
