@@ -4,6 +4,14 @@ from governance.models import Price
 from governance.member_labels import vocabulary as member_vocabulary
 
 ROWS = {
+ "contact": ("تواصل معنا", "Nous contacter", "Contact us"),
+ "contact_intro": ("للاستفسار عن الجمعية وبرامجها والعضوية والشراكات، تواصل معنا عبر الوسيلة المناسبة لك.", "Pour toute information sur l’association, ses programmes, les adhésions ou les partenariats, choisissez le moyen de contact qui vous convient.", "For information about the association, programmes, membership or partnerships, choose the contact method that suits you."),
+ "contact_phone": ("الهاتف وواتساب", "Téléphone et WhatsApp", "Phone and WhatsApp"),
+ "contact_call": ("اتصل بنا", "Nous appeler", "Call us"),
+ "contact_whatsapp": ("تواصل عبر واتساب", "Écrire sur WhatsApp", "Contact on WhatsApp"),
+ "contact_address": ("العنوان", "Adresse", "Address"),
+ "contact_email": ("البريد الإلكتروني الرسمي للجمعية", "Adresse électronique officielle de l’association", "Official association email"),
+
  "synthetic_notice": ("معاينة محلية ببيانات اصطناعية فقط؛ البرامج والخدمات المعروضة للتعريف، وليست إعلانًا عن إطلاق رسمي.", "Aperçu local avec données fictives uniquement. Les programmes et services sont présentés à titre informatif, sans lancement officiel.", "Local preview with synthetic data only. Programmes and services are informational and do not announce an official launch."),
  "mission_title": ("المعرفة والمواكبة وجودة الممارسة", "Connaissance, accompagnement et qualité des pratiques", "Knowledge, support and quality practice"),
  "mission_intro": ("تجمع ANTHEC المهنيين والمهتمين حول العلاج النفسي والأسري والكوتشينغ، للتعريف بهذه المجالات، وتبادل الخبرات، وتشجيع الممارسة المسؤولة والتعاون.", "ANTHEC réunit professionnels et personnes intéressées par la psychothérapie, la thérapie familiale et le coaching pour partager les connaissances et encourager des pratiques responsables et la coopération.", "ANTHEC brings together professionals and people interested in psychotherapy, family therapy and coaching to share knowledge and encourage responsible practice and cooperation."),

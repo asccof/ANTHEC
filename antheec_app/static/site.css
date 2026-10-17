@@ -15,3 +15,6 @@ html[lang="ar"] h1{line-height:1.55;font-size:clamp(2.1rem,3.8vw,3.4rem);max-wid
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
 .synthetic-notice{padding-block:12px;font-size:.8rem;color:var(--muted);line-height:1.8}.editorial-details{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}.editorial-details summary{cursor:pointer;color:var(--teal);font-size:.9rem}.editorial-details h3{margin-top:20px}.editorial-details p{color:var(--muted)}
+
+/* Shared editable public contact details; no embedded third-party widgets. */
+.contact-section{background:#edf1ee}.contact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;font-style:normal}.contact-grid h3{font-size:1rem}.contact-grid p{font-size:.95rem;overflow-wrap:anywhere}.contact-grid a{overflow-wrap:anywhere;color:var(--teal)}.contact-actions{display:flex;gap:18px;flex-wrap:wrap}.contact-actions a{padding-block:8px;min-height:44px}.contact-email-placeholder{font-size:.88rem;color:var(--muted)}.footer-contact{border-top:1px solid var(--line);margin-top:28px;padding-top:28px}.footer-contact .contact-grid{gap:24px}.footer-contact h3{font-size:.9rem}.footer-contact p,.footer-contact a{font-size:.85rem}@media(max-width:720px){.contact-grid{grid-template-columns:1fr;gap:22px}}
