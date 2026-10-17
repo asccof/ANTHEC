@@ -79,3 +79,13 @@ class PublicContactTests(TestCase):
         row = PublicContact.objects.get(site=self.site)
         self.assertEqual(row.email, "contact@example.invalid")
         self.assertContains(self.client.get("/en/"), 'href="mailto:contact@example.invalid"')
+
+    def test_mailto_reserved_local_part_is_encoded_without_changing_display(self):
+        email = "contact?subject=foo#tag@example.invalid"
+        row = PublicContact(site=self.site, email=email)
+        row.full_clean()
+        row.save()
+        response = self.client.get("/en/")
+        self.assertContains(response, 'href="mailto:contact%3Fsubject%3Dfoo%23tag@example.invalid"')
+        self.assertContains(response, email)
+        self.assertNotContains(response, 'href="mailto:contact?')

@@ -75,5 +75,6 @@ class PublicContact(BaseSiteSetting):
             self._meta.get_field("email").clean(email, self)
         except ValidationError:
             email = ""
-        return dict(phone=phone, tel="+" + number if number else "", whatsapp="https://wa.me/" + number if number else "", email=email,
+        from urllib.parse import quote
+        return dict(mailto="mailto:" + quote(email, safe="@") if email else "", phone=phone, tel="+" + number if number else "", whatsapp="https://wa.me/" + number if number else "", email=email,
             address=getattr(self, "address_" + (language if language in ("ar", "fr", "en") else "ar")))
