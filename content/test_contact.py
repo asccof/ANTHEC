@@ -51,6 +51,7 @@ class PublicContactTests(TestCase):
             row.phone = bad
             with self.assertRaises(ValidationError):
                 row.full_clean()
+        row.phone = "invalid-phone"  # Fits varchar(16) on PostgreSQL; still rejected by link validation.
         row.save()
         response = self.client.get("/en/")
         self.assertNotContains(response, "javascript:")
