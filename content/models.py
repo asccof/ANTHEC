@@ -33,8 +33,47 @@ class InstitutionalPage(Page):
             home = Page.objects.live().public().filter(
                 translation_key=site.root_page.translation_key, locale=self.locale).first()
             context["localized_home_url"] = home.url if home else None
+        # Read-only public requests must not create configuration rows.
+        contact = PublicContact.objects.filter(site=site).first() if site else None
+        context["public_contact"] = (contact or PublicContact()).public_values(language)
         if context["is_site_home"]:
             context["membership_prices"] = current_memberships(language)
             labels = context["public_labels"]
             context["leadership_groups"] = [dict(role=role, label=labels[role], names=[block.value["name"] for block in self.body if block.block_type == "leadership" and block.value["role"] == role]) for role in ("president", "vice_president", "founding_council")]
         return context
+
+
+from django.db import models
+from django.core.validators import RegexValidator
+from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
+
+
+@register_setting(icon="mail")
+class PublicContact(BaseSiteSetting):
+    """Owner-approved public association contacts; never account contact fields."""
+    phone = models.CharField("الهاتف وواتساب / Phone and WhatsApp", max_length=16, blank=True,
+        default="0663400190", validators=[RegexValidator(r"^(?:0[0-9]{9}|\+[1-9][0-9]{6,14})\Z", "Use a Moroccan 10-digit number or +international format.")])
+    address_ar = models.CharField("العنوان بالعربية / Arabic address", max_length=500, blank=True, default="رقم 43، زنقة أكلمام سيدي علي، أكدال، الرباط")
+    address_fr = models.CharField("العنوان بالفرنسية / French address", max_length=500, blank=True, default="43, rue Aguelmam Sidi Ali, Agdal, Rabat")
+    address_en = models.CharField("العنوان بالإنجليزية / English address", max_length=500, blank=True, default="43, Aguelmam Sidi Ali Street, Agdal, Rabat")
+    email = models.EmailField("البريد الرسمي للجمعية / Official association email", blank=True, default="")
+    panels = [FieldPanel("phone"), FieldPanel("address_ar"), FieldPanel("address_fr"), FieldPanel("address_en"), FieldPanel("email")]
+
+    class Meta:
+        verbose_name = "بيانات التواصل / Public contact"
+
+    def public_values(self, language):
+        from django.core.exceptions import ValidationError
+        phone = self.phone
+        try:
+            self._meta.get_field("phone").clean(phone, self)
+        except ValidationError:
+            phone = ""
+        number = ("212" + phone[1:]) if phone.startswith("0") else phone.lstrip("+")
+        email = self.email
+        try:
+            self._meta.get_field("email").clean(email, self)
+        except ValidationError:
+            email = ""
+        return dict(phone=phone, tel="+" + number if number else "", whatsapp="https://wa.me/" + number if number else "", email=email,
+            address=getattr(self, "address_" + (language if language in ("ar", "fr", "en") else "ar")))

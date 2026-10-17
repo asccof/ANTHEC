@@ -1,0 +1,5 @@
+<address class="contact-grid">
+{% if public_contact.phone %}<div><h3>{{ public_labels.contact_phone }}</h3><p><bdi dir="ltr">{{ public_contact.phone }}</bdi></p><div class="contact-actions"><a href="tel:{{ public_contact.tel }}">{{ public_labels.contact_call }}</a><a href="{{ public_contact.whatsapp }}" rel="noreferrer">{{ public_labels.contact_whatsapp }}</a></div></div>{% endif %}
+{% if public_contact.address %}<div><h3>{{ public_labels.contact_address }}</h3><p>{{ public_contact.address }}</p></div>{% endif %}
+<div><h3>{{ public_labels.contact_email }}</h3>{% if public_contact.email %}<a href="mailto:{{ public_contact.email }}"><bdi dir="ltr">{{ public_contact.email }}</bdi></a>{% endif %}</div>
+</address>

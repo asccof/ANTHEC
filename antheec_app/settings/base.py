@@ -9,7 +9,7 @@ if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test", 
 
 INSTALLED_APPS = [
     "governance", "django_otp", "django_otp.plugins.otp_totp",
-    "content", "wagtail.contrib.simple_translation", "wagtail.locales",
+    "content", "wagtail.contrib.settings", "wagtail.contrib.simple_translation", "wagtail.locales",
     "wagtail.contrib.redirects", "wagtail.sites", "wagtail.users",
     "wagtail.snippets", "wagtail.documents", "wagtail.images",
     "wagtail.search", "wagtail.admin", "wagtail", "modelcluster", "taggit",
