@@ -21,16 +21,16 @@ class PresentationTests(TestCase):
         Authority.objects.create(primary=self.admin)
     def test_localized_sections_identity_and_navigation(self):
         expected = {
-            "ar": ("فضاء للانتماء والتطوير المهني", "العضو المؤسس والعضو الشرفي"),
-            "fr": ("Un espace d’appartenance", "Membres fondateurs et honoraires"),
-            "en": ("A space for belonging", "Founder and honorary members"),
+            "ar": ("معًا نحو وعي أعمق وممارسة مسؤولة", "العضو المؤسس والعضو الشرفي"),
+            "fr": ("Ensemble pour mieux comprendre", "Membres fondateurs et honoraires"),
+            "en": ("Together for understanding", "Founder and honorary members"),
         }
         for language, texts in expected.items():
             response=self.client.get("/"+language+"/")
             self.assertEqual(response.status_code,200)
             for text in texts:self.assertContains(response,text)
             self.assertContains(response,"| ANTHEC</title>")
-            for anchor in ("main-content","about","membership","accreditation","privacy"):
+            for anchor in ("main-content","about","services","structure","membership","accreditation","privacy"):
                 self.assertContains(response,'id="'+anchor+'"')
             self.assertContains(response,'href="/activities/?lang='+language+'"')
             self.assertContains(response,'href="/partners/?lang='+language+'"')
@@ -84,3 +84,31 @@ class PresentationTests(TestCase):
         self.assertContains(response,"Set by administration")
         affiliate=next(row for row in response.context["membership_prices"] if row["tier"]=="affiliate")
         self.assertIsNone(affiliate["amount"])
+
+    def test_leadership_requires_explicit_public_content_and_escapes_names(self):
+        from governance.models import InstitutionalRole
+        from datetime import date
+        person = Person.objects.create(full_name="PRIVATE-DIRECTOR-NAME", directory_consent=False)
+        InstitutionalRole.objects.create(person=person, role="president", starts_on=date(2026,1,1), ends_on=date(2028,1,1), legal_reference="synthetic")
+        response = self.client.get("/ar/")
+        self.assertNotContains(response, "PRIVATE-DIRECTOR-NAME")
+        self.assertContains(response, "تُضاف الأسماء بعد اعتماد قائمة النشر.")
+        self.home.body = [("leadership", {"role":"president", "name":"Synthetic Public President"}), ("leadership", {"role":"founding_council", "name":"<script>Synthetic Founder</script>"})]
+        self.home.save_revision().publish()
+        response = self.client.get("/ar/")
+        self.assertContains(response, "Synthetic Public President")
+        self.assertContains(response, "&lt;script&gt;Synthetic Founder&lt;/script&gt;")
+        self.assertNotContains(response, "<script>Synthetic Founder</script>")
+        self.assertNotContains(response, "PRIVATE-DIRECTOR-NAME")
+        # Locale copies retain their own published institutional content.
+        self.assertNotContains(self.client.get("/fr/"), "Synthetic Public President")
+
+    def test_services_and_structure_copy_present_in_all_languages(self):
+        from .presentation import vocabulary
+        for language in ("ar", "fr", "en"):
+            labels = vocabulary(language)
+            response = self.client.get("/" + language + "/")
+            for key in ("mission", "goals", "beneficiaries", "professionals", "president", "vice_president", "founding_council"):
+                self.assertContains(response, labels[key])
+            self.assertNotContains(response, "منصة ANTHEEC التجريبية</h3>")
+            self.assertContains(response, 'anthec-logo.png')

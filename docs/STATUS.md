@@ -288,3 +288,9 @@ PR39 Codex identified a migrated-profile bypass: an existing account could apply
 ## 2026-10-16 — application portrait and private addresses
 
 Owner authorized portrait upload at application time plus correspondence/professional addresses for professionals and residential address only for beneficiaries. Bounded implementation and regression coverage prepared on eng/application-photo-addresses from main 603a074; see ADR-022. New self-service approval waits for accepted application portrait, with atomic upload and protected first issuance. Existing requests/renewals and issued snapshots remain compatible. CI, review, merge, local owner acceptance and deployment are separate milestones, not implied by preparation. Private host gates/costs and Tighri untouched.
+
+## 2026-10-17 — homepage content and association structure
+
+Owner local synthetic UAT reported successful application photo/address branches and approval guard, accredited multilingual signed specimen certificate and verification, accredited renewal, honorary/founder permanence, cross-member PDF 404, exemption, bounded refund, rejection/resubmission and portrait replacement. These are owner-observed local results; they do not establish hosted performance, legal/security release acceptance or complete all event/institutional UAT. The owner explicitly moved to page content/design and kept latency deferred.
+
+Homepage increment prepared from main 8a74d41 on eng/homepage-mission-services: mission/goals, beneficiary/professional services, local Arabic fonts and existing logo, editable explicitly published leadership names, responsive public presentation, with existing policies and private hosting gates preserved. See ADR-023. Approved names/localized spelling, owner desktop/mobile acceptance, final CI/review and deployment remain separate pending milestones. Member/admin redesign is a later bounded increment.
