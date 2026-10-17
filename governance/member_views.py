@@ -202,7 +202,27 @@ def home(request):
     ctx = context(request)
     person = Person.objects.filter(user=request.user).first()
     apps = Application.objects.filter(person=person).order_by("-pk") if person else []
+    from .models import Membership
+    from .member_forms import RenewalForm
+
+    apps = list(apps)
+    terms = Membership.objects.filter(application__person=person).select_related("application").order_by("-starts_on", "-pk") if person else []
+    policy_day = services.today()
+    term_rows = []
+    for term in terms:
+        state = term.state
+        if state == "active":
+            if term.ends_on and policy_day >= term.ends_on:
+                state = "expired"
+            elif policy_day < term.starts_on:
+                state = "upcoming_term"
+        term_rows.append(dict(term=term, tier=ctx["labels"].get(term.application.tier, term.application.tier), state=ctx["labels"].get(state, state), state_key=state))
     ctx.update(
+        membership_terms=term_rows,
+        pending_count=sum(a.state == "submitted" for a in apps),
+        document_count=owned_documents(request.user).count(),
+        can_renew=RenewalForm(labels=ctx["labels"], user=request.user).fields["membership_id"].queryset.exists(),
+        can_apply=bool(person and not term_rows and not any(a.state == "submitted" for a in apps)),
         person=person,
         applications=[
             {
@@ -427,17 +447,19 @@ def document_rows(labels, documents):
 @require_http_methods(["GET"])
 @localized
 def documents(request):
+    ctx = context(request)
+    ctx["documents"] = document_rows(ctx["labels"], owned_documents(request.user).order_by("-pk"))
+    return render(request, "governance/member_documents.html", ctx)
+
+
+def owned_documents(user):
+    """Same ownership boundary for dashboard totals and the document list."""
     from django.db.models import Q
     from .models import Document
 
-    ctx = context(request)
-    people = Person.objects.filter(
-        Q(user=request.user) | Q(minor=True, guardian=request.user)
-    )
-    docs = Document.objects.filter(
+    people = Person.objects.filter(Q(user=user) | Q(minor=True, guardian=user))
+    return Document.objects.filter(
         Q(membership__application__person__in=people)
         | Q(accreditation__membership__application__person__in=people)
         | Q(institutional_role__person__in=people)
-    ).order_by("-pk")
-    ctx["documents"] = document_rows(ctx["labels"], docs)
-    return render(request, "governance/member_documents.html", ctx)
+    )
