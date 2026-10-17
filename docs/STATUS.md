@@ -298,3 +298,9 @@ Homepage increment prepared from main 8a74d41 on eng/homepage-mission-services: 
 ## 2026-10-17 — editable public contact
 
 Owner supplied association telephone/WhatsApp and Rabat address for display, and approved editable contact settings plus a blank official email placeholder. Prepared homepage contact section and institutional footer with localized headings/addresses, one phone feeding both call and WhatsApp, and Wagtail administration settings. No account/profile contact is queried; owner-authorized public contact is separate from synthetic UAT identity data. See ADR-024. Exact-head CI/review, owner local visual acceptance and deployment remain distinct pending milestones. No resource/cost or trial gate changes.
+
+## 2026-10-17 — private member dashboard presentation
+
+Owner confirmed local public contact update and explicit Arabic/Latin leadership publication in three homepage locales using a revision-preserving local content command; seven founders are displayed, with president and vice-president/treasurer. This is CMS content acceptance, not creation of accounts, memberships or accreditation decisions.
+
+Prepared member-home dashboard from main b2cf93b on eng/member-dashboard-presentation: own membership periods/states, private pending/document totals, application cards and profile/portrait/renewal quick access with shared private styling. Existing permissions/financial/document rules and private gates remain unchanged. See ADR-025. Focused 21 account/dashboard/journey tests passed locally; full CI/review and owner desktop/mobile acceptance are pending. Local latency remains deferred; no hosting, paid resource, Tighri or MHIOS changes.

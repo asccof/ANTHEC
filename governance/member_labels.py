@@ -3,6 +3,24 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "dashboard_intro": ("عضويتك وطلباتك ووثائقك في مكان واحد.", "Votre adhésion, vos demandes et vos documents au même endroit.", "Your membership, applications and documents in one place."),
+    "membership_summary": ("ملخص العضوية", "Votre adhésion", "Membership overview"),
+    "membership_periods": ("فترات العضوية", "Périodes d’adhésion", "Membership periods"),
+    "no_membership": ("لا توجد عضوية معتمدة بعد.", "Aucune adhésion approuvée pour le moment.", "No approved membership yet."),
+    "upcoming_term": ("فترة مقبلة", "Période à venir", "Upcoming period"),
+    "permanent_term": ("دائمة — دون تاريخ انتهاء", "Permanente — sans date de fin", "Permanent — no end date"),
+    "pending_applications": ("طلبات قيد المراجعة", "Demandes en cours d’examen", "Applications under review"),
+    "documents_total": ("وثائق في سجلك", "Documents dans votre dossier", "Documents in your record"),
+    "quick_actions": ("الوصول السريع", "Accès rapide", "Quick access"),
+    "edit_profile": ("تعديل الملف الشخصي", "Modifier mon profil", "Edit profile"),
+    "manage_portrait": ("إدارة الصورة الشخصية", "Gérer mon portrait", "Manage portrait"),
+    "open_application": ("عرض الطلب", "Voir la demande", "View application"),
+    "account_security": ("أمان الحساب", "Sécurité du compte", "Account security"),
+    "profile_details": ("بياناتي الشخصية", "Mes informations personnelles", "My personal details"),
+    "private_space": ("فضاء خاص", "Espace privé", "Private area"),
+    "languages": ("اللغات", "Langues", "Languages"),
+    "navigation": ("قائمة فضاء العضو", "Navigation de l’espace membre", "Member navigation"),
+
     "intake_photo_notice": (
         "يلزم قبول الصورة قبل اعتماد الطلب. عند رفضها، ارفع صورة بديلة من صفحة الصورة.",
         "Le portrait doit être approuvé avant l’adhésion. En cas de refus, téléversez un remplacement depuis Portrait.",
