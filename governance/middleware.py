@@ -59,6 +59,13 @@ class AdminSecurityMiddleware:
                     enforce(request)
                     return redirect("delegated_workspace")
                 check_admin_route(request, request.resolver_match)
+                if (request.resolver_match.view_name == 'wagtailsettings:edit'
+                    and request.resolver_match.kwargs.get('app_name') == 'content'
+                    and request.resolver_match.kwargs.get('model_name') == 'publiccontact'
+                    and request.method in {'GET', 'HEAD'}):
+                    from .capabilities import allows
+                    if not allows(request, 'contact.edit'):
+                        return redirect('delegated_contact')
         return None
 
 

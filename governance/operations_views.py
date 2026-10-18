@@ -140,6 +140,6 @@ def workspace(request):
     for cap, url, caption in [("content.view", "/operations/content/", "الصفحات / Pages"),
                               ("media_image.view", "/admin/images/", "الصور / Images"),
                               ("media_document.view", "/admin/documents/", "الملفات / Documents"),
-                              ("contact.view", "/admin/settings/content/publiccontact/", "التواصل / Contact")]:
+                              ("contact.view", "/operations/contact/", "التواصل / Contact")]:
         if allows(request, cap): ctx['workspace_links'].append((url, caption))
     return render(request, "governance/delegated_workspace.html", ctx)

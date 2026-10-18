@@ -3,6 +3,11 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "contact_observation": ("بيانات التواصل العامة", "Coordonnées publiques", "Public contact details"),
+    "public_phone": ("الهاتف وواتساب", "Téléphone et WhatsApp", "Phone and WhatsApp"),
+    "public_email": ("البريد الإلكتروني", "Courriel", "Email"),
+    "public_address": ("العنوان", "Adresse", "Address"),
+
     "document_window": ("آخر 100 وثيقة، من الأحدث إلى الأقدم.", "Les 100 derniers documents, du plus récent au plus ancien.", "Latest 100 documents, newest first."),
     "preview_saved": ("معاينة المسودة المحفوظة", "Voir le brouillon enregistré", "Preview saved draft"),
     "saved_publication": ("نشر المسودة المحفوظة", "Publier le brouillon enregistré", "Publish saved draft"),

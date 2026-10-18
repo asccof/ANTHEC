@@ -17,6 +17,7 @@ from . import (
 )
 
 urlpatterns = [
+    path("operations/contact/", content_operations.contact, name="delegated_contact"),
     path("operations/documents/", document_operations.listing, name="delegated_documents"),
     path("operations/documents/<int:document_id>/", document_operations.detail, name="delegated_document"),
     path("operations/content/", content_operations.listing, name="delegated_content"),

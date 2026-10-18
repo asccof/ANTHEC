@@ -65,7 +65,7 @@ def synchronize_cms_group(user, row):
                     collection=Collection.get_first_root_node(),
                     permission=permission,
                 )
-    if "contact.view" in scopes:
+    if "contact.edit" in scopes:
         group.permissions.add(
             Permission.objects.get(
                 content_type__app_label="content", codename="change_publiccontact"

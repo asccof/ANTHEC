@@ -611,3 +611,19 @@ class ScopedDelegationTests(TestCase):
             response = self.client.post(f"/my-documents/{doc_id}/prepare/?lang=en")
         generate.assert_called_once_with(doc_id, "en")
         self.assertEqual(response.url, f"/operations/documents/{doc_id}/?lang=en")
+
+    def test_contact_view_does_not_create_settings_or_grant_native_edit_permission(
+        self,
+    ):
+        from content.models import PublicContact
+
+        PublicContact.objects.all().delete()
+        self.grant(["contact.view"])
+        self.login()
+        response = self.client.get("/operations/contact/?lang=en")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(PublicContact.objects.exists())
+        self.assertFalse(self.delegate.has_perm("content.change_publiccontact"))
+        native = self.client.get("/admin/settings/content/publiccontact/")
+        self.assertEqual(native.url, "/operations/contact/")
+        self.assertFalse(PublicContact.objects.exists())

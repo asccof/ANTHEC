@@ -91,3 +91,23 @@ def publish(request, page_id):
             status = 400
     data.update(page=page, form=form)
     return render(request, "governance/content_publish.html", data, status=status)
+
+
+@never_cache
+@login_required(login_url="/admin/login/")
+@require_http_methods(["GET"])
+@localized
+def contact(request):
+    from wagtail.models import Site
+    from content.models import PublicContact
+    from django.http import Http404
+
+    enforce(request, "contact.view")
+    site = Site.find_for_request(request)
+    if site is None:
+        raise Http404()
+    # Native settings.for_site() creates defaults; a view grant must not do so.
+    row = PublicContact.objects.filter(site=site).first() or PublicContact(site=site)
+    data = context(request)
+    data["public_contact"] = row
+    return render(request, "governance/contact_observation.html", data)
