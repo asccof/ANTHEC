@@ -85,7 +85,11 @@ def register(request):
     ctx.update(
         form=form,
         rows=[
-            {"role": row, "label": ctx["labels"][row.role]}
+            {
+                "role": row,
+                "label": ctx["labels"][row.role],
+                "state_label": ctx["labels"][row.state],
+            }
             for row in InstitutionalRole.objects.select_related("person").order_by(
                 "-pk"
             )[:100]
