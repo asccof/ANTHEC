@@ -58,7 +58,8 @@ class AdminSecurityMiddleware:
                 if request.path == "/admin/":
                     enforce(request)
                     return redirect("delegated_workspace")
-                check_admin_route(request, request.resolver_match)
+                response = check_admin_route(request, request.resolver_match)
+                if response is not None: return response
                 if (request.resolver_match.view_name == 'wagtailsettings:edit'
                     and request.resolver_match.kwargs.get('app_name') == 'content'
                     and request.resolver_match.kwargs.get('model_name') == 'publiccontact'

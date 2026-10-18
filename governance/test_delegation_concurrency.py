@@ -83,8 +83,6 @@ class DelegationConcurrencyTests(TransactionTestCase):
         row = Delegation.objects.get(user=self.target)
         self.assertFalse(row.active)
         self.assertEqual(row.capabilities, [])
-        from django.db import transaction
-
         with transaction.atomic(), self.assertRaises(PermissionDenied):
             s.authorize(
                 administrative_request(self.target, self.epoch),

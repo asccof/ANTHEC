@@ -78,6 +78,7 @@ def check_admin_route(request, match):
     name = match.view_name
     write = request.method not in {"GET", "HEAD", "OPTIONS"}
     required = None
+    redirect_name = None
     if name in {
         "wagtailadmin_home",
         "wagtailadmin_login",
@@ -206,8 +207,14 @@ def check_admin_route(request, match):
                     "preview",
                 }
                 mutations = {"add": "upload", "edit": "edit", "delete": "delete"}
-                if not write and action in reads | {"add"}:
+                if not write and action in reads:
                     required = [scope + ".view"]
+                if not write and action in {"add", "add_multiple"}:
+                    required = [scope + ".view", scope + ".upload"]
+                    if action == "add_multiple":
+                        # Bulk upload mixes create/edit/delete requests. Keep
+                        # upload independent by using the native single form.
+                        redirect_name = namespace + ":add"
                 if write and action in mutations:
                     required = [scope + ".view", scope + "." + mutations[action]]
             if name.startswith(namespace + "_chooser:"):
@@ -223,3 +230,8 @@ def check_admin_route(request, match):
     if required is None:
         raise PermissionDenied("This admin route is not delegated")
     enforce(request, *required, recent=write)
+    if redirect_name:
+        from django.shortcuts import redirect
+
+        return redirect(redirect_name)
+    return None

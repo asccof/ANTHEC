@@ -627,3 +627,97 @@ class ScopedDelegationTests(TestCase):
         native = self.client.get("/admin/settings/content/publiccontact/")
         self.assertEqual(native.url, "/operations/contact/")
         self.assertFalse(PublicContact.objects.exists())
+
+    def test_normal_media_add_buttons_work_without_existing_file_edit_or_delete(self):
+        import tempfile
+        from django.test import override_settings
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from wagtail.models import Collection
+        from wagtail.images import get_image_model
+        from wagtail.documents import get_document_model
+
+        self.grant(
+            [
+                "media_image.view",
+                "media_image.upload",
+                "media_document.view",
+                "media_document.upload",
+            ]
+        )
+        self.login()
+        for prefix in ("images", "documents"):
+            response = self.client.get(f"/admin/{prefix}/multiple/add/")
+            self.assertEqual(response.url, f"/admin/{prefix}/add/")
+            self.assertEqual(self.client.get(response.url).status_code, 200)
+            self.assertEqual(
+                self.client.post(f"/admin/{prefix}/multiple/add/", {}).status_code, 403
+            )
+        collection = Collection.get_first_root_node()
+        with tempfile.TemporaryDirectory() as media_root, override_settings(
+            MEDIA_ROOT=media_root
+        ):
+            response = self.client.post(
+                "/admin/images/add/",
+                {
+                    "title": "Synthetic upload image",
+                    "description": "Synthetic rectangle",
+                    "collection": collection.pk,
+                    "file": SimpleUploadedFile(
+                        "synthetic.png", raw_fixture(), content_type="image/png"
+                    ),
+                },
+            )
+            self.assertEqual(
+                response.status_code,
+                302,
+                (
+                    response.context["form"].errors
+                    if response.status_code == 200
+                    else response.content
+                ),
+            )
+            image = get_image_model().objects.get(title="Synthetic upload image")
+            self.assertEqual(
+                self.client.post(
+                    f"/admin/images/{image.pk}/", {"title": "FORBIDDEN"}
+                ).status_code,
+                403,
+            )
+            self.assertEqual(
+                self.client.post(f"/admin/images/{image.pk}/delete/", {}).status_code,
+                403,
+            )
+            response = self.client.post(
+                "/admin/documents/add/",
+                {
+                    "title": "Synthetic upload file",
+                    "collection": collection.pk,
+                    "file": SimpleUploadedFile(
+                        "synthetic.pdf",
+                        b"%PDF-1.4\n% Synthetic test fixture\n",
+                        content_type="application/pdf",
+                    ),
+                },
+            )
+            self.assertEqual(
+                response.status_code,
+                302,
+                (
+                    response.context["form"].errors
+                    if response.status_code == 200
+                    else response.content
+                ),
+            )
+            document = get_document_model().objects.get(title="Synthetic upload file")
+            self.assertEqual(
+                self.client.post(
+                    f"/admin/documents/edit/{document.pk}/", {"title": "FORBIDDEN"}
+                ).status_code,
+                403,
+            )
+            self.assertEqual(
+                self.client.post(
+                    f"/admin/documents/delete/{document.pk}/", {}
+                ).status_code,
+                403,
+            )
