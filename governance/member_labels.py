@@ -3,6 +3,22 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "admin_intro": ("مراجعة الطلبات وتتبع القرارات والوثائق.", "Examiner les demandes et suivre les décisions et documents.", "Review applications and track decisions and documents."),
+    "register_window": ("آخر 100 طلب، من الأحدث إلى الأقدم.", "Les 100 dernières demandes, de la plus récente à la plus ancienne.", "Latest 100 applications, newest first."),
+    "back_register": ("العودة إلى قائمة الطلبات", "Retour aux demandes", "Back to applications"),
+    "financial_summary": ("الملخص المالي", "Synthèse financière", "Financial summary"),
+    "review_decisions": ("مراجعة الطلب واتخاذ القرار", "Examen et décision", "Review and decision"),
+    "decision_notice": ("يلزم استيفاء شروط الأداء أو الإعفاء وقبول الصورة المطلوبة قبل الموافقة. كل قرار يخضع للتحقق ويسجل في التاريخ.", "Le paiement ou l’exonération et le portrait requis doivent être validés avant approbation. Chaque décision est contrôlée et historisée.", "Required payment or exemption and portrait approval must be satisfied before approval. Every decision is validated and recorded."),
+    "record_payment": ("تسجيل الأداء المتحقق", "Enregistrer le paiement vérifié", "Record verified payment"),
+    "record_exemption": ("تسجيل الإعفاء المعلل", "Enregistrer l’exonération motivée", "Record reasoned exemption"),
+    "record_refund": ("تسجيل قرار الاسترجاع", "Enregistrer la décision de remboursement", "Record refund decision"),
+    "record_membership_state": ("حفظ حالة العضوية", "Enregistrer l’état de l’adhésion", "Save membership state"),
+    "replace_document": ("إعادة إصدار الوثيقة المختارة", "Réémettre le document sélectionné", "Reissue selected document"),
+    "open_document": ("عرض الوثيقة", "Voir le document", "View document"),
+    "pdf_preview": ("معاينة PDF", "Aperçu PDF", "PDF preview"),
+    "prepare_pdf": ("توليد PDF", "Générer le PDF", "Generate PDF"),
+    "admin_navigation": ("قائمة العمليات الإدارية", "Navigation des opérations administratives", "Administrative operations navigation"),
+
     "dashboard_intro": ("عضويتك وطلباتك ووثائقك في مكان واحد.", "Votre adhésion, vos demandes et vos documents au même endroit.", "Your membership, applications and documents in one place."),
     "membership_summary": ("ملخص العضوية", "Votre adhésion", "Membership overview"),
     "membership_periods": ("فترات العضوية", "Périodes d’adhésion", "Membership periods"),
