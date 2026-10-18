@@ -308,3 +308,7 @@ Prepared member-home dashboard from main b2cf93b on eng/member-dashboard-present
 ### 2026-10-18 — membership operations presentation preparation
 
 Owner accepted the member dashboard and supplied current administration screenshots. Prepared localized request cards, financial summaries, grouped decision forms and explicit command captions. Existing authorization, recent MFA, CSRF, financial and portrait prerequisites, audit history and document ownership remain in the existing services. No migration or hosted deployment. Required local checks, PostgreSQL CI and exact-head external review are pending; final evidence belongs in the PR. Owner visual acceptance of this increment is pending.
+
+### 2026-10-18 — institutional card presentation preparation
+
+Owner accepted membership administration presentation and authorized continuing. Prepared consistent institutional header/navigation, responsive register cards, explicit recorded role state and term dates, separate issued card status/actions and grouped decision forms/history. No schema, policy, artwork or hosted deployment changes. Local checks, PostgreSQL/container/recovery CI and exact-head review pending; final evidence belongs in the PR. Owner visual acceptance pending.
