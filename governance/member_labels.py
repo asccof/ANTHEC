@@ -14,7 +14,7 @@ ROWS = {
     "record_refund": ("تسجيل قرار الاسترجاع", "Enregistrer la décision de remboursement", "Record refund decision"),
     "record_membership_state": ("حفظ حالة العضوية", "Enregistrer l’état de l’adhésion", "Save membership state"),
     "replace_document": ("إعادة إصدار الوثيقة المختارة", "Réémettre le document sélectionné", "Reissue selected document"),
-    "open_document": ("عرض الوثيقة", "Voir le document", "View document"),
+    "download_document": ("تنزيل الوثيقة", "Télécharger le document", "Download document"),
     "pdf_preview": ("معاينة PDF", "Aperçu PDF", "PDF preview"),
     "prepare_pdf": ("توليد PDF", "Générer le PDF", "Generate PDF"),
     "admin_navigation": ("قائمة العمليات الإدارية", "Navigation des opérations administratives", "Administrative operations navigation"),

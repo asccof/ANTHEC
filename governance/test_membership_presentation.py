@@ -32,3 +32,14 @@ class MembershipPresentationTests(TestCase):
         self.assertContains(response, 'synthetic', status_code=400)
         self.app.refresh_from_db()
         self.assertEqual(self.app.state, 'submitted')
+
+    def test_issued_documents_keep_download_and_preview_actions_distinct(self):
+        self.assertEqual(self.post('exempt', reason='Synthetic exemption').status_code, 302)
+        self.assertEqual(self.post('approve', reason='Synthetic approval').status_code, 302)
+        for lang in ('ar', 'fr', 'en'):
+            labels = vocabulary(lang)[1]
+            response = self.client.get(f'/operations/membership/{self.app.pk}/?lang={lang}')
+            self.assertContains(response, labels['download_document'])
+            self.assertContains(response, labels['pdf_preview'])
+            self.assertContains(response, labels['replace_document'])
+            self.assertNotContains(response, 'name="action" value="approve"')
