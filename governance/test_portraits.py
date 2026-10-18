@@ -241,11 +241,13 @@ class PortraitTests(TestCase):
         response = self.client.get("/operations/portraits/?lang=en")
         for row in (first, second):
             self.assertContains(
-                response, f'<option value="{row.pk}">{row.serial}</option>', html=True
+                response, f'<option value="{row.pk}">{row.person.full_name} — {row.serial}</option>', html=True
             )
-            self.assertContains(
-                response, f"<p>{row.serial} — {row.person.full_name}</p>", html=True
-            )
+            from bs4 import BeautifulSoup
+            cards = BeautifulSoup(response.content, "html.parser").select(".review-card")
+            card = next(card for card in cards if str(row.serial) in card.get_text())
+            self.assertIn(row.person.full_name, card.get_text())
+            self.assertEqual(card.find("img")["src"], f"/private-portraits/{row.serial}/")
 
     def test_more_than_100_review_choices_have_matching_previews(self):
         first = self.upload()

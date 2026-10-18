@@ -47,6 +47,9 @@ def manage(request):
     action = request.POST.get("action") if request.method == "POST" else None
     upload = UploadForm(request.POST if action == "upload" else None, request.FILES if action == "upload" else None)
     review = ReviewForm(request.POST if action == "review" else None)
+    review.fields["asset_id"].label_from_instance = (
+        lambda asset: f"{labels[2] if asset.kind == 'signature' else labels[3]} — {asset.serial}"
+    )
     status = 200
     if request.method == "POST":
         status = 400
@@ -68,7 +71,7 @@ def manage(request):
     for row in visible:
         row.kind_label = labels[2] if row.kind == "signature" else labels[3]
         row.state_label = labels[{"pending": 13, "approved": 14, "rejected": 15}[row.state]]
-    data.update(asset_words=labels, upload_form=upload, review_form=review, assets=visible)
+    data.update(asset_words=labels, upload_form=upload, review_form=review, assets=visible, has_pending_assets=review.fields["asset_id"].queryset.exists())
     response = render(request, "governance/certificate_assets.html", data, status=status)
     response["Cache-Control"] = "private, no-store"
     response["Referrer-Policy"] = "no-referrer"

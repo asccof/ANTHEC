@@ -99,6 +99,9 @@ def review(request):
         reason = forms.CharField(max_length=1000, label=labels["reason"])
 
     form = ReviewForm(request.POST if request.method == "POST" else None)
+    form.fields["portrait_id"].label_from_instance = (
+        lambda photo: f"{photo.person.full_name} — {photo.serial}"
+    )
     status = 200
     if request.method == "POST":
         status = 400
