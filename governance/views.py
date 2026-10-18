@@ -163,7 +163,7 @@ def download(request, document_id):
     if not own:
         try:
             with transaction.atomic():
-                services.authorize(request)
+                services.authorize(request, capability="document.download")
         except (PermissionDenied, ObjectDoesNotExist):
             return HttpResponse(status=404)
     if doc.kind in {"professional_certificate", "accreditation_certificate"}:

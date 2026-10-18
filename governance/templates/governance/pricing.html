@@ -1,9 +1,9 @@
-{% extends 'governance/member_base.html' %}
+{% extends 'governance/member_base.html' %}{% load delegation_permissions %}
 {% block content %}<section><h2>{{ labels.pricing }}</h2><p>{{ labels.price_notice }}</p>
 {% if owner_testing %}<p>{{ labels.testing }}</p>{% endif %}
 <h3>{{ labels.current }}</h3><table><thead><tr><th>{{ labels.tier }}</th><th>{{ labels.amount }}</th></tr></thead><tbody>
 {% for item in current %}<tr><td>{{ item.label }}</td><td>{% if item.price %}{{ item.price.amount }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table>
-<h3>{{ labels.schedule }}</h3><form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.schedule }}</button></form>
+<h3>{{ labels.schedule }}</h3>{% if request|cap:'pricing.edit' %}<form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.schedule }}</button></form>{% endif %}
 <a href="{% url 'security_challenge' %}?lang={{ language }}">{{ labels.reauth }}</a>
 <h3>{{ labels.versions }}</h3><table><thead><tr><th>{{ labels.tier }}</th><th>{{ labels.amount }}</th><th>{{ labels.starts_at }}</th></tr></thead><tbody>
 {% for row in rows %}<tr><td>{{ row.display_tier }}</td><td>{{ row.amount }}</td><td>{{ row.starts_at|date:'c' }}</td></tr>{% endfor %}</tbody></table>

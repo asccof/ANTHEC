@@ -14,9 +14,9 @@ from .models import CertificateAsset
 from . import certificate_assets as assets, services as s
 
 WORDS = {
-    "ar": ["التوقيع والطابع المحميان", "نوع العنصر", "توقيع الرئيس", "طابع الجمعية", "صورة PNG أو JPEG أصلية", "سبب موثق", "رفع للمراجعة", "قرار المراجعة", "موافقة", "رفض", "حفظ القرار", "تعذر الإجراء؛ تحقق من الصلاحية والملف والحالة.", "لإدارة الجمعية الرئيسية فقط. استعمل الصور الأصلية المصرح بها؛ لا توقيع مقلد. الاستبدال لا يغيّر الوثائق الصادرة؛ يلزم إعادة إصدار رسمية.", "قيد المراجعة", "معتمد", "مرفوض"],
-    "fr": ["Signature et cachet protégés", "Type", "Signature du Président", "Cachet de l’association", "Image authentique PNG ou JPEG", "Motif documenté", "Déposer pour révision", "Décision", "Approuver", "Rejeter", "Enregistrer", "Action impossible : vérifiez autorisation, fichier et état.", "Administration principale uniquement. Images authentiques autorisées, sans imitation. Le remplacement ne modifie pas les documents émis ; réémission formelle requise.", "En attente", "Approuvé", "Rejeté"],
-    "en": ["Protected signature and stamp", "Type", "President’s signature", "Association stamp", "Authentic PNG or JPEG image", "Documented reason", "Upload for review", "Review decision", "Approve", "Reject", "Save decision", "Action unavailable: check authorization, file and state.", "Primary administration only. Authorized authentic images, no imitation. Replacement never rewrites issued documents; formal reissuance required.", "Pending", "Approved", "Rejected"],
+    "ar": ["التوقيع والطابع المحميان", "نوع العنصر", "توقيع الرئيس", "طابع الجمعية", "صورة PNG أو JPEG أصلية", "سبب موثق", "رفع للمراجعة", "قرار المراجعة", "موافقة", "رفض", "حفظ القرار", "تعذر الإجراء؛ تحقق من الصلاحية والملف والحالة.", "للمدير الرئيسي أو الحسابات المفوضة صراحةً لهذه المهمة. استعمل الصور الأصلية المصرح بها؛ لا توقيع مقلد. الاستبدال لا يغيّر الوثائق الصادرة؛ يلزم إعادة إصدار رسمية.", "قيد المراجعة", "معتمد", "مرفوض"],
+    "fr": ["Signature et cachet protégés", "Type", "Signature du Président", "Cachet de l’association", "Image authentique PNG ou JPEG", "Motif documenté", "Déposer pour révision", "Décision", "Approuver", "Rejeter", "Enregistrer", "Action impossible : vérifiez autorisation, fichier et état.", "Directeur principal ou comptes explicitement autorisés pour cette tâche. Images authentiques autorisées, sans imitation. Le remplacement ne modifie pas les documents émis ; réémission formelle requise.", "En attente", "Approuvé", "Rejeté"],
+    "en": ["Protected signature and stamp", "Type", "President’s signature", "Association stamp", "Authentic PNG or JPEG image", "Documented reason", "Upload for review", "Review decision", "Approve", "Reject", "Save decision", "Action unavailable: check authorization, file and state.", "Primary director or accounts explicitly delegated for this task. Authorized authentic images, no imitation. Replacement never rewrites issued documents; formal reissuance required.", "Pending", "Approved", "Rejected"],
 }
 
 
@@ -26,7 +26,7 @@ WORDS = {
 @localized
 def manage(request):
     with transaction.atomic():
-        s.authorize(request, primary_only=True, recent=False)
+        s.authorize(request, recent=False, capability="signing.view")
     data = context(request)
     labels = WORDS[data["language"]]
     visible_ids = list(CertificateAsset.objects.order_by("-pk").values_list("pk", flat=True)[:100])
@@ -50,6 +50,8 @@ def manage(request):
     review.fields["asset_id"].label_from_instance = (
         lambda asset: f"{labels[2] if asset.kind == 'signature' else labels[3]} — {asset.serial}"
     )
+    from .capabilities import restrict_choices
+    restrict_choices(request, review, "decision", {"approved": "signing.approve", "rejected": "signing.reject"})
     status = 200
     if request.method == "POST":
         status = 400
@@ -84,7 +86,7 @@ def manage(request):
 @transaction.atomic
 def image(request, serial):
     try:
-        s.authorize(request, primary_only=True, recent=False)
+        s.authorize(request, recent=False, capability="signing.view")
     except (PermissionDenied, ObjectDoesNotExist):
         return HttpResponse(status=404)
     row = get_object_or_404(CertificateAsset, serial=serial)

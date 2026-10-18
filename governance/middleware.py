@@ -37,7 +37,29 @@ class AdminSecurityMiddleware:
                     if "lang" in request.GET:
                         target += "?lang=" + vocabulary(request.GET["lang"])[0]
                     return redirect(target)
+        if request.path.startswith('/admin/') and request.user.is_authenticated and not Authority.objects.filter(pk=1, primary=request.user).exists():
+            from django.db import transaction
+            from .services import authorize
+            # Hold the same authority lock through native CMS writes, so a
+            # concurrent revoke cannot slip between the check and persistence.
+            with transaction.atomic():
+                authorize(request, capability=(), recent=False)
+                response = self.get_response(request)
+                if response.status_code >= 400:
+                    transaction.set_rollback(True)
+                return response
         return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if request.path.startswith("/admin/") and request.user.is_authenticated:
+            if not Authority.objects.filter(pk=1, primary=request.user).exists():
+                from .delegation_cms import check_admin_route
+                from .capabilities import enforce
+                if request.path == "/admin/":
+                    enforce(request)
+                    return redirect("delegated_workspace")
+                check_admin_route(request, request.resolver_match)
+        return None
 
 
 from django.middleware.locale import LocaleMiddleware

@@ -169,7 +169,7 @@ def password(request):
                 if (
                     authority and authority.primary_id == user.pk
                 ) or Delegation.objects.filter(user=user, active=True).exists():
-                    services.authorize(request)
+                    services.authorize(request, capability=())
                 form.user = user
                 user = form.save()
                 services.audit(user, "member.password.changed", user.pk)

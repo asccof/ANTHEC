@@ -14,9 +14,23 @@ class DecisionFields(forms.Form):
 class DirectorForm(DecisionFields):
     user = forms.ModelChoiceField(queryset=get_user_model().objects.none())
     decision = forms.ChoiceField(choices=[("grant", "grant"), ("revoke", "revoke")])
+    capabilities = forms.MultipleChoiceField(required=False, choices=[], widget=forms.CheckboxSelectMultiple)
+    expected_epoch = forms.IntegerField(min_value=0, widget=forms.HiddenInput)
+
+    def clean(self):
+        data = super().clean()
+        from .capabilities import validate_capabilities
+        if 'decision' in data:
+            try: data['capabilities'] = validate_capabilities(data.get('capabilities', []), active=data['decision'] == 'grant')
+            except forms.ValidationError: self.add_error('capabilities', self.capability_error)
+        return data
     def __init__(self, *args, **kwargs):
         labels = kwargs["labels"]
         super().__init__(*args, **kwargs)
+        from .capabilities import ALL_CAPABILITIES, label
+        self.fields['capabilities'].choices = [(key, label(key, labels.get('_language', 'ar'), full=True)) for key in ALL_CAPABILITIES]
+        self.fields['capabilities'].label = labels['capabilities_title']
+        self.capability_error = labels['capability_error']
         primary = Authority.objects.get(pk=1).primary_id
         self.fields["user"].queryset = get_user_model().objects.filter(is_superuser=False).exclude(pk=primary).order_by("pk")
         self.fields["user"].label_from_instance = lambda user: user.get_username()

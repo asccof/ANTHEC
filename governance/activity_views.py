@@ -16,6 +16,7 @@ from .activity_forms import ActivityForm,RegistrationForm,DecisionForm,CheckinFo
 from .models import Activity,Registration,Attendance,Audit,Document
 from .deployment import require_applications_enabled,require_issuance_enabled
 from . import services,activity_services
+from .capabilities import allows, restrict_choices
 
 
 def context(request):
@@ -73,7 +74,7 @@ def participate(request,activity_id):
 @require_http_methods(['GET','POST'])
 @localized
 def register(request):
-    read_authority(request);ctx=context(request)
+    read_authority(request, "activity.view");ctx=context(request)
     form=ActivityForm(request.POST if request.method=='POST' else None,labels=ctx['labels'],initial={'key':uuid.uuid4()})
     status=200
     if request.method=='POST':
@@ -94,7 +95,7 @@ def register(request):
 @require_http_methods(['GET','POST'])
 @localized
 def detail(request,activity_id):
-    read_authority(request);ctx=context(request)
+    read_authority(request, "activity.view");ctx=context(request)
     row=get_object_or_404(Activity,pk=activity_id)
     initial={field:getattr(row,field) for field in ('starts_on','ends_on','capacity','allows_minors','consent_version','consent_text')}
     initial.update(event_title=row.title,key=uuid.uuid4())
@@ -109,11 +110,13 @@ def detail(request,activity_id):
             except PermissionDenied:form.add_error(None,ctx['labels']['error']);status=403
             except ValidationError:form.add_error(None,ctx['labels']['error']);status=400
         else:status=400
+    from .capabilities import allows
     rows=list(Registration.objects.filter(activity=row).select_related('person').order_by('-pk')[:100])
-    attended=set(Attendance.objects.filter(registration__activity=row).values_list('registration_id',flat=True))
+    if not allows(request, "registration.view"): rows=[]
+    attended=set(Attendance.objects.filter(registration__activity=row).values_list('registration_id',flat=True)) if allows(request, "attendance.view") else set()
     for item in rows:
         item.display_state=ctx['labels'][item.state]
-        item.display_attendance=ctx['labels']['present' if item.pk in attended else 'absent']
+        item.display_attendance=ctx['labels']['present' if item.pk in attended else 'absent'] if allows(request, 'attendance.view') else '—'
     ctx.update(row=row,form=form,registrations=rows)
     return render(request,'governance/activity_detail.html',ctx,status=status)
 
@@ -123,7 +126,7 @@ def detail(request,activity_id):
 @require_http_methods(['GET','POST'])
 @localized
 def admission(request,registration_id):
-    read_authority(request);ctx=context(request)
+    read_authority(request, "registration.view");ctx=context(request)
     row=get_object_or_404(Registration.objects.select_related('activity','person','submitted_by'),pk=registration_id)
     form=DecisionForm(request.POST if request.method=='POST' and request.POST.get('operation')!='checkin' else None,labels=ctx['labels'],initial={'key':uuid.uuid4()})
     if request.method=='GET':
@@ -148,7 +151,8 @@ def admission(request,registration_id):
             except PermissionDenied:active.add_error(None,ctx['labels']['error']);status=403
             except ValidationError:active.add_error(None,ctx['labels']['error']);status=400
         else:status=400
+    restrict_choices(request, form, 'operation', {'accept':'registration.approve','reject':'registration.reject','cancel':'registration.cancel'})
     ctx.update(row=row,form=form,checkin=checkin,can_checkin=bool(doc and services.document_status(doc)=='active'),
-        display_state=ctx['labels'][row.state],display_attendance=ctx['labels']['present' if Attendance.objects.filter(registration=row).exists() else 'absent'],
+        display_state=ctx['labels'][row.state],display_attendance=ctx['labels']['present' if Attendance.objects.filter(registration=row).exists() else 'absent'] if allows(request, 'attendance.view') else '—',
         history=Audit.objects.filter(subject=str(row.pk),action__in=['registration.decided','registration.cancelled']).order_by('pk'))
     return render(request,'governance/activity_admission.html',ctx,status=status)

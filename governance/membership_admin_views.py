@@ -16,7 +16,7 @@ from .membership_admin_forms import (
     DocumentForm,
     LinkForm,
 )
-from .models import Application, Document, Audit, Membership, Refund
+from .models import Application, Document, Audit, Membership, Refund, Person
 
 
 @never_cache
@@ -24,7 +24,7 @@ from .models import Application, Document, Audit, Membership, Refund
 @require_http_methods(["GET"])
 @localized
 def register(request):
-    read_authority(request)
+    read_authority(request, "membership.view")
     ctx = context(request)
     apps = Application.objects.select_related("person").order_by("-pk")[:100]
     ctx["applications"] = [
@@ -43,7 +43,7 @@ def register(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def identities(request):
-    read_authority(request)
+    read_authority(request, "identity.view")
     ctx = context(request)
     form = LinkForm(
         request.POST if request.method == "POST" else None, labels=ctx["labels"]
@@ -74,7 +74,7 @@ def identities(request):
     return render(
         request,
         "governance/membership_admin_identities.html",
-        {**ctx, "form": form},
+        {**ctx, "form": form, "identity_rows": Person.objects.select_related("user").order_by("-pk")[:100]},
         status=status,
     )
 
@@ -84,16 +84,19 @@ def identities(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def detail(request, application_id):
-    read_authority(request)
+    read_authority(request, "membership.view")
     app = get_object_or_404(
         Application.objects.select_related("person", "previous"), pk=application_id
     )
     ctx = context(request)
-    payments = app.payment_set.order_by("pk")
+    from .capabilities import allows
+    finance_visible = allows(request, "finance.view")
+    documents_visible = allows(request, "document.view")
+    payments = app.payment_set.order_by("pk") if finance_visible else app.payment_set.none()
     term = Membership.objects.filter(application=app).first()
     documents = (
         Document.objects.filter(Q(membership=term) | Q(accreditation__membership=term))
-        if term
+        if term and documents_visible
         else Document.objects.none()
     )
     constructors = {
@@ -109,6 +112,9 @@ def detail(request, application_id):
         name: cls(labels=ctx["labels"], **options)
         for name, (cls, options) in constructors.items()
     }
+    from .capabilities import restrict_choices
+    restrict_choices(request, forms["state"], "state", {"active": "membership.activate", "suspended": "membership.suspend", "cancelled": "membership.cancel"})
+    restrict_choices(request, forms["refund"], "approved", {"yes": "finance.refund_approve", "no": "finance.refund_reject"})
     status = 200
     if request.method == "POST":
         action = request.POST.get("action")
@@ -117,6 +123,8 @@ def detail(request, application_id):
         else:
             cls, options = constructors[action]
             form = forms[action] = cls(request.POST, labels=ctx["labels"], **options)
+            if action == "state": restrict_choices(request, form, "state", {"active": "membership.activate", "suspended": "membership.suspend", "cancelled": "membership.cancel"})
+            if action == "refund": restrict_choices(request, form, "approved", {"yes": "finance.refund_approve", "no": "finance.refund_reject"})
             if form.is_valid():
                 data = form.cleaned_data
                 common = {"key": str(data["key"])}
@@ -187,6 +195,7 @@ def detail(request, application_id):
         .select_related("payment")
         .order_by("pk")
     )
+    if not finance_visible: refunds = Refund.objects.none()
     # Exemption is one-to-one; query explicitly, do not expose unrelated same-ID audits.
     from .models import Exemption
 
@@ -194,6 +203,7 @@ def detail(request, application_id):
         str(pk)
         for pk in Exemption.objects.filter(application=app).values_list("pk", flat=True)
     ]
+    if not finance_visible: exemption_ids = []
     history = Audit.objects.filter(
         Q(
             action__in=[
@@ -218,6 +228,8 @@ def detail(request, application_id):
         | Q(action="document.replaced", subject__in=[str(d.pk) for d in documents])
     ).order_by("pk")
     ctx.update(
+        finance_visible=finance_visible,
+        documents_visible=documents_visible,
         declared_capacity=ctx["labels"].get(
             (
                 "capacity_option_other"

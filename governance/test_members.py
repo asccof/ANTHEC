@@ -292,7 +292,7 @@ class MemberTests(TestCase):
         }
         for user in [self.admin, self.user]:
             if user == self.user:
-                Delegation.objects.create(user=user, active=True)
+                Delegation.objects.create(user=user, active=True, capabilities=["membership.view"])
             self.client.force_login(user)
             self.assertEqual(
                 self.client.post("/members/password/", payload).status_code, 403

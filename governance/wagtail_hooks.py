@@ -79,3 +79,33 @@ def pricing_menu():
     from .operations_labels import vocabulary as operations_vocabulary
     label = lazy(lambda: operations_vocabulary(get_language().split("-")[0])[1]["pricing"], str)()
     return MenuItem(label, reverse("pricing_register"), icon_name="list-ul", order=960)
+
+
+@hooks.register('construct_page_action_menu')
+def scoped_page_actions(menu_items, request, context):
+    from .models import Authority
+    from .capabilities import allows
+    if Authority.objects.filter(pk=1, primary=request.user).exists(): return
+    editing = 'content.create' if context.get('view') == 'create' else 'content.edit'
+    needed = {'action-save-draft': (editing,), 'action-publish': (editing, 'content.publish'),
+              'action-unpublish': ('content.unpublish',)}
+    menu_items[:] = [item for item in menu_items if getattr(item, 'name', None) in needed
+                     and all(allows(request, key) for key in needed[item.name])]
+
+
+@hooks.register('construct_main_menu')
+def scoped_admin_menu(request, menu_items):
+    from .models import Authority
+    from .capabilities import allows
+    if Authority.objects.filter(pk=1, primary=request.user).exists(): return
+    by_url = {reverse('institutional_register'): 'institutional.view',
+              reverse('membership_admin_register'): 'membership.view',
+              reverse('partnership_register'): 'partner.view',
+              reverse('accreditation_register'): 'accreditation.view',
+              reverse('activity_admin_register'): 'activity.view',
+              reverse('pricing_register'): 'pricing.view'}
+    by_name = {'explorer': 'content.view', 'images': 'media_image.view',
+               'documents': 'media_document.view', 'settings': 'contact.view'}
+    menu_items[:] = [item for item in menu_items
+                     if str(getattr(item, 'url', '')).startswith(('/ar/', '/fr/', '/en/'))
+                     or allows(request, by_url.get(str(getattr(item, 'url', '')), by_name.get(getattr(item, 'name', ''), '')))]

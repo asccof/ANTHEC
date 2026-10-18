@@ -34,9 +34,9 @@ def context(request):
     }
 
 
-def read_authority(request):
+def read_authority(request, capability):
     with transaction.atomic():
-        services.authorize(request, recent=False)
+        services.authorize(request, recent=False, capability=capability)
 
 
 @never_cache
@@ -44,7 +44,7 @@ def read_authority(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def register(request):
-    read_authority(request)
+    read_authority(request, "institutional.view")
     ctx = context(request)
     form = GrantForm(
         request.POST or None, labels=ctx["labels"], initial={"key": uuid.uuid4()}
@@ -103,7 +103,7 @@ def register(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def detail(request, role_id):
-    read_authority(request)
+    read_authority(request, "institutional.view")
     row = get_object_or_404(
         InstitutionalRole.objects.select_related("person"), pk=role_id
     )
@@ -172,6 +172,9 @@ def detail(request, role_id):
                     status = 400
             else:
                 status = 400
+    from .capabilities import restrict_choices, allows
+    restrict_choices(request, decision, "state", {"active": "institutional.activate", "suspended": "institutional.suspend", "cancelled": "institutional.cancel", "terminated": "institutional.terminate"})
+    if not allows(request, "document.view"): documents = documents.none()
     ctx.update(
         row=row,
         role_label=ctx["labels"][row.role],

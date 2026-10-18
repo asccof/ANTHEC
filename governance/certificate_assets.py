@@ -52,7 +52,7 @@ def normalize(upload):
         raise ValidationError("Invalid certificate image") from None
 
 
-@s.command("certificate.asset.upload", primary_only=True)
+@s.command("certificate.asset.upload")
 def upload_asset(*, actor, kind, image_data, reason):
     if kind not in {"signature", "stamp"} or not isinstance(reason, str) or not reason.strip() or len(reason) > 1000 or not isinstance(image_data, str) or len(image_data) > 4*MAX_BYTES//3+4:
         raise ValidationError("Valid kind, reason and image required")
@@ -65,7 +65,7 @@ def upload_asset(*, actor, kind, image_data, reason):
     return {"asset": str(row.serial)}
 
 
-@s.command("certificate.asset.review", primary_only=True)
+@s.command("certificate.asset.review")
 def review_asset(*, actor, asset_id, decision, reason):
     if decision not in {"approved", "rejected"} or not isinstance(reason, str) or not reason.strip() or len(reason) > 1000:
         raise ValidationError("Explicit approval/rejection and reason required")
