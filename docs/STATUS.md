@@ -312,3 +312,7 @@ Owner accepted the member dashboard and supplied current administration screensh
 ### 2026-10-18 — institutional card presentation preparation
 
 Owner accepted membership administration presentation and authorized continuing. Prepared consistent institutional header/navigation, responsive register cards, explicit recorded role state and term dates, separate issued card status/actions and grouped decision forms/history. No schema, policy, artwork or hosted deployment changes. Local checks, PostgreSQL/container/recovery CI and exact-head review pending; final evidence belongs in the PR. Owner visual acceptance pending.
+
+### 2026-10-18 — private asset review presentation preparation
+
+Owner accepted institutional card presentation and authorized portrait/signature/stamp interface work. Prepared responsive private galleries, reference/state/date facts, clearer upload/review instructions and identifiable selector captions. Existing queue windows, pending-only decisions, authority, recent MFA, CSRF and immutable document assets preserved. No schema, artwork, hosting or release changes. Required tests/CI/review and owner visual acceptance pending; final evidence belongs in the PR. Lazy previews do not establish a fix for deferred server latency.

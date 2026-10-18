@@ -3,6 +3,18 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "review_queue": ("الملفات المعروضة للمراجعة", "Fichiers présentés pour révision", "Files available for review"),
+    "portrait_queue_notice": ("تعرض الصفحة أقدم 100 صورة بانتظار المراجعة. اختر المرجع المطابق للصورة قبل تسجيل القرار.", "Les 100 portraits en attente les plus anciens sont affichés. Sélectionnez la référence correspondant au portrait avant la décision.", "The oldest 100 pending portraits are shown. Select the reference matching the portrait before recording a decision."),
+    "asset_queue_notice": ("تعرض الصفحة آخر 100 ملف. قائمة القرار تتيح الملفات المنتظرة ضمن هذه المجموعة فقط؛ الاعتماد السابق لا يعني أن الملف هو الأحدث المستخدم للإصدار.", "Les 100 derniers fichiers sont affichés. La décision porte uniquement sur les fichiers en attente de ce lot ; une approbation antérieure ne désigne pas nécessairement le fichier utilisé pour la prochaine émission.", "The latest 100 files are shown. Review choices include only pending files in this batch; an earlier approval does not necessarily identify the file used for the next issuance."),
+    "no_pending_review": ("لا توجد ملفات بانتظار المراجعة ضمن المجموعة المعروضة.", "Aucun fichier en attente dans le lot affiché.", "No pending files in the displayed batch."),
+    "record_review": ("تسجيل قرار المراجعة", "Enregistrer la décision de révision", "Record review decision"),
+    "asset_upload_title": ("رفع توقيع أو طابع للمراجعة", "Déposer une signature ou un cachet", "Upload a signature or stamp for review"),
+    "asset_upload_hint": ("اختر نوع العنصر: توقيع الرئيس أو طابع الجمعية، ثم الملف وسبب الرفع. رفع الملف لا يعتمده تلقائيًا.", "Choisissez Signature du Président ou Cachet de l’association, puis le fichier et le motif. Le dépôt ne vaut pas approbation.", "Choose President’s signature or Association stamp, then the file and reason. Uploading does not approve the file."),
+    "created_on": ("تاريخ الرفع", "Date de dépôt", "Uploaded on"),
+    "reviewed_on": ("تاريخ المراجعة", "Date de révision", "Reviewed on"),
+    "file_reference": ("مرجع الملف", "Référence du fichier", "File reference"),
+    "jump_review": ("الانتقال إلى تسجيل القرار", "Aller à la décision", "Go to review decision"),
+
     "admin_intro": ("مراجعة الطلبات وتتبع القرارات والوثائق.", "Examiner les demandes et suivre les décisions et documents.", "Review applications and track decisions and documents."),
     "register_window": ("آخر 100 طلب، من الأحدث إلى الأقدم.", "Les 100 dernières demandes, de la plus récente à la plus ancienne.", "Latest 100 applications, newest first."),
     "back_register": ("العودة إلى قائمة الطلبات", "Retour aux demandes", "Back to applications"),
