@@ -1,6 +1,7 @@
 """Public/editorial activity captions; content translations are supplied manually."""
 
 ROWS = {
+    "edit_activity": ("تعديل النشاط", "Modifier l’activité", "Edit activity"),
     "registrations": (
         "طلبات المشاركة",
         "Demandes de participation",

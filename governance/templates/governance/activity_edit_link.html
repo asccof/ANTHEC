@@ -1,0 +1,1 @@
+{% load delegation_permissions %}{% if request|cap:'activity.edit' %}{% if not activity.is_published or request|cap:'activity.publish' %}<a class="activity-button" href="{% url 'activity_admin_detail' activity.pk %}?lang={{ language }}#activity-editor">{{ labels.edit_activity }}</a>{% endif %}{% endif %}

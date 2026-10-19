@@ -104,6 +104,55 @@ class ActivityEditorialTests(TestCase):
         self.admin = self.owner
         PolicyTests.http_login(self)
 
+    def test_visible_edit_entry_and_live_save_for_owner_and_scoped_delegate(self):
+        self.publish()
+        target = self.admin_url + "?lang=fr#activity-editor"
+        self.assertNotContains(Client().get(self.url + "?lang=fr"), target)
+        self.login_owner()
+        for path in (self.url, "/activities/", "/operations/activities/"):
+            self.assertContains(self.client.get(path + "?lang=fr"), target)
+        for index, capabilities in enumerate(
+            (
+                ["activity.view"],
+                ["activity.view", "activity.edit"],
+                ["activity.view", "activity.edit", "activity.publish"],
+            )
+        ):
+            user = synthetic_user(f"synthetic-edit-entry-{index}")
+            services.delegate(
+                self.request,
+                key=f"edit-entry-{index}",
+                user_id=user.pk,
+                active=True,
+                capabilities=capabilities,
+                reason="Synthetic edit access",
+            )
+            self.client.logout()
+            self.client.login(username=user.username, password="synthetic-password-123")
+            response = self.client.get(self.url + "?lang=fr")
+            if index == 2:
+                self.assertContains(response, target)
+                self.assertContains(
+                    self.client.get(self.admin_url), 'id="activity-editor"'
+                )
+                response = self.decision(
+                    "edit",
+                    event_title="Synthetic edited after publication",
+                    starts_on=str(self.row.starts_on),
+                    ends_on=str(self.row.ends_on),
+                    capacity=30,
+                    description_ar="Synthetic updated description",
+                )
+                self.assertEqual(response.status_code, 302)
+            else:
+                self.assertNotContains(response, target)
+                self.assertNotContains(
+                    self.client.get(self.admin_url), 'id="activity-editor"'
+                )
+        self.row.refresh_from_db()
+        self.assertTrue(self.row.is_published)
+        self.assertContains(Client().get(self.url), "Synthetic updated description")
+
     def decision(self, action, **extra):
         return self.client.post(
             self.admin_url,
