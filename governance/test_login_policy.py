@@ -53,6 +53,7 @@ class LoginPolicyTests(TestCase):
         self.grant.epoch += 1
         self.grant.save()
         self.assertEqual(self.client.get('/operations/workspace/').status_code, 403)
+        self.assertNotContains(self.client.get('/members/'), '/operations/workspace/')
         self.assertEqual(self.client.get('/operations/membership/').status_code, 403)
         self.client.post('/members/logout/')
         self.signin(self.delegate)
@@ -83,6 +84,7 @@ class LoginPolicyTests(TestCase):
         self.signin(self.owner)
         self.assertNotIn('otp_device_id', self.client.session)
         self.assertNotIn('authority_epoch', self.client.session)
+        self.assertNotContains(self.client.get('/security/challenge/'), '/operations/workspace/')
         self.assertRedirects(self.client.get('/operations/directors/'), '/security/challenge/')
 
     def test_grant_does_not_upgrade_an_existing_member_session(self):
@@ -91,6 +93,7 @@ class LoginPolicyTests(TestCase):
         self.signin(self.delegate)
         self.grant.active = True
         self.grant.save()
+        self.assertNotContains(self.client.get('/members/'), '/operations/workspace/')
         self.assertEqual(self.client.get('/operations/workspace/').status_code, 403)
         self.client.post('/members/logout/')
         self.signin(self.delegate)
