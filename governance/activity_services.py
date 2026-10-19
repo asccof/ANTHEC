@@ -72,6 +72,11 @@ def update(*, actor, activity_id, **payload):
         from .activity_editorial import validate_presentation
 
         data["presentation"] = validate_presentation(payload["presentation"])
+        if row.is_published and not any(
+            item.get("description")
+            for item in data["presentation"]["translations"].values()
+        ):
+            raise ValidationError("An activity description is required before publication")
     if Registration.objects.filter(activity=row).exists():
         for field in (
             "starts_on",

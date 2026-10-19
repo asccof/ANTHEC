@@ -74,6 +74,30 @@ class ActivityEditorialTests(TestCase):
             reason="Synthetic editorial review",
         )
 
+    def test_live_update_cannot_remove_last_description(self):
+        self.publish()
+        original = self.row.presentation
+        with self.assertRaises(ValidationError):
+            activity_services.update(
+                self.request,
+                key="remove-live-description",
+                activity_id=self.row.pk,
+                title="Changed title",
+                starts_on=str(self.row.starts_on),
+                ends_on=str(self.row.ends_on),
+                capacity=40,
+                allows_minors=False,
+                consent_version="v1",
+                consent_text="",
+                reason="Synthetic empty description regression",
+                presentation=content(translations={"ar": {"description": "   "}}),
+            )
+        self.row.refresh_from_db()
+        self.assertTrue(self.row.is_published)
+        self.assertEqual(self.row.presentation, original)
+        self.assertEqual(self.row.title, "Synthetic source activity")
+        self.assertFalse(Audit.objects.filter(action="activity.updated").exists())
+
     def login_owner(self):
         from .tests import PolicyTests
 
