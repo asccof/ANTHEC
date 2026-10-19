@@ -4,7 +4,7 @@ permissions:
   contents: read
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
@@ -59,7 +59,7 @@ jobs:
           # Public synthetic fixture from settings.test; never a deployed key.
           ANTHEEC_DATA_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
   container:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - run: docker build --file deploy/Dockerfile --tag anthec-owner-test:ci .

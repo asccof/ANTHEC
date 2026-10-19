@@ -24,4 +24,6 @@ New HTTP regressions cover password-only delegate login, permitted/denied worksp
 
 ## CI recovery toolchain correction
 
-The full PostgreSQL suite passed on the prior reviewed implementation, but recovery exposed runner-default client/server drift: a newer pg_restore emitted SET transaction_timeout against the PostgreSQL 16 service. The workflow now explicitly installs and prioritizes PostgreSQL 16 clients and verifies pg_dump/pg_restore/createdb major versions before tests. The recovery drill remains mandatory with exit-on-error; no SQL filtering, ignored errors, server upgrade or hosted database change is introduced.
+The full PostgreSQL suite passed on the prior reviewed implementation, but recovery exposed runner-default client/server drift: a newer pg_restore emitted SET transaction_timeout against the PostgreSQL 16 service. The floating ubuntu-latest runner had advanced to Ubuntu 26.04, whose configured repositories lacked postgresql-client-16. The workflow now pins Ubuntu 24.04 (where the official runner image/package baseline provides PostgreSQL 16), explicitly installs and prioritizes PostgreSQL 16 clients and verifies pg_dump/pg_restore/createdb major versions before tests. The recovery drill remains mandatory with exit-on-error; no SQL filtering, ignored errors, server upgrade or hosted database change is introduced.
+
+Toolchain references: https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md and https://packages.ubuntu.com/noble/postgresql-client-16 (checked 2026-10-19).
