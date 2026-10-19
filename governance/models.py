@@ -20,6 +20,7 @@ class Delegation(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     active = models.BooleanField(default=True)
     epoch = models.PositiveIntegerField(default=1)
+    capabilities = models.JSONField(default=list, blank=True)
 
 
 class Audit(models.Model):

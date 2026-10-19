@@ -1,3 +1,4 @@
+from .capabilities import ALL_CAPABILITIES
 """Synthetic operational UI acceptance; deployment gates stay closed."""
 import uuid
 from datetime import timedelta
@@ -20,7 +21,7 @@ class OperationalInterfaceTests(TestCase):
         self.request = fixtures.administrative_request(self.admin)
         call_command("seed_policy_prices", stdout=StringIO())
     def director_payload(self, **changes):
-        data = dict(key=str(uuid.uuid4()), user=self.target.pk, decision="grant", reason="Synthetic mandate", confirm=True)
+        data = dict(key=str(uuid.uuid4()), user=self.target.pk, decision="grant", reason="Synthetic mandate", confirm=True, capabilities=list(ALL_CAPABILITIES), expected_epoch=Delegation.objects.get(user=self.target).epoch if Delegation.objects.filter(user=self.target).exists() else 0)
         data.update(changes)
         return data
     def price_payload(self, **changes):
@@ -30,7 +31,7 @@ class OperationalInterfaceTests(TestCase):
         data.update(changes)
         return data
     def grant(self):
-        services.delegate(self.request, key=str(uuid.uuid4()), user_id=self.target.pk, active=True, reason="Synthetic mandate")
+        services.delegate(self.request, key=str(uuid.uuid4()), user_id=self.target.pk, active=True, capabilities=list(ALL_CAPABILITIES), reason="Synthetic mandate")
         return Delegation.objects.get(user=self.target).epoch
     def test_primary_grant_revoke_replay_and_epoch(self):
         self.http_login()
@@ -131,7 +132,7 @@ class OperationalInterfaceTests(TestCase):
     def test_inactive_grant_is_blocked_in_locked_service_and_json(self):
         self.target.is_active=False; self.target.save(update_fields=["is_active"])
         with self.assertRaises(ValidationError):
-            services.delegate(self.request,key=str(uuid.uuid4()),user_id=self.target.pk,active=True,reason="Synthetic inactive grant")
+            services.delegate(self.request,key=str(uuid.uuid4()),user_id=self.target.pk,active=True, capabilities=list(ALL_CAPABILITIES),reason="Synthetic inactive grant")
         self.http_login()
         data=dict(key=str(uuid.uuid4()),user_id=self.target.pk,active=True,reason="Synthetic inactive grant")
         self.assertEqual(self.client.post("/operations/delegate/",data,content_type="application/json").status_code,400)

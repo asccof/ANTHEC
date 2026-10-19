@@ -12,9 +12,17 @@ from . import (
     accreditation_views,
     activity_views,
     operations_views,
+    content_operations,
+    document_operations,
 )
 
 urlpatterns = [
+    path("operations/contact/", content_operations.contact, name="delegated_contact"),
+    path("operations/documents/", document_operations.listing, name="delegated_documents"),
+    path("operations/documents/<int:document_id>/", document_operations.detail, name="delegated_document"),
+    path("operations/content/", content_operations.listing, name="delegated_content"),
+    path("operations/content/<int:page_id>/publish/", content_operations.publish, name="delegated_publish"),
+    path("operations/workspace/", operations_views.workspace, name="delegated_workspace"),
     path("operations/directors/", operations_views.directors, name="director_register"),
     path("operations/pricing/", operations_views.pricing, name="pricing_register"),
     path("activities/", activity_views.listing, name="activity_list"),

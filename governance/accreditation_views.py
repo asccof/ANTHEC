@@ -28,7 +28,7 @@ def context(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def register(request):
-    read_authority(request)
+    read_authority(request, "accreditation.view")
     ctx = context(request)
     form = CaseForm(request.POST if request.method=="POST" else None, labels=ctx["labels"], initial={"key":uuid.uuid4()})
     status = 200
@@ -56,7 +56,7 @@ def register(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def detail(request,case_id):
-    read_authority(request)
+    read_authority(request, "accreditation.view")
     ctx=context(request)
     row=get_object_or_404(AccreditationCase.objects.select_related("person"),pk=case_id)
     private=decrypt(row.private_payload)
@@ -64,6 +64,9 @@ def detail(request,case_id):
     approving=request.method=="POST" and request.POST.get("operation")=="approve"
     form=ReviewForm(request.POST if request.method=="POST" and not approving else None,labels=ctx["labels"],initial=initial)
     approval=ApprovalForm(request.POST if approving else None,labels=ctx["labels"],initial={"key":uuid.uuid4()})
+    from .capabilities import allows
+    if not allows(request, "accreditation.edit"):
+        for name in ('criteria', 'assessment', 'fee'): form.fields[name].disabled = True
     status=200
     active=approval if approving else form
     if request.method=="POST":
@@ -79,6 +82,8 @@ def detail(request,case_id):
     history=list(Audit.objects.filter(subject=str(row.pk),action__startswith="accreditation.case.").order_by("pk"))
     for event in history:
         event.private_reason=decrypt(event.details["private_payload"]).get("reason", "") if event.details.get("private_payload") else ""
+    from .capabilities import restrict_choices
+    restrict_choices(request, form, "decision", {"draft": "accreditation.reopen" if row.state == "reviewed" else "accreditation.edit", "reviewed": "accreditation.review", "rejected": "accreditation.reject"})
     ctx.update(row=row,private=private,form=form,approval=approval,display_state=ctx["labels"][row.state],
         display_subject=row.person.full_name if row.person else row.subject_name,
         display_kind=ctx["labels"][row.kind], history=history)

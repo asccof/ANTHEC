@@ -61,7 +61,7 @@ def request_partnership(request):
 @require_http_methods(['GET'])
 @localized
 def register(request):
-    read_authority(request); ctx=context(request)
+    read_authority(request, "partner.view"); ctx=context(request)
     ctx['requests']=list(PartnershipRequest.objects.order_by('-pk')[:100])
     ctx['records']=list(Partner.objects.order_by('-pk')[:100])
     for row in ctx['requests']: row.display_state=ctx['labels'][row.state]
@@ -75,7 +75,7 @@ def register(request):
 @require_http_methods(['GET','POST'])
 @localized
 def review(request,request_id):
-    read_authority(request); ctx=context(request)
+    read_authority(request, "partner.view"); ctx=context(request)
     row=get_object_or_404(PartnershipRequest,pk=request_id)
     form=PartnershipDecisionForm(request.POST if request.method=='POST' else None,labels=ctx['labels'],initial={'key':uuid.uuid4()})
     status=200
@@ -88,6 +88,8 @@ def review(request,request_id):
             except PermissionDenied: form.add_error(None,ctx['labels']['error']); status=403
             except ValidationError: form.add_error(None,ctx['labels']['error']); status=400
         else: status=400
+    from .capabilities import restrict_choices
+    restrict_choices(request, form, 'decision', {'approved': 'partner.approve', 'rejected': 'partner.reject'})
     row.display_state=ctx['labels'][row.state]
     ctx.update(row=row,form=form,history=Audit.objects.filter(subject=str(row.pk),action__in=['partnership.approved','partnership.rejected']).order_by('pk'))
     return render(request,'governance/partnership_review.html',ctx,status=status)
@@ -97,11 +99,18 @@ def review(request,request_id):
 @require_http_methods(['GET','POST'])
 @localized
 def detail(request,partner_id):
-    read_authority(request); ctx=context(request)
+    read_authority(request, "partner.view"); ctx=context(request)
     row=get_object_or_404(Partner,pk=partner_id)
     initial={name:getattr(row,name) for name in ['name_ar','name_fr','name_en','summary_ar','summary_fr','summary_en','website','state','public_visible']}
     initial['key']=uuid.uuid4()
     form=PartnerForm(request.POST if request.method=='POST' else None,labels=ctx['labels'],initial=initial)
+    from .capabilities import allows
+    for name in ('name_ar','name_fr','name_en','summary_ar','summary_fr','summary_en','website'):
+        form.fields[name].disabled = not allows(request, 'partner.edit')
+    form.fields['state'].choices = [(value, caption) for value, caption in form.fields['state'].choices
+        if value == row.state or allows(request, 'partner.' + {'active':'activate','suspended':'suspend','cancelled':'cancel'}[value])]
+    form.fields['public_visible'].disabled = not allows(request, 'partner.hide' if row.public_visible else 'partner.publish')
+    partner_can_mutate = any(allows(request, 'partner.' + action) for action in ('edit','activate','suspend','cancel','publish','hide'))
     status=200
     if request.method=='POST':
         if form.is_valid():
@@ -112,5 +121,5 @@ def detail(request,partner_id):
             except PermissionDenied: form.add_error(None,ctx['labels']['error']); status=403
             except ValidationError: form.add_error(None,ctx['labels']['error']); status=400
         else: status=400
-    ctx.update(row=row,form=form,history=Audit.objects.filter(subject=str(row.pk),action='partner.updated').order_by('pk'))
+    ctx.update(row=row,form=form,partner_can_mutate=partner_can_mutate,history=Audit.objects.filter(subject=str(row.pk),action='partner.updated').order_by('pk'))
     return render(request,'governance/partner_detail.html',ctx,status=status)

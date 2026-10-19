@@ -75,7 +75,7 @@ def upload(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def review(request):
-    read_authority(request)
+    read_authority(request, "portrait.view")
     data = ctx(request)
     labels = data["photo_labels"]
     visible_ids = list(
@@ -102,6 +102,8 @@ def review(request):
     form.fields["portrait_id"].label_from_instance = (
         lambda photo: f"{photo.person.full_name} — {photo.serial}"
     )
+    from .capabilities import restrict_choices
+    restrict_choices(request, form, "decision", {"approved": "portrait.approve", "rejected": "portrait.reject"})
     status = 200
     if request.method == "POST":
         status = 400
@@ -137,7 +139,7 @@ def image(request, serial):
     if not portraits.owned_people(request.user).filter(pk=row.person_id).exists():
         try:
             with transaction.atomic():
-                services.authorize(request, recent=False)
+                services.authorize(request, recent=False, capability="portrait.view")
         except (PermissionDenied, ObjectDoesNotExist):
             return HttpResponse(status=404)
     services.audit(request.user, "portrait.viewed", row.serial)

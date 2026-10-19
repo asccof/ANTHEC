@@ -1,3 +1,4 @@
+from .capabilities import ALL_CAPABILITIES
 """Phase 1 acceptance: synthetic roles, existing issuance and administrative UI."""
 
 from datetime import date
@@ -436,7 +437,7 @@ class InstitutionalTests(TestCase):
             self.request,
             key="delegate",
             user_id=delegate.pk,
-            active=True,
+            active=True, capabilities=list(ALL_CAPABILITIES),
             reason="Synthetic",
         )
         self.http_login(delegate, Delegation.objects.get(user=delegate).epoch)

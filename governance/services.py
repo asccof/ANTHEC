@@ -98,7 +98,7 @@ def audit(user, action, subject, reason="", **details):
     )
 
 
-def authorize(request, primary_only=False, recent=True):
+def authorize(request, primary_only=False, recent=True, capability=None):
     authority = Authority.objects.select_for_update().get(pk=1)
     user = request.user
     if not user.is_authenticated:
@@ -118,6 +118,12 @@ def authorize(request, primary_only=False, recent=True):
         )
         if not delegation:
             raise PermissionDenied("No active delegation")
+        from .capabilities import validate_capabilities
+        try: granted = validate_capabilities(delegation.capabilities)
+        except ValidationError: raise PermissionDenied("Delegation needs explicit capabilities")
+        required = [capability] if isinstance(capability, str) else capability
+        if required is None or any(key not in granted for key in required):
+            raise PermissionDenied("Capability not delegated")
         epoch = delegation.epoch
     if request.session.get("authority_epoch") != epoch:
         raise PermissionDenied("Administrative session revoked")
@@ -137,7 +143,12 @@ def command(action, primary_only=False):
             if not isinstance(key, str) or not key or len(key) > 120:
                 raise ValidationError("Invalid command key")
             with transaction.atomic():
-                actor = authorize(request, primary_only=primary_only)
+                actor = authorize(request, primary_only=primary_only, capability=())
+                if not Authority.objects.filter(pk=1, primary=actor).exists():
+                    from .capabilities import action_capabilities
+                    if action in {"partner.update", "accreditation.case.review"}:
+                        authorize(request, capability="partner.view" if action == "partner.update" else "accreditation.view")
+                    authorize(request, capability=action_capabilities(action, payload))
                 for field, value in payload.items():
                     if (
                         field
@@ -202,61 +213,31 @@ def command(action, primary_only=False):
 
 
 @command("delegate", primary_only=True)
-def delegate(*, actor, user_id, active, reason):
+def delegate(*, actor, user_id, active, reason, capabilities=None, expected_epoch=None):
     from django.contrib.auth import get_user_model
-    from django.contrib.auth.models import Permission, Group
-
+    from .capabilities import validate_capabilities
+    from .delegation_cms import synchronize_cms_group
     authority = Authority.objects.get(pk=1)
-    if (
-        not isinstance(active, bool)
-        or user_id == authority.primary_id
-        or not reason.strip()
-    ):
+    if not isinstance(active, bool) or user_id == authority.primary_id or not reason.strip() or len(reason) > 3000:
         raise ValidationError("Primary director cannot be changed; reason required")
     target = get_user_model().objects.select_for_update().get(pk=user_id)
-    if target.is_superuser:
-        raise ValidationError("Delegates cannot be Django superusers")
-    if active and not target.is_active:
-        raise ValidationError("Active target account required")
-    row, _ = Delegation.objects.get_or_create(user=target)
-    row.active = bool(active)
+    if target.is_superuser or active and not target.is_active:
+        raise ValidationError("Active non-superuser target required")
+    selected = validate_capabilities(capabilities if capabilities is not None else [], active=active)
+    row, created = Delegation.objects.get_or_create(user=target)
+    actual_epoch = 0 if created else row.epoch
+    if expected_epoch is not None and (not isinstance(expected_epoch, int) or isinstance(expected_epoch, bool) or expected_epoch != actual_epoch):
+        raise Conflict("Delegation changed; reload before editing")
+    before = dict(active=False if created else row.active, capabilities=row.capabilities, epoch=actual_epoch)
+    row.active = active
+    row.capabilities = selected
     row.epoch += 1
     row.save()
-    # Business operations are authorized by delegation, not Django superuser.
-    group, _ = Group.objects.get_or_create(name="ANTHEEC operational directors")
-    if active:
-        permissions = Permission.objects.filter(
-            content_type__app_label__in=["wagtailadmin", "wagtailimages", "wagtaildocs"]
-        )
-        group.permissions.set(permissions)
-        from wagtail.models import GroupPagePermission, Page
-
-        for name in [
-            "add_page",
-            "change_page",
-            "publish_page",
-            "lock_page",
-            "unlock_page",
-        ]:
-            permission = Permission.objects.filter(
-                content_type__app_label="wagtailcore", codename=name
-            ).first()
-            if permission:
-                GroupPagePermission.objects.get_or_create(
-                    group=group, page=Page.get_first_root_node(), permission=permission
-                )
-        target.groups.add(group)
-    else:
-        target.groups.remove(group)
-    audit(
-        actor,
-        "delegation.changed",
-        row.pk,
-        reason,
-        active=bool(active),
-        epoch=row.epoch,
-    )
-    return {"delegation": row.pk, "active": row.active}
+    synchronize_cms_group(target, row)
+    audit(actor, "delegation.changed", row.pk, reason, user_id=target.pk,
+          username=target.get_username(), before=before,
+          active=active, capabilities=selected, epoch=row.epoch)
+    return {"delegation": row.pk, "active": row.active, "capabilities": selected}
 
 
 @command("price.change")

@@ -1,3 +1,4 @@
+from .capabilities import ALL_CAPABILITIES
 """Owner-policy acceptance tests; every identity, payment and activity is synthetic."""
 
 from datetime import date, timedelta
@@ -546,7 +547,7 @@ class PolicyTests(TestCase):
             self.request,
             key="delegate",
             user_id=delegate.pk,
-            active=True,
+            active=True, capabilities=list(ALL_CAPABILITIES),
             reason="Synthetic mandate",
         )
         epoch = Delegation.objects.get(user=delegate).epoch
@@ -556,7 +557,7 @@ class PolicyTests(TestCase):
                 request,
                 key="manage-other",
                 user_id=self.holder.pk,
-                active=True,
+                active=True, capabilities=list(ALL_CAPABILITIES),
                 reason="Synthetic",
             )
         with self.assertRaises(ValidationError):
@@ -582,7 +583,7 @@ class PolicyTests(TestCase):
     ):
         user = synthetic_user("synthetic-delegate")
         s.delegate(
-            self.request, key="grant", user_id=user.pk, active=True, reason="Synthetic"
+            self.request, key="grant", user_id=user.pk, active=True, capabilities=list(ALL_CAPABILITIES), reason="Synthetic"
         )
         request = administrative_request(user, Delegation.objects.get(user=user).epoch)
         app = self.application("general")
@@ -614,7 +615,7 @@ class PolicyTests(TestCase):
             self.request,
             key="regrant",
             user_id=user.pk,
-            active=True,
+            active=True, capabilities=list(ALL_CAPABILITIES),
             reason="Synthetic",
         )
         with self.assertRaises(PermissionDenied):
@@ -655,11 +656,11 @@ class PolicyTests(TestCase):
             self.request,
             key="delegate",
             user_id=user.pk,
-            active=True,
+            active=True, capabilities=list(ALL_CAPABILITIES),
             reason="Synthetic",
         )
         self.http_login(user, Delegation.objects.get(user=user).epoch)
-        self.assertEqual(self.client.get("/admin/").status_code, 200)
+        self.assertEqual(self.client.get("/admin/").url, "/operations/workspace/")
         for url in ["/admin/users/", "/admin/groups/"]:
             self.assertEqual(self.client.get(url).status_code, 403)
         s.delegate(

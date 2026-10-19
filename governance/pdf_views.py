@@ -26,14 +26,14 @@ def document_person(doc):
     )
 
 
-def permitted(request, doc):
+def permitted(request, doc, capability="document.view"):
     person = document_person(doc)
     own = person and portraits.owned_people(request.user).filter(pk=person.pk).exists()
     if own:
         return "owned"
     try:
         with transaction.atomic():
-            s.authorize(request)
+            s.authorize(request, capability=capability)
     except (PermissionDenied, ObjectDoesNotExist):
         return False
     return "administrative"
@@ -45,7 +45,7 @@ def permitted(request, doc):
 @transaction.atomic
 def download(request, document_id, preview=False):
     doc = get_object_or_404(Document, pk=document_id)
-    access = permitted(request, doc)
+    access = permitted(request, doc, "document.view" if preview else "document.download")
     if not access:
         return HttpResponse(status=404)
     # Administrative authority is acquired before Document, matching command
@@ -139,7 +139,8 @@ def prepare(request, document_id):
     from django.urls import reverse
 
     doc = get_object_or_404(Document, pk=document_id)
-    if not permitted(request, doc):
+    access = permitted(request, doc, "document.generate")
+    if not access:
         return HttpResponse(status=404)
     language, _ = vocabulary(request.GET.get("lang", "ar"))
     try:
@@ -157,4 +158,7 @@ def prepare(request, document_id):
             status=409,
         )
     s.audit(request.user, "document.pdf.prepared", doc.serial, language=language)
+    from .capabilities import allows
+    if access == "administrative" and not allows(request, "document.download"):
+        return redirect(reverse("delegated_document", args=[doc.pk]) + "?lang=" + language)
     return redirect(reverse("document_pdf", args=[doc.pk]) + "?lang=" + language)

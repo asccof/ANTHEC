@@ -1,5 +1,19 @@
 """Explicit private operational vocabulary; no policy or permission changes."""
 ROWS = {
+    "before_change": ("الصلاحيات السابقة", "Autorisations précédentes", "Previous capabilities"),
+    "after_change": ("الصلاحيات بعد القرار", "Autorisations après décision", "Capabilities after decision"),
+    "capabilities_title": ("الصلاحيات المستقلة", "Autorisations indépendantes", "Independent capabilities"),
+    "capabilities_notice": ("لا تُمنح أي صلاحية تلقائيًا. اختر الاطلاع المطلوب صراحةً؛ تعديل التفويض يبطل الجلسة السابقة. التفويض القديم يحتاج مراجعة واختيارات جديدة.", "Aucun droit automatique. Sélectionnez explicitement les droits de consultation requis. Toute modification invalide la session précédente ; les anciens mandats doivent être réattribués.", "No implicit grants. Explicitly select required view capabilities. Changes invalidate previous sessions; legacy grants must be reassigned."),
+    "requires": ("يتطلب أيضًا", "Exige aussi", "Also requires"),
+    "select_account": ("اختيار الحساب وعرض تفويضه", "Choisir le compte et charger son mandat", "Select account and load its grant"),
+    "account_state": ("حالة الحساب", "État du compte", "Account state"),
+    "account_active": ("حساب مفعل", "Compte actif", "Active account"),
+    "account_inactive": ("حساب معطل", "Compte désactivé", "Disabled account"),
+    "edit_grant": ("عرض وتعديل التفويض", "Afficher et modifier le mandat", "View and edit grant"),
+    "delegated_workspace": ("مساحة العمل المفوضة", "Espace de travail délégué", "Delegated workspace"),
+    "no_capabilities": ("لا توجد صلاحيات ممنوحة؛ يلزم اختيارها صراحةً.", "Aucune autorisation ; sélection explicite requise.", "No capabilities granted; explicit selection required."),
+    "capability_error": ("حدد صلاحيات معروفة واختر صلاحيات الاطلاع المطلوبة لكل إجراء؛ يلزم اختيار واحد على الأقل لمنح التفويض.", "Sélectionnez des autorisations valides et leurs droits de consultation requis ; au moins un droit est nécessaire.", "Select valid capabilities and their explicit view prerequisites; at least one is required for a grant."),
+
     "directors": ("إدارة المديرين", "Gestion des directeurs", "Director management"),
     "pricing": ("إدارة أسعار العضوية", "Tarifs des adhésions", "Membership pricing"),
     "primary": ("المدير الرئيسي", "Directeur principal", "Primary director"),

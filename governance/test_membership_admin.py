@@ -1,3 +1,4 @@
+from .capabilities import ALL_CAPABILITIES
 from io import StringIO
 import uuid
 from django.core.management import call_command
@@ -338,7 +339,7 @@ class MembershipAdminTests(TestCase):
             self.request,
             key="delegate",
             user_id=delegate.pk,
-            active=True,
+            active=True, capabilities=list(ALL_CAPABILITIES),
             reason="Synthetic",
         )
         self.http_login(delegate, epoch=Delegation.objects.get(user=delegate).epoch)

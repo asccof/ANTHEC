@@ -3,6 +3,18 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "contact_observation": ("بيانات التواصل العامة", "Coordonnées publiques", "Public contact details"),
+    "public_phone": ("الهاتف وواتساب", "Téléphone et WhatsApp", "Phone and WhatsApp"),
+    "public_email": ("البريد الإلكتروني", "Courriel", "Email"),
+    "public_address": ("العنوان", "Adresse", "Address"),
+
+    "document_window": ("آخر 100 وثيقة، من الأحدث إلى الأقدم.", "Les 100 derniers documents, du plus récent au plus ancien.", "Latest 100 documents, newest first."),
+    "preview_saved": ("معاينة المسودة المحفوظة", "Voir le brouillon enregistré", "Preview saved draft"),
+    "saved_publication": ("نشر المسودة المحفوظة", "Publier le brouillon enregistré", "Publish saved draft"),
+    "publish_confirm": ("أؤكد نشر المراجعة المحفوظة المعروضة", "Je confirme la publication de la révision enregistrée affichée", "I confirm publication of the displayed saved revision"),
+    "content_pages": ("صفحات الموقع", "Pages du site", "Website pages"),
+    "edit_draft": ("تعديل المسودة", "Modifier le brouillon", "Edit draft"),
+
     "review_queue": ("الملفات المعروضة للمراجعة", "Fichiers présentés pour révision", "Files available for review"),
     "portrait_queue_notice": ("تعرض الصفحة أقدم 100 صورة بانتظار المراجعة. اختر المرجع المطابق للصورة قبل تسجيل القرار.", "Les 100 portraits en attente les plus anciens sont affichés. Sélectionnez la référence correspondant au portrait avant la décision.", "The oldest 100 pending portraits are shown. Select the reference matching the portrait before recording a decision."),
     "asset_queue_notice": ("تعرض الصفحة آخر 100 ملف. قائمة القرار تتيح الملفات المنتظرة ضمن هذه المجموعة فقط؛ الاعتماد السابق لا يعني أن الملف هو الأحدث المستخدم للإصدار.", "Les 100 derniers fichiers sont affichés. La décision porte uniquement sur les fichiers en attente de ce lot ; une approbation antérieure ne désigne pas nécessairement le fichier utilisé pour la prochaine émission.", "The latest 100 files are shown. Review choices include only pending files in this batch; an earlier approval does not necessarily identify the file used for the next issuance."),
