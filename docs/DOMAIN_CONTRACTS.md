@@ -52,3 +52,7 @@ APPROVED_POLICIES.md and POLICY_EXECUTION.md distinguish approved organizational
 ## Activity editorial content, 2026-10-19
 
 ADR031 adds bounded manually localized public presentation, an explicit visibility flag and separately normalized activity-image assets. Newly added/existing editorial pages start hidden. Public catalog/detail/media enforce that visibility, while draft preview requires activity.view; member participation/history remains the existing authenticated workflow. Publish/hide/media upload/withdrawal use independent scoped commands, with publication additionally required for editing visible content or adding live images. Public text is escaped, external links are named HTTPS references with no automatic fetch/embed, and no private portrait/signature is reused. The deployed owner-testing gate and all release/registration/financial/document restrictions remain unchanged.
+
+## Optional activity translation, 2026-10-19
+
+ADR032 permits explicit free-tier Gemini requests for selected public editorial text only. Preview is not publication. Direct translation/publication is explicit and requires publication scope. Existing target text needs replacement consent; ordinary saves/visits never call a provider. PostgreSQL attempts bound daily requests and replay, provider output is validated and authorization rechecked after network. External delivery defaults off until owner privately configures a confirmed unbilled Google project. Private data, paid resources and hosted release remain outside scope.

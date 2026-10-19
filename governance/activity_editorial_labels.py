@@ -1,6 +1,15 @@
 """Public/editorial activity captions; content translations are supplied manually."""
 
 ROWS = {
+    "translation_source": ("لغة النص الأصلي", "Langue du texte source", "Source language"),
+    "translation_replace": ("استبدال الترجمات الموجودة، بما فيها تعديلاتي اليدوية", "Remplacer les traductions existantes, y compris mes modifications", "Replace existing translations, including my manual edits"),
+    "translation_public": ("أؤكد أن النص معد للنشر العام ولا يتضمن بيانات خاصة؛ سيُرسل إلى Google", "Texte destiné au public, sans données privées ; envoi à Google", "Public editorial text only, no private data; send to Google"),
+    "translation_preview": ("توليد الترجمتين ومعاينتهما", "Générer et relire les traductions", "Generate translations for review"),
+    "translation_direct": ("توليد الترجمتين والنشر مباشرة", "Traduire et publier directement", "Translate and publish directly"),
+    "translation_publish": ("اعتماد المحتوى والنشر كما هو", "Valider et publier tel quel", "Accept content and publish as is"),
+    "translation_failed": ("تعذرت الترجمة. تحقق من تفعيل Gemini المجاني ولغة المصدر وحجم النص؛ استبدال النصوص الموجودة يحتاج اختيارًا صريحًا. لم يُحفظ أو يُنشر شيء.", "Traduction impossible : configuration gratuite, quota, source, taille ou remplacement explicite à vérifier. Aucun enregistrement ni publication.", "Translation unavailable: check free-tier configuration, quota, source, size or explicit replacement. Nothing saved or published."),
+    "translation_generated": ("الترجمتان جاهزتان في الخانات أدناه. يمكنك تعديلهما أو اعتمادهما. أعد اختيار الصورة إن كنت قد أرفقتها. لم يُحفظ أو يُنشر شيء بعد.", "Traductions prêtes ci-dessous : relisez, modifiez ou validez. Resélectionnez le fichier image si nécessaire. Rien enregistré ni publié.", "Translations are ready below: review, edit or accept. Reselect any attached image. Nothing saved or published yet."),
+
     "edit_activity": ("تعديل النشاط", "Modifier l’activité", "Edit activity"),
     "registrations": (
         "طلبات المشاركة",

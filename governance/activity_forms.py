@@ -25,6 +25,14 @@ class ActivityForm(LabelForm):
 
 
 class EditorialActivityForm(ActivityForm):
+    translation_source = forms.ChoiceField(
+        required=False,
+        choices=[("ar", "العربية"), ("fr", "Français"), ("en", "English")],
+        initial="ar",
+    )
+    translation_replace = forms.BooleanField(required=False)
+    translation_public = forms.BooleanField(required=False)
+
     image_file = forms.FileField(
         required=False,
         widget=forms.ClearableFileInput(attrs={"accept": "image/jpeg,image/png"}),
@@ -48,6 +56,9 @@ class EditorialActivityForm(ActivityForm):
             choices=[(x, labels[x]) for x in FORMATS],
             initial=presentation.get("format", "online"),
         )
+        self.fields["translation_source"].label = labels["translation_source"]
+        self.fields["translation_replace"].label = labels["translation_replace"]
+        self.fields["translation_public"].label = labels["translation_public"]
         self.editorial_error = labels["error"]
         self.editorial_groups = []
         for lang in ("ar", "fr", "en"):
