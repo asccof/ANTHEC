@@ -6,7 +6,7 @@ from django.db import transaction
 from django.test import TestCase
 from django.utils import timezone
 from django_otp.plugins.otp_totp.models import TOTPDevice
-from .models import Authority, Delegation, Person, Application
+from .models import Authority, Delegation, Person
 from . import services
 from .tests import synthetic_user, administrative_request
 

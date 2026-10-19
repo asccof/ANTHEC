@@ -188,7 +188,7 @@ def password(request):
                 status=403,
             )
         update_session_auth_hash(request, user)
-        # A password change must not retain sensitive-operation reauthentication.
+        # Discard the obsolete operation-reauthentication timestamp.
         request.session.pop("reauth_at", None)
         return go(request, "member_home")
     return render(
