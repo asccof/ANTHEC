@@ -309,15 +309,13 @@ class MembershipAdminTests(TestCase):
                 self.assertContains(response, f'lang="{language}"')
                 self.assertContains(
                     response,
-                    f'href="/security/challenge/?lang={language}">'
-                    + vocabulary(language)[1]["reauth_link"]
-                    + "</a>",
+                    f'href="/operations/workspace/?lang={language}">',
                 )
                 self.assertIn("no-store", response["Cache-Control"])
         session = self.client.session
-        session["reauth_at"] = timezone.now().timestamp() - 600
+        session["authority_epoch"] = -1
         session.save()
-        self.assertEqual(self.post("reject", reason="Synthetic").status_code, 403)
+        self.assertRedirects(self.post("reject", reason="Synthetic"), "/security/challenge/?lang=fr", fetch_redirect_response=False)
         csrf = Client(enforce_csrf_checks=True)
         self.http_login(client=csrf)
         self.assertEqual(

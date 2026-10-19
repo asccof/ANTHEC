@@ -38,7 +38,7 @@ ROWS = {
     "current": ("الأسعار الحالية", "Tarifs actuels", "Current prices"),
     "versions": ("الإصدارات السابقة والمبرمجة", "Historique et tarifs programmés", "Historical and scheduled versions"),
     "testing": ("تجربة خاصة ببيانات اصطناعية؛ تغيير التفويض لا يفتح الموقع لغير المالك. التسجيلات والمدفوعات والإصدار الرسمي معطلة.", "Test privé fictif ; déléguer ne donne pas accès au site privé. Inscriptions, paiements et émission désactivés.", "Private synthetic testing; delegation does not admit anyone else to the private site. Registration, payments and issuance remain disabled."),
-    "error": ("تعذر التنفيذ. تحقق من القرار والبيانات وأعد التحقق الأمني عند الحاجة.", "Opération impossible. Vérifiez les données et la réauthentification récente.", "Unable to apply. Check the decision, data and recent reauthentication."),
+    "error": ("تعذر التنفيذ. تحقق من القرار والبيانات والصلاحيات.", "Opération impossible. Vérifiez les données et les autorisations et la session.", "Unable to apply. Check the decision, data and permissions and session."),
     "reauth": ("إعادة التحقق الأمني", "Se réauthentifier", "Reauthenticate"),
 }
 def vocabulary(language="ar"):

@@ -126,7 +126,7 @@ def operation(request, action):
         return JsonResponse(result)
     except PermissionDenied:
         return JsonResponse(
-            {"error": "Not authorized or recent MFA required"}, status=403
+            {"error": "Not authorized or administrative session unavailable"}, status=403
         )
     except services.Conflict:
         return JsonResponse({"error": "Conflicting command"}, status=409)

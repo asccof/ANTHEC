@@ -1,7 +1,7 @@
 {% extends 'governance/institutional_base.html' %}{% load delegation_permissions %}
 {% block content %}
 <section class="admin-intro"><h2>{{ labels.title }}</h2><p>{{ labels.institutional_intro }}</p><p><a href="#institutional-records">{{ labels.list }}</a></p></section>
-<section><h2>{{ labels.grant }}</h2><p class="muted">{{ labels.reauth }}</p>{% if request|cap:'institutional.grant' %}<form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.grant }}</button></form>{% endif %}</section>
+<section><h2>{{ labels.grant }}</h2>{% if request|cap:'institutional.grant' %}<form method="post">{% csrf_token %}{{ form.as_p }}<button>{{ labels.grant }}</button></form>{% endif %}</section>
 <section id="institutional-records"><h2>{{ labels.list }}</h2><p class="muted">{{ labels.register_window }}</p>
 <div class="application-grid admin-register">{% for item in rows %}<article class="application-card"><div class="term-title"><h3>{{ item.role.person.full_name }}</h3><span class="state-badge state-{{ item.role.state }}">{{ labels.recorded_state }}: {{ item.state_label }}</span></div><p>{{ item.label }}</p><dl class="admin-facts"><dt>{{ labels.starts_on }}</dt><dd><bdi dir="ltr">{{ item.role.starts_on|date:'Y-m-d' }}</bdi></dd><dt>{{ labels.ends_on }}</dt><dd>{% if item.role.ends_on %}<bdi dir="ltr">{{ item.role.ends_on|date:'Y-m-d' }}</bdi>{% elif item.role.role == "founder" or item.role.role == "honorary" %}{{ labels.permanent_term }}{% else %}—{% endif %}</dd></dl><a class="member-button" href="{% url 'institutional_detail' item.role.pk %}?lang={{ language }}">#{{ item.role.pk }} — {{ labels.detail }}</a></article>{% empty %}<p class="empty-state">{{ labels.empty }}</p>{% endfor %}</div>
 </section>

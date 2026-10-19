@@ -116,12 +116,12 @@ class PortraitTests(TestCase):
         with self.assertRaises(s.Conflict):
             self.review(a)
 
-    def test_review_requires_current_authority_and_recent_mfa(self):
+    def test_review_requires_current_authority_and_epoch(self):
         row = self.upload()
         request = administrative_request(self.other)
         with self.assertRaises(PermissionDenied):
             self.review(row, request=request)
-        self.request.session["reauth_at"] = 0
+        self.request.session["authority_epoch"] = -1
         with self.assertRaises(PermissionDenied):
             self.review(row)
 

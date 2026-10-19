@@ -106,6 +106,11 @@ def account(request, mode):
                 user = form.get_user()
                 services.audit(user, "member.account.login", user.pk)
             login(request, user)
+            from .models import Authority, Delegation
+            if Authority.objects.filter(pk=1, primary=user).exists():
+                return go(request, "security_challenge")
+            if Delegation.objects.filter(user=user, active=True).exists():
+                return go(request, "delegated_workspace")
             return go(request, "member_home")
         else:
             services.audit(
@@ -183,7 +188,7 @@ def password(request):
                 status=403,
             )
         update_session_auth_hash(request, user)
-        # A password change must not retain sensitive-operation reauthentication.
+        # Discard the obsolete operation-reauthentication timestamp.
         request.session.pop("reauth_at", None)
         return go(request, "member_home")
     return render(

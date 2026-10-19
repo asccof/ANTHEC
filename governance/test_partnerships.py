@@ -74,7 +74,7 @@ class PartnershipTests(TestCase):
         for lang in ('ar','fr','en'):
             self.assertEqual(self.client.get('/operations/partners/?lang='+lang).status_code,200)
             self.assertEqual(self.client.get(f'/operations/partners/requests/{self.row.pk}/?lang='+lang).status_code,200)
-        self.request.session['reauth_at']=0
+        self.request.session["authority_epoch"] = -1
         with self.assertRaises(PermissionDenied): self.decide()
     def test_public_request_consent_csrf_throttle_and_no_forwarding_trust(self):
         client=Client(enforce_csrf_checks=True)

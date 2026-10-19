@@ -4,7 +4,7 @@ permissions:
   contents: read
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
@@ -29,7 +29,20 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-      - run: sudo apt-get update && sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0
+      - name: Install runtime and matching PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 postgresql-client-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+      - name: Verify PostgreSQL client major
+        run: |
+          python - <<'PYCLIENT'
+          import subprocess
+          for tool in ("pg_dump", "pg_restore", "createdb"):
+              version = subprocess.check_output([tool, "--version"], text=True).strip()
+              print(version)
+              assert version.split()[2].split(".")[0] == "16", version
+          PYCLIENT
       - run: pip install -r requirements.txt
       - run: python tools/validate_baseline.py
       - run: python -m unittest discover -s tests -v
@@ -46,7 +59,7 @@ jobs:
           # Public synthetic fixture from settings.test; never a deployed key.
           ANTHEEC_DATA_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
   container:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - run: docker build --file deploy/Dockerfile --tag anthec-owner-test:ci .

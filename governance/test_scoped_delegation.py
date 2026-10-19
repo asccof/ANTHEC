@@ -229,7 +229,7 @@ class ScopedDelegationTests(TestCase):
         s.change_price(req, key="replayed", **payload)
         self.login()
         self.grant(["membership.view"])
-        self.assertEqual(self.client.get("/operations/pricing/").status_code, 302)
+        self.assertEqual(self.client.get("/operations/pricing/").status_code, 403)
         with self.assertRaises(PermissionDenied):
             s.change_price(req, key="replayed", **payload)
         self.login()

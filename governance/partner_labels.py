@@ -23,7 +23,7 @@ WORDS = {
  'website': ('الموقع الرسمي','Site officiel','Official website'),
  'public_visible': ('إظهار للعموم بعد القرار الإداري','Visibilité publique après décision','Public visibility after administrative decision'),
  'received': ('تم تسجيل الطلب للمراجعة، وهذا ليس قبولًا للشراكة.','Demande enregistrée pour examen ; aucun partenariat accordé.','Request received for review; no partnership granted.'),
- 'error': ('تعذر الحفظ؛ تحقق من المعطيات والمصادقة الحديثة.','Enregistrement impossible ; vérifiez les données et réauthentifiez-vous.','Unable to save; check data and recent reauthentication.'),
+ 'error': ('تعذر الحفظ؛ تحقق من المعطيات والصلاحيات والجلسة.','Enregistrement impossible ; vérifiez les données et les autorisations.','Unable to save; check data and permissions and session.'),
  'testing': ('تجربة خاصة ببيانات اصطناعية فقط. الطلبات والنشر العام معطلان.','Essai privé fictif. Demandes et publication publiques désactivées.','Private synthetic testing. Public submissions and publication disabled.'),
  'history': ('سجل القرارات','Historique des décisions','Decision history'),
 }

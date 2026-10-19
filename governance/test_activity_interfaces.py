@@ -91,12 +91,12 @@ class ActivityInterfaceTests(TestCase):
         self.assertEqual(Document.objects.count(),0)
         self.assertEqual(self.client.post(url,{'operation':'reject','key':str(uuid.uuid4()),'reason':'Synthetic rejection'}).status_code,302)
         self.assertEqual(Registration.objects.get(pk=row.pk).state,'rejected')
-    def test_admin_authority_csrf_and_recent_mfa(self):
+    def test_admin_authority_csrf_and_current_epoch(self):
         self.http_login(user=self.holder)
         self.assertEqual(self.client.get('/operations/activities/').status_code,403)
         csrf=Client(enforce_csrf_checks=True);self.http_login(client=csrf)
         self.assertEqual(csrf.post('/operations/activities/',{}).status_code,403)
-        self.request.session['reauth_at']=0
+        self.request.session["authority_epoch"] = -1
         with self.assertRaises(PermissionDenied):activity_services.create(self.request,key=str(uuid.uuid4()),**self.payload())
     def test_manual_fixture_guard_idempotency_and_no_documents(self):
         with self.assertRaises(CommandError):call_command('seed_activity_demo',stdout=StringIO())

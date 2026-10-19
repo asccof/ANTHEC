@@ -75,7 +75,7 @@ class AccreditationCaseTests(TestCase):
         self.http_login()
         csrf=Client(enforce_csrf_checks=True); self.http_login(client=csrf)
         self.assertEqual(csrf.post('/operations/accreditation/',{}).status_code,403)
-        self.request.session['reauth_at']=0
+        self.request.session["authority_epoch"] = -1
         with self.assertRaises(PermissionDenied): self.review(pk)
     def test_seed_guard_and_idempotency(self):
         with self.assertRaises(CommandError): call_command('seed_accreditation_demo',stdout=StringIO())

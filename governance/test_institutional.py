@@ -521,20 +521,14 @@ class InstitutionalTests(TestCase):
         )
         self.assertEqual(Document.objects.count(), 2)
         session = self.client.session
-        session["reauth_at"] -= 301
+        session["authority_epoch"] = -1
         session.save()
-        response = self.client.get("/operations/institutional/")
-        self.assertEqual(response.status_code, 200)
-        data = self.payload(
-            "vice_president", key=str(response.context["form"].initial["key"])
-        )
-        self.assertEqual(
-            self.client.post("/operations/institutional/", data).status_code, 403
-        )
+        self.assertRedirects(self.client.get("/operations/institutional/"), "/security/challenge/", fetch_redirect_response=False)
+        self.assertRedirects(self.client.post("/operations/institutional/", self.payload("vice_president")), "/security/challenge/", fetch_redirect_response=False)
         client = Client(enforce_csrf_checks=True)
         self.http_login(client=client)
         self.assertEqual(
-            client.post("/operations/institutional/", data).status_code, 403
+            client.post("/operations/institutional/", self.payload("vice_president")).status_code, 403
         )
         self.assertEqual(InstitutionalRole.objects.count(), 2)
 
@@ -586,14 +580,14 @@ class InstitutionalTests(TestCase):
         self.assertContains(response, "&lt;script&gt;Synthetic&lt;/script&gt;")
         self.assertNotIn("<script>Synthetic</script>", printable(doc, language="en"))
 
-    def test_mfa_required_for_sensitive_commands_and_suspended_card_reissued_stays_suspended(
+    def test_current_epoch_required_and_suspended_reissue_stays_suspended(
         self,
     ):
         doc = self.doc()
-        self.request.session["reauth_at"] -= 301
+        self.request.session["authority_epoch"] = -1
         with self.assertRaises(PermissionDenied):
             self.grant("founder")
-        self.request.session["reauth_at"] = timezone.now().timestamp()
+        self.request.session["authority_epoch"] = 0
         i.change_state(
             self.request,
             key="suspend",

@@ -1,0 +1,29 @@
+# ADR 030: Primary login MFA and password-only delegated sessions
+
+Date: 2026-10-19
+Status: Implemented locally; final CI, exact-head review and owner acceptance pending.
+
+## Owner decision
+
+The owner explicitly amended POL-04: only the primary director supplies an administrative second factor, once at each login. Delegates sign in with their own username/password. No five-minute operation timer or repeated OTP during work. Initial primary enrollment and one-use recovery remain available; no primary factor bypass.
+
+## Superseded contract and acceptance instructions
+
+README.md now documents the role-specific login/workspace flow and removes timed operation reauthentication. DOMAIN_CONTRACTS.md now defines the amended authentication contract and scoped grants; OWNER_ACCEPTANCE_AR.md UAT-11 now tests primary-login-only MFA, password-only delegates, permitted/forbidden actions and epoch revocation. DECISIONS.md retires the old timer constant. Earlier phase documents and ledger snapshots describe historical behavior and do not override this owner decision. Actual hosted deployments are unchanged until separately authorized and verified.
+
+## Implementation
+
+An actual Django login signal clears prior administrative/OTP state. The primary earns epoch zero only after factor verification. An active delegate receives the current valid explicit-grant epoch at password login, including the native Wagtail login boundary. Grant changes never upgrade existing sessions: the delegate must sign out and sign in. Every operation still checks current active account, grant, exact capabilities and session epoch under the Authority lock; CSRF, primary-only actions, audit and revocation remain unchanged. Existing verified primary sessions remain valid until their normal logout/expiry/password invalidation. The recent argument remains as a compatibility parameter but no longer imposes time-based reauthentication.
+
+The shared navigation exposes Administrative workspace only to the primary or an active delegate. Member password login sends directors to the appropriate workspace or primary challenge. Delegate security/enrollment endpoints cannot create administrative OTP requirements. The owner-testing hosted gate remains primary-only and unchanged; this does not open hosted delegate access or authorize deployment.
+
+## Verification
+
+New HTTP regressions cover password-only delegate login, permitted/denied workspace links, epoch changes, grant-after-login, revocation, ordinary-member denial, primary login factor and repeat login clearing factor state. Prior timer-denial regressions now test revoked epochs instead. Final PostgreSQL/container/recovery and external review evidence belongs in the PR. No schema change, Tighri changes, paid resources or deployment.
+
+
+## CI recovery toolchain correction
+
+The full PostgreSQL suite passed on the prior reviewed implementation, but recovery exposed runner-default client/server drift: a newer pg_restore emitted SET transaction_timeout against the PostgreSQL 16 service. The floating ubuntu-latest runner had advanced to Ubuntu 26.04, whose configured repositories lacked postgresql-client-16. The workflow now pins Ubuntu 24.04 (where the official runner image/package baseline provides PostgreSQL 16), explicitly installs and prioritizes PostgreSQL 16 clients and verifies pg_dump/pg_restore/createdb major versions before tests. The recovery drill remains mandatory with exit-on-error; no SQL filtering, ignored errors, server upgrade or hosted database change is introduced.
+
+Toolchain references: https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md and https://packages.ubuntu.com/noble/postgresql-client-16 (checked 2026-10-19).
