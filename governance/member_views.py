@@ -111,6 +111,13 @@ def account(request, mode):
                 return go(request, "security_challenge")
             if Delegation.objects.filter(user=user, active=True).exists():
                 return go(request, "delegated_workspace")
+            # Public activity participation resumes after ordinary member login.
+            from django.utils.http import url_has_allowed_host_and_scheme
+            target = request.GET.get("next", "")
+            if target.startswith("/activities/") and url_has_allowed_host_and_scheme(
+                target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
+                return redirect(target)
             return go(request, "member_home")
         else:
             services.audit(

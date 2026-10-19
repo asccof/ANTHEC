@@ -1,6 +1,7 @@
 import base64
 import io
 import uuid
+from urllib.parse import urlencode
 from datetime import timedelta
 from django.test import TestCase, Client, override_settings
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -428,3 +429,34 @@ class ActivityEditorialTests(TestCase):
         )
         self.row.refresh_from_db()
         self.assertTrue(self.row.is_published)
+
+    def test_anonymous_participation_resumes_after_login_without_external_redirects(
+        self,
+    ):
+        self.publish()
+        member = synthetic_user("synthetic-activity-visitor")
+        target = f"/activities/{self.row.pk}/?lang=fr"
+        self.assertContains(
+            self.client.get(self.url + "?lang=fr"), "/members/login/?lang=fr"
+        )
+        login = self.client.get(target)
+        self.assertEqual(login.status_code, 302)
+        response = self.client.post(
+            login.url,
+            {"username": member.username, "password": "synthetic-password-123"},
+        )
+        self.assertRedirects(response, target)
+        for unsafe in (
+            "https://example.invalid/activities/1/",
+            "//example.invalid/activities/1/",
+            "/operations/directors/",
+        ):
+            self.client.logout()
+            response = self.client.post(
+                "/members/login/",
+                {"username": member.username, "password": "synthetic-password-123"},
+                QUERY_STRING=__import__(
+                    "urllib.parse", fromlist=["urlencode"]
+                ).urlencode({"next": unsafe}),
+            )
+            self.assertRedirects(response, "/members/?lang=ar")
