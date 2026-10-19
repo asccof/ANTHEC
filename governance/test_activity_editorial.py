@@ -388,3 +388,43 @@ class ActivityEditorialTests(TestCase):
         response = self.client.get(self.url)
         self.assertNotContains(response, "<script>alert(")
         self.assertContains(response, "&lt;script&gt;")
+
+    def test_invalid_image_withdrawal_does_not_bind_publication_form(self):
+        self.publish()
+        result = editorial.upload_image(
+            self.request,
+            key="initial-image",
+            activity_id=self.row.pk,
+            image_data=base64.b64encode(picture()).decode(),
+            caption="Synthetic",
+            reason="Synthetic",
+        )
+        user = synthetic_user("synthetic-image-remover")
+        services.delegate(
+            self.request,
+            key="remover",
+            user_id=user.pk,
+            active=True,
+            capabilities=["activity.view", "activity.image_remove"],
+            reason="Synthetic remove scope",
+        )
+        self.client.login(username=user.username, password="synthetic-password-123")
+        response = self.client.post(
+            self.admin_url,
+            {
+                "action": "remove_image",
+                "key": str(uuid.uuid4()),
+                "image_serial": result["image"],
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("reason", response.context["removal_form"].errors)
+        self.assertFalse(response.context["decision"].is_bound)
+        self.row.refresh_from_db()
+        self.assertTrue(self.row.is_published)
+        self.assertTrue(ActivityImage.objects.get(serial=result["image"]).active)
+        self.assertEqual(
+            self.decision("remove_image", image_serial=result["image"]).status_code, 302
+        )
+        self.row.refresh_from_db()
+        self.assertTrue(self.row.is_published)

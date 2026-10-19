@@ -283,7 +283,16 @@ def detail(request, activity_id):
         (
             request.POST
             if request.method == "POST"
-            and request.POST.get("action") in {"publish", "hide", "remove_image"}
+            and request.POST.get("action") in {"publish", "hide"}
+            else None
+        ),
+        labels=ctx["labels"],
+        initial={"key": uuid.uuid4()},
+    )
+    removal_form = EditorialDecisionForm(
+        (
+            request.POST
+            if request.method == "POST" and request.POST.get("action") == "remove_image"
             else None
         ),
         labels=ctx["labels"],
@@ -309,7 +318,11 @@ def detail(request, activity_id):
         active = (
             form
             if action == "edit"
-            else image_form if action == "upload_image" else decision
+            else (
+                image_form
+                if action == "upload_image"
+                else removal_form if action == "remove_image" else decision
+            )
         )
         if action not in {"edit", "upload_image", "publish", "hide", "remove_image"}:
             return HttpResponse(ctx["labels"]["error"], status=400)
@@ -337,7 +350,7 @@ def detail(request, activity_id):
                             key=key,
                             activity_id=row.pk,
                             image_serial=request.POST.get("image_serial", ""),
-                            reason=decision.cleaned_data["reason"],
+                            reason=removal_form.cleaned_data["reason"],
                         )
                     else:
                         getattr(activity_editorial, action)(
@@ -385,6 +398,7 @@ def detail(request, activity_id):
         form=form,
         registrations=rows,
         decision=decision,
+        removal_form=removal_form,
         image_form=image_form,
         images=row.editorial_images.filter(active=True).defer("jpeg").order_by("pk"),
         can_edit=allows(request, "activity.edit")
