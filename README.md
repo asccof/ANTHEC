@@ -23,7 +23,8 @@ The primary logs in at `/admin/login/` and completes authenticator verification 
 | `/operations/membership/` | Membership review and finance/rights controls, with live trial guards |
 | `/operations/institutional/` | Recorded office terms and free permanent founder/honorary designations |
 | `/operations/accreditation/` | Private independent casework; annual effective dates derive from final approval, course dates remain explicit |
-| `/operations/activities/` | Configuration, admission, guardian evidence and invitation-based attendance controls |
+| `/activities/`, `/activities/<id>/about/` | Visible editorial catalog/detail in isolated local testing; hosted owner-only gate remains unchanged |
+| `/operations/activities/` | Activity content/media/visibility authoring plus existing admission, guardian evidence and invitation-based attendance controls |
 | `/operations/partners/` | Proposal review and hidden/localized partner records |
 | `/operations/directors/` | Primary-only delegation management; the primary cannot be replaced here |
 | `/operations/pricing/` | Prospective membership price versions, fixed prior quotes |
@@ -67,3 +68,10 @@ Local SQLite is not PostgreSQL lock evidence. CI runs the full suite on disposab
 
 
 [Owner acceptance scenarios (Arabic)](docs/OWNER_ACCEPTANCE_AR.md) and [recovery/security procedure (Arabic)](docs/RECOVERY_SECURITY_RUNBOOK_AR.md) are the execution package. After the package is reviewed and privately deployed, `python manage.py check_owner_readiness` in the ANTHEC shell reports sanitized read-only observations only; it does not prove key custody, restore success or launch readiness. Keep database external access closed. Never run CI recovery/test settings against the hosted database.
+
+
+## Activity content authoring (isolated synthetic testing)
+
+Create/edit an activity at `/operations/activities/`: title/dates/conditions, manually supplied AR/FR/EN descriptions, programme/audience/speakers/location, category/format, up to four named HTTPS resource/video links and an optional first PNG/JPEG image. Further images/captions are added on its detail screen (six active images, 3 MiB upload each). Preview the editorial page, then explicitly Show activity. Existing records default hidden after migration0013. Hiding immediately removes the new public editorial page/images; existing authenticated participation/history stays separate.
+
+Publish/hide/upload/remove are independent delegated choices. Editing a visible activity or adding a live image additionally requires publication permission. Primary-only hosted trial gates remain in force. See ADR031; no real data, automatic external video loading, storage service or deployment is introduced.

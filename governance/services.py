@@ -147,8 +147,9 @@ def command(action, primary_only=False):
                 actor = authorize(request, primary_only=primary_only, capability=())
                 if not Authority.objects.filter(pk=1, primary=actor).exists():
                     from .capabilities import action_capabilities
-                    if action in {"partner.update", "accreditation.case.review"}:
-                        authorize(request, capability="partner.view" if action == "partner.update" else "accreditation.view")
+                    if action in {"partner.update", "accreditation.case.review", "activity.update", "activity.image.upload"}:
+                        view_cap = "partner.view" if action == "partner.update" else "activity.view" if action.startswith("activity.") else "accreditation.view"
+                        authorize(request, capability=view_cap)
                     authorize(request, capability=action_capabilities(action, payload))
                 for field, value in payload.items():
                     if (

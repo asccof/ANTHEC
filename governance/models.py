@@ -168,6 +168,8 @@ class Accreditation(models.Model):
 
 
 class Activity(models.Model):
+    presentation = models.JSONField(default=dict, blank=True)
+    is_published = models.BooleanField(default=False)
     fixture_key = models.CharField(max_length=60, null=True, unique=True)
     title = models.CharField(max_length=200)
     starts_on = models.DateField()
@@ -183,6 +185,15 @@ class Activity(models.Model):
                 condition=Q(ends_on__gte=models.F("starts_on")), name="activity_dates"
             )
         ]
+
+
+class ActivityImage(models.Model):
+    activity = models.ForeignKey(Activity, on_delete=models.PROTECT, related_name="editorial_images")
+    serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    jpeg = models.BinaryField()
+    caption = models.CharField(max_length=240, blank=True)
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Registration(models.Model):

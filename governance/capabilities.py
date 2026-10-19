@@ -144,6 +144,10 @@ GROUPS = [
             ("view", "الاطلاع", "Consulter", "View"),
             ("create", "الإنشاء", "Créer", "Create"),
             ("edit", "التعديل", "Modifier", "Edit"),
+            ("publish", "نشر النشاط", "Publier l’activité", "Publish activity"),
+            ("hide", "إخفاء النشاط", "Masquer l’activité", "Hide activity"),
+            ("image_upload", "رفع صور النشاط", "Ajouter des images", "Upload activity images"),
+            ("image_remove", "سحب صور النشاط", "Retirer des images", "Remove activity images"),
         ],
     ),
     (
@@ -348,6 +352,10 @@ def action_capabilities(action, payload):
         "document.replace": "document.reissue",
         "registration.cancel": "registration.cancel",
         "attendance.checkin": "attendance.checkin",
+        "activity.publish": "activity.publish",
+        "activity.hide": "activity.hide",
+        "activity.image.upload": "activity.image_upload",
+        "activity.image.remove": "activity.image_remove",
         "activity.create": "activity.create",
         "activity.update": "activity.edit",
         "accreditation.case.create": "accreditation.create",
@@ -356,6 +364,10 @@ def action_capabilities(action, payload):
     }
     if action in static:
         required = [static[action]]
+        if action in {'activity.update', 'activity.image.upload'}:
+            from .models import Activity
+            if Activity.objects.select_for_update().get(pk=payload.get('activity_id')).is_published:
+                required.append('activity.publish')
         if action == "institutional.grant" and payload.get("replaces_role_id"):
             required.append("institutional.terminate")
         return required
