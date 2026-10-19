@@ -27,6 +27,7 @@ from .activity_forms import (
 from .models import Activity, ActivityImage, Registration, Attendance, Audit, Document
 from .deployment import require_applications_enabled, require_issuance_enabled
 from . import services, activity_services, activity_editorial
+from .activity_translation import TranslationConflict
 from .capabilities import allows, restrict_choices
 
 
@@ -75,7 +76,11 @@ def translate_form(request, form, ctx, activity_id=None):
             replace=form.cleaned_data.get("translation_replace", False),
             activity_id=activity_id,
             direct=mode == "direct",
+            editorial_version=form.cleaned_data.get("editorial_version"),
         )
+    except TranslationConflict:
+        form.add_error(None, ctx["labels"]["translation_changed"])
+        return False
     except (TranslationUnavailable, ValidationError):
         form.add_error(None, ctx["labels"]["translation_failed"])
         values = form.data.copy()
@@ -327,7 +332,11 @@ def detail(request, activity_id):
             "consent_text",
         )
     }
-    initial.update(event_title=row.title, key=uuid.uuid4())
+    from .activity_translation import version_token
+
+    initial.update(
+        event_title=row.title, key=uuid.uuid4(), editorial_version=version_token(row)
+    )
     form = ActivityForm(
         (
             request.POST
@@ -399,7 +408,13 @@ def detail(request, activity_id):
                     if action == "edit":
                         key, data = form_payload(form.cleaned_data)
                         activity_services.update(
-                            request, key=key, activity_id=row.pk, **data
+                            request,
+                            key=key,
+                            activity_id=row.pk,
+                            editorial_version=form.cleaned_data.get(
+                                "editorial_version"
+                            ),
+                            **data
                         )
                         upload_from_form(request, row.pk, form, key, data["reason"])
                         publish_from_form(request, form, row.pk, key, data["reason"])
@@ -432,6 +447,9 @@ def detail(request, activity_id):
             except PermissionDenied:
                 active.add_error(None, ctx["labels"]["error"])
                 status = 403
+            except TranslationConflict:
+                active.add_error(None, ctx["labels"]["translation_changed"])
+                status = 400
             except (ValidationError, ValueError, ObjectDoesNotExist):
                 active.add_error(None, ctx["labels"]["error"])
                 status = 400

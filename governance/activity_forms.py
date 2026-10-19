@@ -24,7 +24,14 @@ class ActivityForm(LabelForm):
     reason = forms.CharField(max_length=3000, widget=forms.Textarea)
 
 
+class SourceTitleInput(forms.TextInput):
+    def use_required_attribute(self, initial):
+        # The source locale/action decides the requirement on the server.
+        return False
+
+
 class EditorialActivityForm(ActivityForm):
+    editorial_version = forms.CharField(required=False, widget=forms.HiddenInput)
     translation_source = forms.ChoiceField(
         required=False,
         choices=[("ar", "العربية"), ("fr", "Français"), ("en", "English")],
@@ -44,6 +51,7 @@ class EditorialActivityForm(ActivityForm):
         labels = kwargs["labels"]
         super().__init__(*args, **kwargs)
         presentation = presentation or {}
+        self.fields["event_title"].widget = SourceTitleInput()
         self.fields["category"] = forms.ChoiceField(
             required=False,
             label=labels["category"],
@@ -59,6 +67,12 @@ class EditorialActivityForm(ActivityForm):
         self.fields["translation_source"].label = labels["translation_source"]
         self.fields["translation_replace"].label = labels["translation_replace"]
         self.fields["translation_public"].label = labels["translation_public"]
+        if (
+            self.is_bound
+            and self.data.get("translation_action") in {"preview", "direct"}
+            and self.data.get("translation_source") in {"fr", "en"}
+        ):
+            self.fields["event_title"].required = False
         self.editorial_error = labels["error"]
         self.editorial_groups = []
         for lang in ("ar", "fr", "en"):

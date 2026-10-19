@@ -1,6 +1,7 @@
 """Public/editorial activity captions; content translations are supplied manually."""
 
 ROWS = {
+    "translation_changed": ("تغير محتوى النشاط منذ فتح المحرر. أعد تحميل الصفحة قبل المتابعة؛ لم تُستبدل التعديلات المحفوظة.", "Le contenu a changé. Rechargez l’éditeur avant de continuer ; les modifications enregistrées sont conservées.", "The activity changed. Reload the editor before continuing; saved edits were preserved."),
     "translation_source": ("لغة النص الأصلي", "Langue du texte source", "Source language"),
     "translation_replace": ("استبدال الترجمات الموجودة، بما فيها تعديلاتي اليدوية", "Remplacer les traductions existantes, y compris mes modifications", "Replace existing translations, including my manual edits"),
     "translation_public": ("أؤكد أن النص معد للنشر العام ولا يتضمن بيانات خاصة؛ سيُرسل إلى Google", "Texte destiné au public, sans données privées ; envoi à Google", "Public editorial text only, no private data; send to Google"),

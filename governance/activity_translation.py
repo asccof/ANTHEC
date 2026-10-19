@@ -5,6 +5,7 @@ import json
 import uuid
 import requests
 from django.conf import settings
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -15,6 +16,10 @@ from . import services
 
 
 class TranslationUnavailable(Exception):
+    pass
+
+
+class TranslationConflict(ValidationError):
     pass
 
 
@@ -116,6 +121,29 @@ def provider(source, content, targets):
         raise TranslationUnavailable() from None
 
 
+def content_digest(row):
+    return hashlib.sha256(
+        json.dumps([row.title, row.presentation], sort_keys=True).encode()
+    ).hexdigest()
+
+
+def version_token(row):
+    return signing.dumps(
+        {"id": row.pk, "digest": content_digest(row)}, salt="activity-editor-version"
+    )
+
+
+def check_version(row, token):
+    try:
+        version = signing.loads(token, salt="activity-editor-version", max_age=14400)
+    except (signing.BadSignature, TypeError, ValueError):
+        raise TranslationConflict("Reload the activity editor") from None
+    if version != {"id": row.pk, "digest": content_digest(row)}:
+        raise TranslationConflict(
+            "Activity changed; reload before replacing translations"
+        )
+
+
 def permissions(request, activity_id, direct):
     caps = ["activity.view", "activity.edit" if activity_id else "activity.create"]
     services.authorize(request, capability=caps)
@@ -127,7 +155,15 @@ def permissions(request, activity_id, direct):
 
 
 def generate(
-    request, *, key, presentation, source, replace=False, activity_id=None, direct=False
+    request,
+    *,
+    key,
+    presentation,
+    source,
+    replace=False,
+    activity_id=None,
+    direct=False,
+    editorial_version=None
 ):
     if source not in {"ar", "fr", "en"}:
         raise ValidationError("Invalid source")
@@ -152,6 +188,16 @@ def generate(
     attempt_key = uuid.UUID(str(key))
     with transaction.atomic():
         permissions(request, activity_id, direct)
+        if activity_id:
+            current = Activity.objects.select_for_update().get(pk=activity_id)
+            check_version(current, editorial_version)
+            if not replace and any(
+                any(current.presentation.get("translations", {}).get(lang, {}).values())
+                for lang in targets
+            ):
+                raise ValidationError(
+                    "Explicit replacement required for persisted translations"
+                )
         TranslationAttempt.objects.filter(
             created_at__lt=timezone.now() - timedelta(days=30)
         ).delete()
@@ -187,6 +233,11 @@ def generate(
             raise
         with transaction.atomic():
             permissions(request, activity_id, direct)
+            if activity_id:
+                check_version(
+                    Activity.objects.select_for_update().get(pk=activity_id),
+                    editorial_version,
+                )
             attempt.result, attempt.state = output, "done"
             attempt.save(update_fields=["result", "state"])
             services.audit(

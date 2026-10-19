@@ -163,6 +163,117 @@ class ActivityTranslationTests(TestCase):
         )
         self.assertFalse(Activity.objects.exists())
 
+    @patch("governance.activity_translation.provider", side_effect=translated)
+    def test_french_and_english_source_only_creation(self, provider):
+        from bs4 import BeautifulSoup
+
+        page = self.client.get("/operations/activities/")
+        title_input = BeautifulSoup(page.content, "html.parser").find(
+            "input", {"name": "event_title"}
+        )
+        self.assertFalse(title_input.has_attr("required"))
+        for source in ("fr", "en"):
+            data = dict(
+                self.payload,
+                key=str(uuid.uuid4()),
+                event_title="",
+                description_ar="",
+                translation_source=source,
+                translation_action="direct",
+            )
+            data["title_" + source] = "Synthetic source title"
+            data["description_" + source] = "Synthetic source body"
+            self.assertEqual(
+                self.client.post("/operations/activities/", data).status_code, 302
+            )
+        self.assertEqual(Activity.objects.count(), 2)
+        for row in Activity.objects.all():
+            self.assertTrue(row.is_published)
+            self.assertTrue(row.presentation["translations"]["ar"]["title"])
+            self.assertTrue(row.presentation["translations"]["ar"]["description"])
+
+    def editing_activity(self):
+        row = Activity.objects.create(
+            title="Synthetic title",
+            starts_on=timezone.localdate(),
+            ends_on=timezone.localdate() + timedelta(days=1),
+            capacity=20,
+            presentation={
+                "translations": {
+                    "ar": {
+                        "title": "Synthetic title",
+                        "description": "Synthetic public body",
+                    }
+                }
+            },
+        )
+        data = dict(
+            self.payload,
+            action="edit",
+            editorial_version=translation.version_token(row),
+        )
+        return row, data, f"/operations/activities/{row.pk}/"
+
+    @patch("governance.activity_translation.provider", side_effect=translated)
+    def test_stale_before_generation_and_persisted_target_need_replacement(
+        self, provider
+    ):
+        row, data, url = self.editing_activity()
+        row.presentation["translations"]["fr"] = {
+            "description": "Synthetic manual target"
+        }
+        row.save()
+        self.assertEqual(self.client.post(url, data).status_code, 400)
+        provider.assert_not_called()
+        data["editorial_version"] = translation.version_token(row)
+        self.assertEqual(self.client.post(url, data).status_code, 400)
+        provider.assert_not_called()
+        data["translation_replace"] = "on"
+        self.assertEqual(self.client.post(url, data).status_code, 200)
+        provider.assert_called_once()
+
+    @patch("governance.activity_translation.provider")
+    def test_concurrent_manual_target_during_provider_is_preserved(self, provider):
+        row, data, url = self.editing_activity()
+
+        def concurrent_edit(source, content, targets):
+            row.presentation["translations"]["fr"] = {
+                "description": "Synthetic concurrent manual target"
+            }
+            row.save()
+            return translated(source, content, targets)
+
+        provider.side_effect = concurrent_edit
+        data["translation_action"] = "direct"
+        self.assertEqual(self.client.post(url, data).status_code, 400)
+        row.refresh_from_db()
+        self.assertEqual(
+            row.presentation["translations"]["fr"]["description"],
+            "Synthetic concurrent manual target",
+        )
+        self.assertFalse(row.is_published)
+
+    @patch("governance.activity_translation.provider", side_effect=translated)
+    def test_concurrent_manual_target_after_preview_is_preserved_at_final_save(
+        self, provider
+    ):
+        row, data, url = self.editing_activity()
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 200)
+        data = response.context["form"].data.copy()
+        data["translation_action"] = "publish"
+        row.presentation["translations"]["fr"] = {
+            "description": "Synthetic edit after preview"
+        }
+        row.save()
+        self.assertEqual(self.client.post(url, data).status_code, 400)
+        row.refresh_from_db()
+        self.assertEqual(
+            row.presentation["translations"]["fr"]["description"],
+            "Synthetic edit after preview",
+        )
+        self.assertFalse(row.is_published)
+
 
 class GeminiProviderTests(SimpleTestCase):
     def test_disabled_never_calls_network(self):
