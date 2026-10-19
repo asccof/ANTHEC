@@ -15,7 +15,8 @@ class AdminSecurityMiddleware:
             and request.user.is_authenticated
         ):
             authority = Authority.objects.filter(pk=1).first()
-            if authority and authority.primary_id == request.user.pk:
+            primary = bool(authority and authority.primary_id == request.user.pk)
+            if primary:
                 epoch = 0
             else:
                 delegation = Delegation.objects.filter(
@@ -30,9 +31,11 @@ class AdminSecurityMiddleware:
                     return HttpResponseForbidden("Primary director only")
             if not request.path.startswith("/security/"):
                 if (
-                    not request.user.is_verified()
+                    (primary and not request.user.is_verified())
                     or request.session.get("authority_epoch") != epoch
                 ):
+                    if not primary:
+                        return HttpResponseForbidden("Delegation changed; sign out and sign in again")
                     target = reverse("security_challenge")
                     if "lang" in request.GET:
                         target += "?lang=" + vocabulary(request.GET["lang"])[0]

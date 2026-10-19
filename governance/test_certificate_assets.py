@@ -42,12 +42,12 @@ class CertificateAssetTests(TestCase):
     def upload(self, kind="signature", key="upload"):
         return a.upload_asset(self.request, key=key, kind=kind, image_data=base64.b64encode(raw_fixture()).decode(), reason="Synthetic image-integrity test")
 
-    def test_primary_mfa_recent_reauthentication_and_replay(self):
+    def test_primary_mfa_current_epoch_and_replay(self):
         first = self.upload(); self.assertEqual(self.upload(), first)
         self.assertEqual(CertificateAsset.objects.count(), 1)
         with self.assertRaises(PermissionDenied):
             a.upload_asset(administrative_request(self.other), key="delegate", kind="signature", image_data=base64.b64encode(raw_fixture()).decode(), reason="Synthetic")
-        self.request.session["reauth_at"] = 0
+        self.request.session["authority_epoch"] = -1
         with self.assertRaises(PermissionDenied): self.upload(key="stale")
         self.request = administrative_request(self.admin)
         self.admin.is_verified = lambda: False

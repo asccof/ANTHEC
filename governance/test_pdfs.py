@@ -146,7 +146,7 @@ class PDFTests(TestCase):
         self.role.save()
         self.http_login()
         session = self.client.session
-        session["reauth_at"] = 0
+        session["authority_epoch"] = -1
         session.save()
         self.assertEqual(self.client.get(url).status_code, 404)
 

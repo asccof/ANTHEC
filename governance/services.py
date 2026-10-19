@@ -104,9 +104,11 @@ def authorize(request, primary_only=False, recent=True, capability=None):
     if not user.is_authenticated:
         raise PermissionDenied("Authentication required")
     user.refresh_from_db()
-    if not user.is_active or not user.is_verified():
-        raise PermissionDenied("Administrative MFA required")
+    if not user.is_active:
+        raise PermissionDenied("Active account required")
     if authority.primary_id == user.pk:
+        if not user.is_verified():
+            raise PermissionDenied("Primary login MFA required")
         epoch = 0
     else:
         if primary_only:
@@ -127,9 +129,8 @@ def authorize(request, primary_only=False, recent=True, capability=None):
         epoch = delegation.epoch
     if request.session.get("authority_epoch") != epoch:
         raise PermissionDenied("Administrative session revoked")
-    verified_at = request.session.get("reauth_at", 0)
-    if recent and not 0 <= timezone.now().timestamp() - verified_at <= 300:
-        raise PermissionDenied("Recent password and second factor required")
+    # Owner decision 2026-10-19: primary MFA lasts for this login session.
+    # Delegates use password login; epoch checks still revoke changed grants.
     return user
 
 

@@ -294,18 +294,17 @@ class MemberTests(TestCase):
             if user == self.user:
                 Delegation.objects.create(user=user, active=True, capabilities=["membership.view"])
             self.client.force_login(user)
-            self.assertEqual(
-                self.client.post("/members/password/", payload).status_code, 403
-            )
-            user.refresh_from_db()
-            self.assertTrue(user.check_password("synthetic-password-123"))
-            fixtures.PolicyTests.http_login(
-                self, user=user, epoch=0 if user == self.admin else 1
-            )
+            if user == self.admin:
+                self.assertEqual(self.client.post("/members/password/", payload).status_code, 403)
+                user.refresh_from_db()
+                self.assertTrue(user.check_password("synthetic-password-123"))
+                fixtures.PolicyTests.http_login(self, user=user, epoch=0)
+            else:
+                self.assertNotIn("otp_device_id", self.client.session)
             self.assertEqual(
                 self.client.post("/members/password/", payload).status_code, 302
             )
             self.assertNotIn("reauth_at", self.client.session)
         self.assertEqual(
-            Audit.objects.filter(action="member.password.denied").count(), 2
+            Audit.objects.filter(action="member.password.denied").count(), 1
         )

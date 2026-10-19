@@ -63,6 +63,12 @@ def authenticate_factor(user, code, recovery=False):
 @require_http_methods(["GET", "POST"])
 @member_localized
 def challenge(request):
+    if not Authority.objects.filter(pk=1, primary=request.user).exists():
+        from .capabilities import enforce
+        enforce(request)
+        return redirect("delegated_workspace")
+    if request.user.is_verified() and request.session.get("authority_epoch") == 0:
+        return redirect("/admin/")
     ctx = member_context(request)
     error = ""
     if request.method == "POST":
@@ -104,6 +110,8 @@ def challenge(request):
 @require_http_methods(["GET", "POST"])
 @member_localized
 def enroll(request):
+    if not Authority.objects.filter(pk=1, primary=request.user).exists():
+        raise PermissionDenied("Only the primary director enrolls administrative MFA")
     if TOTPDevice.objects.filter(user=request.user, confirmed=True).exists():
         return HttpResponseForbidden(
             member_context(request)["labels"]["already_enrolled"]

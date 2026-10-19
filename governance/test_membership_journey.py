@@ -458,7 +458,7 @@ class MembershipJourneyTests(TestCase):
                 self.assertContains(pending.get(response.url), f'lang="{language}"')
             response = self.director.get("/operations/institutional/?lang=" + language)
             self.assertContains(
-                response, f'href="/security/challenge/?lang={language}"'
+                response, f'href="/operations/workspace/?lang={language}"'
             )
         response = pending.get("/operations/membership/?lang=untrusted")
         self.assertEqual(response.url, "/security/challenge/?lang=ar")
@@ -473,8 +473,7 @@ class MembershipJourneyTests(TestCase):
                 if path.endswith("enroll/"):
                     self.assertEqual(response.status_code, 403)
                 else:
-                    self.assertContains(response, f'lang="{lang}"')
-                    self.assertContains(response, vocabulary(lang)[1]["mfa_title"])
+                    self.assertRedirects(response, "/admin/")
                     self.assertIn("no-store", response["Cache-Control"])
         response = self.form_post(
             self.client,
@@ -497,7 +496,9 @@ class MembershipJourneyTests(TestCase):
             f"/operations/membership/{app.pk}/",
             {"action": "approve", "key": str(uuid.uuid4()), "reason": "Synthetic"},
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 302)
+        app.refresh_from_db()
+        self.assertEqual(app.state, "approved")
 
     def test_public_site_links_to_localized_membership_interfaces(self):
         call_command("seed_demo", stdout=StringIO())

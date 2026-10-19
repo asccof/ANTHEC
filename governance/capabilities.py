@@ -304,12 +304,13 @@ def allows(request, capability):
         not user
         or not user.is_authenticated
         or not user.is_active
-        or not getattr(user, "is_verified", lambda: False)()
     ):
         return False
     if not hasattr(request, "_display_capabilities"):
         if Authority.objects.filter(pk=1, primary=user).exists():
-            request._display_capabilities = set(ALL_CAPABILITIES)
+            request._display_capabilities = (
+                set(ALL_CAPABILITIES) if user.is_verified() and request.session.get("authority_epoch") == 0 else set()
+            )
         else:
             row = Delegation.objects.filter(user=user, active=True).first()
             try:

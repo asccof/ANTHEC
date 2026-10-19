@@ -629,13 +629,13 @@ class PolicyTests(TestCase):
             )
         self.assertEqual(Payment.objects.count(), 1)
 
-    def test_recent_mfa_is_required_even_for_primary_and_django_superuser_is_not_authority(
+    def test_primary_mfa_and_current_epoch_required_superuser_is_not_authority(
         self,
     ):
-        self.request.session["reauth_at"] -= 301
+        self.request.session["authority_epoch"] = -1
         with self.assertRaises(PermissionDenied):
             self.approve(self.application("founder"))
-        self.request.session["reauth_at"] = timezone.now().timestamp()
+        self.request.session["authority_epoch"] = 0
         self.admin.is_verified = lambda: False
         with self.assertRaises(PermissionDenied):
             self.approve(self.application("honorary"))
@@ -672,7 +672,7 @@ class PolicyTests(TestCase):
         )
         self.assertEqual(self.client.get("/admin/").status_code, 403)
 
-    def test_http_operation_validation_csrf_and_recent_mfa(self):
+    def test_http_operation_validation_csrf_and_revoked_epoch(self):
         self.http_login()
         response = self.client.post(
             "/operations/membership.approve/",
@@ -691,7 +691,7 @@ class PolicyTests(TestCase):
             403,
         )
         session = self.client.session
-        session["reauth_at"] -= 301
+        session["authority_epoch"] = -1
         session.save()
         app = self.application("founder")
         self.assertEqual(
@@ -699,8 +699,8 @@ class PolicyTests(TestCase):
                 "/operations/membership.approve/",
                 data={"key": "x", "application_id": app.pk, "reason": "Synthetic"},
                 content_type="application/json",
-            ).status_code,
-            403,
+            ).url,
+            "/security/challenge/",
         )
 
     def test_recovery_codes_are_hashed_single_use_and_attempts_are_limited(self):
@@ -743,6 +743,8 @@ class PolicyTests(TestCase):
         self.assertTrue(TOTPDevice.objects.get().confirmed)
         self.assertEqual(self.client.get("/admin/").status_code, 200)
         token = response.context["codes"][0]
+        self.client.logout()
+        self.client.login(username=self.admin.username, password="synthetic-password-123")
         self.client.post(
             "/security/challenge/",
             {"password": "synthetic-password-123", "code": token, "recovery": "on"},

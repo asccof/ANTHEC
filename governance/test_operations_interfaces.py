@@ -95,15 +95,16 @@ class OperationalInterfaceTests(TestCase):
         for change in ({"tier":"founder"},{"tier":"honorary"},{"amount":"-1"},{"starts_at":"2000-01-01T00:00"},{"confirm":False}):
             self.assertEqual(self.client.post("/operations/pricing/",self.price_payload(**change)).status_code,400)
         self.assertEqual(Price.objects.count(),count)
-    def test_csrf_recent_mfa_and_revoked_delegate_write(self):
+    def test_csrf_and_revoked_administrative_session(self):
         csrf = Client(enforce_csrf_checks=True); self.http_login(client=csrf)
         self.assertEqual(csrf.post("/operations/directors/",self.director_payload()).status_code,403)
         self.assertEqual(csrf.post("/operations/pricing/",self.price_payload()).status_code,403)
         self.http_login()
-        session=self.client.session;session["reauth_at"]=0;session.save()
-        self.assertEqual(self.client.get("/operations/directors/").status_code,200)
-        self.assertEqual(self.client.post("/operations/directors/",self.director_payload()).status_code,403)
-        self.assertEqual(self.client.post("/operations/pricing/",self.price_payload()).status_code,403)
+        session=self.client.session;session["authority_epoch"]=-1;session.save()
+        for response in (self.client.get("/operations/directors/"),
+                         self.client.post("/operations/directors/",self.director_payload()),
+                         self.client.post("/operations/pricing/",self.price_payload())):
+            self.assertRedirects(response, "/security/challenge/", fetch_redirect_response=False)
     @override_settings(ANTHEEC_OWNER_TESTING=True, MIDDLEWARE=PRIVATE_MIDDLEWARE)
     def test_trial_locales_and_candidate_cannot_enter_private_site(self):
         self.assertEqual(self.client.get("/operations/directors/").status_code,404)
