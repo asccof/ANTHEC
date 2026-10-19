@@ -544,3 +544,15 @@ class AccreditationCase(models.Model):
             models.CheckConstraint(condition=(Q(kind="individual", person__isnull=False, subject_name="") | (~Q(kind="individual") & Q(person__isnull=True) & ~Q(subject_name=""))), name="case_subject"),
             models.CheckConstraint(condition=(Q(state="approved", accreditation__isnull=False) | (~Q(state="approved") & Q(accreditation__isnull=True))), name="case_approval_link"),
         ]
+
+
+class TranslationAttempt(models.Model):
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    key = models.UUIDField()
+    digest = models.CharField(max_length=64)
+    state = models.CharField(max_length=10, default='pending')
+    result = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['actor', 'key'], name='translation_actor_key')]

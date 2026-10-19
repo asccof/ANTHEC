@@ -27,6 +27,7 @@ from .activity_forms import (
 from .models import Activity, ActivityImage, Registration, Attendance, Audit, Document
 from .deployment import require_applications_enabled, require_issuance_enabled
 from . import services, activity_services, activity_editorial
+from .activity_translation import TranslationConflict
 from .capabilities import allows, restrict_choices
 
 
@@ -48,6 +49,66 @@ def context(request):
 
 def go(request, name, *args):
     return redirect(reverse(name, args=args) + "?lang=" + context(request)["language"])
+
+
+class TranslationFormPreview(Exception):
+    pass
+
+
+def translate_form(request, form, ctx, activity_id=None):
+    from .activity_translation import generate, TranslationUnavailable
+
+    mode = request.POST.get("translation_action", "")
+    if mode not in {"", "preview", "direct", "publish"}:
+        form.add_error(None, ctx["labels"]["error"])
+        return False
+    if mode not in {"preview", "direct"}:
+        return True
+    if not form.cleaned_data.get("translation_public"):
+        form.add_error(None, ctx["labels"]["translation_public"])
+        return False
+    try:
+        translated = generate(
+            request,
+            key=form.cleaned_data["key"],
+            presentation=form.cleaned_data["presentation"],
+            source=form.cleaned_data.get("translation_source") or "ar",
+            replace=form.cleaned_data.get("translation_replace", False),
+            activity_id=activity_id,
+            direct=mode == "direct",
+            editorial_version=form.cleaned_data.get("editorial_version"),
+        )
+    except TranslationConflict:
+        form.add_error(None, ctx["labels"]["translation_changed"])
+        return False
+    except (TranslationUnavailable, ValidationError):
+        form.add_error(None, ctx["labels"]["translation_failed"])
+        values = form.data.copy()
+        values["key"] = str(uuid.uuid4())
+        form.data = values
+        return False
+    form.cleaned_data["presentation"] = translated
+    form.cleaned_data["event_title"] = translated["translations"]["ar"]["title"]
+    values = form.data.copy()
+    for lang, fields in translated["translations"].items():
+        for field, value in fields.items():
+            values[
+                (
+                    "event_title"
+                    if field == "title" and lang == "ar"
+                    else field + "_" + lang
+                )
+            ] = value
+    form.data = values
+    ctx["translation_generated"] = True
+    return mode != "preview"
+
+
+def publish_from_form(request, form, activity_id, key, reason):
+    if request.POST.get("translation_action") in {"direct", "publish"}:
+        activity_editorial.publish(
+            request, key=key + ":publish", activity_id=activity_id, reason=reason
+        )
 
 
 def form_payload(data):
@@ -221,14 +282,22 @@ def register(request):
     status = 200
     if request.method == "POST":
         if form.is_valid():
-            key, data = form_payload(form.cleaned_data)
             try:
+                ready = translate_form(request, form, ctx)
+                if not ready:
+                    raise TranslationFormPreview()
+                key, data = form_payload(form.cleaned_data)
                 with transaction.atomic():
                     result = activity_services.create(request, key=key, **data)
                     upload_from_form(
                         request, result["activity"], form, key, data["reason"]
                     )
+                    publish_from_form(
+                        request, form, result["activity"], key, data["reason"]
+                    )
                 return go(request, "activity_admin_detail", result["activity"])
+            except TranslationFormPreview:
+                status = 400 if form.errors else 200
             except PermissionDenied:
                 form.add_error(None, ctx["labels"]["error"])
                 status = 403
@@ -263,7 +332,11 @@ def detail(request, activity_id):
             "consent_text",
         )
     }
-    initial.update(event_title=row.title, key=uuid.uuid4())
+    from .activity_translation import version_token
+
+    initial.update(
+        event_title=row.title, key=uuid.uuid4(), editorial_version=version_token(row)
+    )
     form = ActivityForm(
         (
             request.POST
@@ -328,14 +401,23 @@ def detail(request, activity_id):
             return HttpResponse(ctx["labels"]["error"], status=400)
         elif active.is_valid():
             try:
+                if action == "edit" and not translate_form(request, form, ctx, row.pk):
+                    raise TranslationFormPreview()
                 with transaction.atomic():
                     key = str(active.cleaned_data["key"])
                     if action == "edit":
                         key, data = form_payload(form.cleaned_data)
                         activity_services.update(
-                            request, key=key, activity_id=row.pk, **data
+                            request,
+                            key=key,
+                            activity_id=row.pk,
+                            editorial_version=form.cleaned_data.get(
+                                "editorial_version"
+                            ),
+                            **data
                         )
                         upload_from_form(request, row.pk, form, key, data["reason"])
+                        publish_from_form(request, form, row.pk, key, data["reason"])
                     elif action == "upload_image":
                         upload_from_form(
                             request,
@@ -360,9 +442,14 @@ def detail(request, activity_id):
                             reason=decision.cleaned_data["reason"],
                         )
                 return go(request, "activity_admin_detail", row.pk)
+            except TranslationFormPreview:
+                status = 400 if form.errors else 200
             except PermissionDenied:
                 active.add_error(None, ctx["labels"]["error"])
                 status = 403
+            except TranslationConflict:
+                active.add_error(None, ctx["labels"]["translation_changed"])
+                status = 400
             except (ValidationError, ValueError, ObjectDoesNotExist):
                 active.add_error(None, ctx["labels"]["error"])
                 status = 400

@@ -65,9 +65,13 @@ def create(*, actor, **payload):
 
 
 @command("activity.update")
-def update(*, actor, activity_id, **payload):
+def update(*, actor, activity_id, editorial_version=None, **payload):
     data = validated(**payload)
     row = Activity.objects.select_for_update().get(pk=activity_id)
+    if editorial_version:
+        from .activity_translation import check_version
+
+        check_version(row, editorial_version)
     if payload.get("presentation") is not None:
         from .activity_editorial import validate_presentation
 
@@ -76,7 +80,9 @@ def update(*, actor, activity_id, **payload):
             item.get("description")
             for item in data["presentation"]["translations"].values()
         ):
-            raise ValidationError("An activity description is required before publication")
+            raise ValidationError(
+                "An activity description is required before publication"
+            )
     if Registration.objects.filter(activity=row).exists():
         for field in (
             "starts_on",

@@ -11,7 +11,7 @@ Owner policy authority: APPROVED_POLICIES.md, SRC-08, current continuation instr
 | ADR-005 | Engineering choice | Atomic authority-locked commands, scoped idempotency and durable render outbox; synthetic PostgreSQL tests required on current head |
 | ADR-006 | Owner policy resolved; technical calendar | POL-02 early/late renewal, POL-03 ongoing current prices; exclusive end and Feb29→Feb28 technical rule explicitly permitted by source §11 |
 | ADR-007 | Owner policy resolved | POL-05 QR or serial+additional code, full name/type/reference/dates/status; prior notice; optional directory separate; contacts/internal reasons excluded |
-| ADR-008 | Deferred | Tighri, electronic gateway, WhatsApp, external mail/translation, branch accounts require separate scope |
+| ADR-008 | Partly amended 2026-10-19 | ADR032 authorizes opt-in Gemini free-tier public activity editorial translation only. Tighri, electronic gateway, WhatsApp, external email and other external data delivery remain separately scoped |
 | ADR-009 | Owner-approved | POL-04 single primary director, full operational delegation permitted, no second electronic approval; MFA/audit/reauth/immediate revocation/recovery |
 | ADR-010 | Owner-approved | POL-07 appropriate minor participation through guardian explicit consent and administrative admission; technical profile deduplication documented |
 | ADR-011 | Owner-approved | POL-08 reasoned suspension/cancellation/reactivation/reissue/exemption/refund; preserve original history and invalidate replacements |

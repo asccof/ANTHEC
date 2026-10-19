@@ -104,3 +104,8 @@ try:
 except (ValueError, TypeError) as exc:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured("Invalid private certificate signatory configuration") from exc
+
+# Owner-authorized public editorial translation only. Never enable billing here.
+ANTHEEC_GEMINI_ENABLED = os.environ.get('ANTHEEC_GEMINI_ENABLED') == '1'
+ANTHEEC_GEMINI_FREE_PROJECT_CONFIRMED = os.environ.get('ANTHEEC_GEMINI_FREE_PROJECT_CONFIRMED') == '1'
+ANTHEEC_GEMINI_API_KEY = os.environ.get('ANTHEEC_GEMINI_API_KEY', '')
