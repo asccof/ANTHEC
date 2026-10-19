@@ -9,7 +9,7 @@ The owner explicitly amended POL-04: only the primary director supplies an admin
 
 ## Superseded contract and acceptance instructions
 
-DOMAIN_CONTRACTS.md now defines the amended authentication contract and scoped grants; OWNER_ACCEPTANCE_AR.md UAT-11 now tests primary-login-only MFA, password-only delegates, permitted/forbidden actions and epoch revocation. DECISIONS.md retires the old timer constant. Earlier phase documents and ledger snapshots describe historical behavior and do not override this owner decision. Actual hosted deployments are unchanged until separately authorized and verified.
+README.md now documents the role-specific login/workspace flow and removes timed operation reauthentication. DOMAIN_CONTRACTS.md now defines the amended authentication contract and scoped grants; OWNER_ACCEPTANCE_AR.md UAT-11 now tests primary-login-only MFA, password-only delegates, permitted/forbidden actions and epoch revocation. DECISIONS.md retires the old timer constant. Earlier phase documents and ledger snapshots describe historical behavior and do not override this owner decision. Actual hosted deployments are unchanged until separately authorized and verified.
 
 ## Implementation
 

@@ -14,11 +14,12 @@ On the deployed owner-testing service, only the verified active primary sees dyn
 
 ## Operational entry points
 
-Log in at `/admin/login/`, complete password + authenticator verification, then use the administrative menu or return-to-site navigation. Sensitive writes require recent reauthentication at `/security/challenge/` (five minutes). Never send credentials, TOTP secrets, recovery codes or signing assets in chat or commit them.
+The primary logs in at `/admin/login/` and completes authenticator verification once for that login. Delegates in isolated development/testing sign in with their own password at `/members/login/` and enter `/operations/workspace/`; current scoped sessions also have an Administrative workspace navigation link. No administrative OTP is required from delegates, and no repeated challenge or five-minute timer applies during the same login session. A new primary login after logout/expiry requires its factor again. Changed/revoked grants require a fresh delegated login. The hosted owner-testing gate remains primary-only. Never send credentials, TOTP secrets, recovery codes or signing assets in chat or commit them.
 
 | Path | Access / purpose |
 |---|---|
 | `/ar/`, `/fr/`, `/en/` | Owner-only trial presentation; existing manual CMS revisions/translations preserved |
+| `/operations/workspace/` | Current authenticated administrative session; links limited to explicitly granted scopes |
 | `/operations/membership/` | Membership review and finance/rights controls, with live trial guards |
 | `/operations/institutional/` | Recorded office terms and free permanent founder/honorary designations |
 | `/operations/accreditation/` | Private independent casework; annual effective dates derive from final approval, course dates remain explicit |
@@ -47,7 +48,7 @@ python manage.py bootstrap_authority synthetic-primary --settings=antheec_app.se
 python manage.py runserver 127.0.0.1:8000 --settings=antheec_app.settings.dev
 ```
 
-Business commands remain CSRF-protected JSON POSTs at `/operations/<action>/` as well as bounded forms. Current authority, confirmed MFA, epoch and recent reauthentication are enforced in the service boundary; unrelated Django permissions do not establish authority. Do not create delegates as superusers. Synthetic fixtures do not replace identity verification or recovery procedures for real operations.
+Business commands remain CSRF-protected JSON POSTs at `/operations/<action>/` as well as bounded forms. Current active authority, explicit capabilities and session/grant epoch are enforced in the service boundary; the primary additionally requires its login MFA. Unrelated Django permissions do not establish authority. See the owner-approved 2026-10-19 amendment in POL-04 and ADR-030. Do not create delegates as superusers. Synthetic fixtures do not replace identity verification or recovery procedures for real operations.
 
 ## Validation and readiness
 
