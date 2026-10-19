@@ -20,3 +20,8 @@ The shared navigation exposes Administrative workspace only to the primary or an
 ## Verification
 
 New HTTP regressions cover password-only delegate login, permitted/denied workspace links, epoch changes, grant-after-login, revocation, ordinary-member denial, primary login factor and repeat login clearing factor state. Prior timer-denial regressions now test revoked epochs instead. Final PostgreSQL/container/recovery and external review evidence belongs in the PR. No schema change, Tighri changes, paid resources or deployment.
+
+
+## CI recovery toolchain correction
+
+The full PostgreSQL suite passed on the prior reviewed implementation, but recovery exposed runner-default client/server drift: a newer pg_restore emitted SET transaction_timeout against the PostgreSQL 16 service. The workflow now explicitly installs and prioritizes PostgreSQL 16 clients and verifies pg_dump/pg_restore/createdb major versions before tests. The recovery drill remains mandatory with exit-on-error; no SQL filtering, ignored errors, server upgrade or hosted database change is introduced.
