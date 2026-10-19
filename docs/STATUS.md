@@ -327,3 +327,7 @@ Migration 0012 disables legacy broad grants, increments session epochs and remov
 ## 2026-10-19 — owner-approved login/session policy amendment
 
 Following PR #47 scoped capabilities, the owner authorized password-only delegated login and primary MFA only at login, without operation-time reauthentication. ADR 030 records the POL-04 amendment, actual-login epoch binding, unchanged server-side scopes/revocation and shared administrative workspace navigation. Implementation prepared on eng/login-only-mfa; local/full PostgreSQL/container/recovery CI, exact-head review and owner UAT must be recorded separately. No hosted deploy, resource change, Tighri modification or public-release approval.
+
+## 2026-10-19 — public activity editorial authoring
+
+Owner accepted PR48 login/delegation changes locally, then deferred latency work and authorized activity public presentation linked to administrative content/media authoring. ADR031 records bounded AR/FR/EN editorial content, visible/past catalogs, normalized PostgreSQL activity images, named HTTPS/video links, explicit publication/media scopes and unchanged participation/owner-testing gates. Migration0013 keeps existing activities hidden in the new public catalog until explicitly completed and shown. Initial 36 activity/editorial/scope tests passed locally; full suite, PostgreSQL/container/recovery CI and exact-head review are separate pending evidence. Owner desktop/mobile/editorial UAT remains pending. No Tighri, paid resource, hosting, private document artwork or release change.

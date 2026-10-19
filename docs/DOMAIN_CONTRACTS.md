@@ -47,3 +47,8 @@ APPROVED_POLICIES.md and POLICY_EXECUTION.md distinguish approved organizational
 ## Owner-authorized institutional cards, 2026-10-10
 
 [Phase 1](INSTITUTIONAL_CARDS_PHASE1.md) adds a fourth typed document origin and minimum protected administration. Office terms are explicitly recorded, founder cards permanent/free, existing Person identity reused, and no administrator rights are inferred. This owner authorization supplements POL-01–08 without changing them.
+
+
+## Activity editorial content, 2026-10-19
+
+ADR031 adds bounded manually localized public presentation, an explicit visibility flag and separately normalized activity-image assets. Newly added/existing editorial pages start hidden. Public catalog/detail/media enforce that visibility, while draft preview requires activity.view; member participation/history remains the existing authenticated workflow. Publish/hide/media upload/withdrawal use independent scoped commands, with publication additionally required for editing visible content or adding live images. Public text is escaped, external links are named HTTPS references with no automatic fetch/embed, and no private portrait/signature is reused. The deployed owner-testing gate and all release/registration/financial/document restrictions remain unchanged.
