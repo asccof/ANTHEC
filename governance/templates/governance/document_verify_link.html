@@ -1,0 +1,1 @@
+<a{% if verify_link_class %} class="{{ verify_link_class }}"{% endif %} href="{% url 'document_verify' %}?lang={{ language }}">{% if language == 'ar' %}التحقق من الوثائق{% elif language == 'fr' %}Vérifier un document{% else %}Verify a document{% endif %}</a>
