@@ -5,6 +5,7 @@
 <section class="hero"><div class="shell hero-grid"><div class="hero-copy">
   <p class="eyebrow">{{ public_labels.eyebrow }}</p><h1>{{ public_labels.hero }}</h1><p class="hero-intro">{{ public_labels.intro }}</p>
   <div class="hero-actions"><a class="button button-gold" href="#services">{{ public_labels.discover_services }}</a>
+  {% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='button button-teal' %}
   {% if owner_testing %}<span class="button button-muted" aria-disabled="true">{{ public_labels.closed }}</span>{% else %}<a class="button button-outline" href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{{ public_labels.apply }}</a>{% endif %}</div>
 </div><div class="hero-art"><div class="emblem-disc"><img src="{% static 'anthec-logo.png' %}" width="220" height="220" alt="ANTHEC"></div><p class="art-caption">{{ public_labels.name }}</p></div></div></section>
 <section id="about" class="section shell"><div class="section-heading"><p class="eyebrow">{{ public_labels.about }}</p><h2>{{ public_labels.mission_title }}</h2><p>{{ public_labels.mission_intro }}</p></div>
