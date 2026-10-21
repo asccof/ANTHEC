@@ -162,7 +162,7 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         except signing.PendingCertificateAssets:
             if not (proof or preview):
                 raise
-    official_output = bool(getattr(settings, "ANTHEEC_OPERATIONAL", False) and not (preview or proof or participation))
+    official_output = bool(participation is None and not doc.is_specimen and not (preview or proof))
     signature_pending = not is_card and certificate_assets is None
     fg = THEMES[category][1] if is_card else "#173045"
     accent = THEMES[category][2] if is_card else "#216459"

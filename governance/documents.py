@@ -39,7 +39,7 @@ def printable(doc, language="ar"):
             f"<p>{escape(labels[k])}: {escape(display_value(labels, k, v))}</p>"
             for k, v in data.items()
         )
-        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px;border:3px solid #16475b}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape("" if getattr(settings, "ANTHEEC_OPERATIONAL", False) else labels["demo"])}</p></body></html>'
+        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px;border:3px solid #16475b}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape("" if not doc.is_specimen else labels["demo"])}</p></body></html>'
     if doc.membership_id or doc.accreditation_id and doc.accreditation.membership_id:
         from .member_labels import vocabulary as member_vocabulary
 
@@ -51,7 +51,7 @@ def printable(doc, language="ar"):
             f"<p>{escape(labels[k])}: {escape(display_value(labels, k, v))}</p>"
             for k, v in data.items()
         )
-        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{background};padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["association_notice"])}</p><p>{escape("" if getattr(settings, "ANTHEEC_OPERATIONAL", False) else labels["demo"])}</p></body></html>'
+        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;background:{background};padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape(labels["association_notice"])}</p><p>{escape("" if not doc.is_specimen else labels["demo"])}</p></body></html>'
     if doc.kind == "invitation":
         from .invitation_labels import vocabulary as invitation_vocabulary
 
@@ -62,7 +62,7 @@ def printable(doc, language="ar"):
             f"<p>{escape(labels[k])}: {escape(display_value(labels, k, v))}</p>"
             for k, v in data.items()
         )
-        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape("" if getattr(settings, "ANTHEEC_OPERATIONAL", False) else labels["demo"])}</p></body></html>'
+        return f'<!doctype html><html lang="{language}" dir="{direction}"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer"><title>{escape(title)}</title><style>body{{font-family:sans-serif;padding:30px}}svg{{width:160px;height:160px}}p{{overflow-wrap:anywhere}}</style></head><body><h1>ANTHEC</h1><h2>{escape(title)}</h2>{rows}<p>{escape(labels["code"])}: {escape(credentials["code"])}</p>{svg}<p>{escape(labels["scan"])}</p><p>{escape("" if not doc.is_specimen else labels["demo"])}</p></body></html>'
     raise ValueError("Unsupported HTML document kind")
 
 

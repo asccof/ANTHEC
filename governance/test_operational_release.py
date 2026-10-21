@@ -168,19 +168,31 @@ class OperationalPDFTests(TestCase):
         import io
         from pypdf import PdfReader
         from . import test_pdfs as fixtures_pdf, pdf_design, pdf_services
-        fixtures_pdf.PDFTests.setUp(self)
         with override_settings(ANTHEEC_OPERATIONAL=False):
+            fixtures_pdf.PDFTests.setUp(self)
             previous=pdf_services.artifact_for(self.doc.pk,'en')
             old_bytes=pdf_services.bytes_for(previous)
-        body, metadata=pdf_design.render(self.doc,'en')
-        reader=PdfReader(io.BytesIO(body))
-        text=' '.join(page.extract_text() for page in reader.pages)
-        self.assertNotIn('SPECIMEN',text)
-        self.assertEqual(reader.metadata.title,'ANTHEC')
         from .documents import printable
-        self.assertNotIn('development',printable(self.doc,'en').lower())
+        from . import services
+        self.assertTrue(self.doc.is_specimen)
+        self.assertIn('development',printable(self.doc,'en').lower())
+        old, old_metadata=pdf_design.render(self.doc,'en')
+        self.assertEqual(PdfReader(io.BytesIO(old)).metadata.title,'ANTHEC SPECIMEN')
+        self.assertIsNone(services.lookup_document(serial=str(self.doc.serial),code=services.decrypt(self.doc.credentials)['code']))
+        result=services.replace_document(self.request,key='synthetic-release-replace',document_id=self.doc.pk,reason='Synthetic formal operational replacement')
+        from .models import Document
+        new=Document.objects.get(pk=result['document'])
+        self.assertFalse(new.is_specimen)
+        body, metadata=pdf_design.render(new,'en')
+        reader=PdfReader(io.BytesIO(body))
+        self.assertEqual(reader.metadata.title,'ANTHEC')
+        self.assertNotIn('SPECIMEN',' '.join(page.extract_text() for page in reader.pages))
+        self.assertNotIn('development',printable(new,'en').lower())
         self.assertTrue(metadata['template'].endswith('-operational-v1'))
-        proof, proof_metadata=pdf_design.render(self.doc,'en',proof=True)
+        proof, proof_metadata=pdf_design.render(new,'en',proof=True)
         self.assertEqual(PdfReader(io.BytesIO(proof)).metadata.title,'ANTHEC SPECIMEN')
         self.assertFalse(proof_metadata['template'].endswith('-operational-v1'))
         self.assertEqual(pdf_services.bytes_for(previous),old_bytes)
+        new.is_specimen=True
+        from django.core.exceptions import ValidationError
+        with self.assertRaises(ValidationError):new.save()

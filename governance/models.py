@@ -349,6 +349,7 @@ class CertificateAsset(models.Model):
 
 
 class Document(models.Model):
+    is_specimen = models.BooleanField(default=True, editable=False)
     serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     issued_at = models.DateTimeField(null=True, editable=False)
     kind = models.CharField(max_length=30)
@@ -378,7 +379,7 @@ class Document(models.Model):
         from django.core.exceptions import ValidationError
         if self.pk:
             old = type(self).objects.get(pk=self.pk)
-            if any(getattr(old, f) != getattr(self, f) for f in ("signature_asset_id", "stamp_asset_id", "signing_snapshot")):
+            if any(getattr(old, f) != getattr(self, f) for f in ("signature_asset_id", "stamp_asset_id", "signing_snapshot", "is_specimen")):
                 raise ValidationError("Issuance signing snapshot is immutable; formal reissuance required")
         super().save(*args, **kwargs)
 
