@@ -206,6 +206,7 @@ class OperationalRateLimitTests(TestCase):
         request=RequestFactory().post('/members/login/',REMOTE_ADDR='10.0.0.1')
         for _ in range(10):self.assertTrue(consume(request,'auth',identity='first'))
         self.assertFalse(consume(request,'auth',identity='first'))
+        self.assertFalse(consume(request,'auth',identity='ｆｉｒｓｔ'))
         self.assertTrue(consume(request,'auth',identity='second'))
 
     def test_forwarded_headers_or_peer_changes_cannot_evade_global_ceilings(self):
@@ -225,3 +226,19 @@ class OperationalRateLimitTests(TestCase):
             self.assertEqual(self.client.post('/verify/',{'serial':'bad','code':'bad'}).status_code,404)
         for _ in range(6):
             self.assertEqual(self.client.post('/partners/request/',{}).status_code,400)
+
+    def test_exhausted_global_auth_budget_never_creates_fresh_account_buckets(self):
+        from django.test import RequestFactory
+        from django.utils import timezone
+        from .public_limits import consume
+        from .services import digest
+        moment=timezone.now()
+        window=int(moment.timestamp()//300)
+        key=digest(f'operational-auth-global:{window}')
+        RateBucket.objects.create(key=key,count=200)
+        request=RequestFactory().post('/members/login/',REMOTE_ADDR='10.0.0.1')
+        with patch('governance.public_limits.timezone.now',return_value=moment):
+            for index in range(100):
+                self.assertFalse(consume(request,'auth',identity=f'fresh-{index}'))
+        self.assertEqual(RateBucket.objects.count(),1)
+        self.assertEqual(RateBucket.objects.get(pk=key).count,200)
