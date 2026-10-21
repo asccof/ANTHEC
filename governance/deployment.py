@@ -146,6 +146,12 @@ class PublicPreviewMiddleware(OwnerTestingMiddleware):
         if not getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False):
             return super().__call__(request)
         if self.public_read(request):
+            # Public views can personalize for authenticated members or bypass
+            # CMS restrictions for staff. A preview must always render their
+            # anonymous projection, including before primary MFA. Keep the
+            # stored login session intact for the separate private admin gate.
+            from django.contrib.auth.models import AnonymousUser
+            request.user = AnonymousUser()
             response = self.get_response(request)
         else:
             response = self.restricted_response(request)

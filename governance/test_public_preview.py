@@ -14,7 +14,7 @@ from antheec_app.urls import urlpatterns as application_urls
 urlpatterns = [path("ar/unreviewed/", lambda request: HttpResponse("PRIVATE NEW ROUTE"))] + application_urls
 from .deployment import (require_applications_enabled, require_payments_enabled,
                          require_issuance_enabled)
-from .models import Authority, Activity, ActivityImage, Application, Payment, Document, Command, RateBucket
+from .models import Authority, Activity, ActivityImage, Application, Payment, Document, Command, RateBucket, Person, Registration
 from .tests import synthetic_user, administrative_request
 from . import tests as fixtures, test_deployment as deployment_tests
 from .test_deployment import PRIVATE_MIDDLEWARE
@@ -92,6 +92,41 @@ class PublicPreviewTests(TestCase):
         self.assertFalse(Payment.objects.exists())
         self.assertFalse(Document.objects.exists())
         self.assertFalse(Command.objects.exists())
+
+    def test_public_reads_never_personalize_before_or_after_primary_mfa(self):
+        private_activity = Activity.objects.create(
+            title='PRIVATE UNPUBLISHED ACTIVITY', starts_on=timezone.localdate(),
+            ends_on=timezone.localdate()+timedelta(days=1), capacity=20)
+        for user in (self.admin, self.other):
+            person = Person.objects.create(full_name='PRIVATE PARTICIPANT', user=user)
+            Registration.objects.create(activity=private_activity, person=person,
+                                        submitted_by=user)
+            self.client.force_login(user)
+            response = self.client.get('/activities/')
+            self.assertEqual(response.context['mine'], [])
+            self.assertNotContains(response, 'PRIVATE PARTICIPANT')
+            self.assertNotContains(response, 'PRIVATE UNPUBLISHED ACTIVITY')
+            self.assertEqual(self.client.get(f'/activities/{private_activity.pk}/about/').status_code, 404)
+        self.http_login()
+        response = self.client.get('/activities/')
+        self.assertEqual(response.context['mine'], [])
+        self.assertEqual(self.client.get('/admin/').status_code, 200)
+        self.assertEqual(self.client.get(f'/activities/{private_activity.pk}/about/').status_code, 404)
+
+    def test_primary_password_alone_cannot_bypass_cms_page_restrictions(self):
+        from wagtail.models import Site, PageViewRestriction
+        from content.models import InstitutionalPage
+        home = Site.objects.get(is_default_site=True).root_page.specific
+        child = home.add_child(instance=InstitutionalPage(
+            title='PRIVATE CMS TITLE', slug='restricted', live=False,
+            body=[('paragraph', 'PRIVATE CMS BODY')]))
+        child.save_revision().publish()
+        PageViewRestriction.objects.create(page=child, restriction_type='login')
+        self.client.force_login(self.admin)
+        response = self.client.get('/ar/restricted/')
+        self.assertNotContains(response, 'PRIVATE CMS BODY', status_code=response.status_code)
+        self.assertNotEqual(response.status_code, 200)
+        self.assertEqual(self.client.get('/admin/').url, '/security/challenge/')
 
     @override_settings(ROOT_URLCONF=__name__)
     def test_new_locale_prefixed_endpoint_is_not_accidentally_public(self):
