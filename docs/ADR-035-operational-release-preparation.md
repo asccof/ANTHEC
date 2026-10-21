@@ -1,0 +1,30 @@
+# ADR035 — Secure operational runtime preparation
+
+Date: 2026-10-21. Owner directs engineering toward full launch and explicitly defers CNDP filing. Deferral is not an exemption, legal acceptance or evidence that a formal obligation was discharged. Do not publish private signed policy/source attachments in this public repository.
+
+## Bounded decision
+
+Prepare `ANTHEEC_MODE=operational` in the secure hosted settings. Deployment alone leaves the existing Docker default `owner-testing` unchanged. Operational startup needs exactly `ANTHEEC_OPERATIONAL_RELEASE_APPROVED=1` and `ANTHEEC_PUBLIC_CONTENT_APPROVED=1`. These operator acknowledgements are not automatic certification of legal/security/recovery acceptance; do not set them on Render during this preparation.
+
+Operational mode keeps DEBUG off, exact HTTPS origin, encrypted DB-backed private assets, disabled filesystem uploads, dummy outbound email, dedicated ANTHEC PostgreSQL namespace, secure cookies, unchanged primary MFA at login and independently scoped delegates. Application, manual payment/refund and document issuance switches each default to `0`; only literal `0` and `1` are accepted. Both preview modes still reject any nonzero switch. `development`/static-build settings cannot be substituted for the operational runtime. No online payment gateway or outbound mail provider is introduced.
+
+Existing public and member views resume their own ownership/publication checks in operational mode. The private preview primary-only perimeter is deliberately absent; administrative view guards, delegation epochs and primary MFA remain. The global admin login budget is reused after CSRF validation, without trusting forwarding headers. Responses remain no-store and noindex during initial operational release; search indexing is not inferred from the instruction to complete functionality.
+
+`python manage.py check_release_readiness` observes all secure hosted modes under a PostgreSQL read-only transaction. It returns booleans for primary account recovery posture, secure configuration, workflow state and approved signing-asset presence. It prints no account identities, connection details, keys or asset bytes, and writes nothing. Missing records are not repaired. `release_authorized` is always false because the command cannot certify acceptance. Original `check_owner_readiness` remains unchanged.
+
+Operational UI removes local synthetic-only banners. Newly rendered official credentials omit specimen labels only in operational mode; previews, explicit proofs and all participation design proofs remain marked. Operational PDF template metadata has a distinct suffix. Existing encrypted artifacts remain immutable and are not silently relabeled; a formal replacement is needed for a previously issued specimen. Artwork, layout, membership policies and signing/photo prerequisites are unchanged.
+
+## Work still required before activation
+
+- Implement/version/test the approved privacy notice and acknowledgement evidence; existing document notice is not a full privacy system. Implement the actual rights/retention procedure and reconcile proposed periods with financial obligations and provider retention.
+- Resolve applicable processing/foreign-transfer procedures with evidence. No filing was performed and no exemption was established.
+- Audit actual hosted content, membership prices, signatory and owned approved signature/stamp, public verification disclosures, member permissions and revoked delegations. Local UAT content is not automatically on Render.
+- Preserve key/recovery custody and current backup. Owner reported one actual Render export/local restore/decrypt success for a clearly synthetic audit canary. It does not prove Render-hosted restore or recovery of absent photo/PDF assets.
+- Validate memory under representative bounded PDF input/concurrency within the existing 512 MiB resource, and verify long-term stability; prior latency measurement is deferred at owner request. No capacity claim from idle checks.
+- Verify main branch protections and full exact-head PostgreSQL/container/recovery CI plus external code review. Confirm no outstanding material findings before merge or activation.
+
+## Eventual rollout and rollback
+
+No active Render setting is changed in this increment. After remaining acceptance evidence, deploy the exact reviewed version privately first, inspect sanitized readiness output and backup, then apply the distinct operational decision with only the independently authorized workflows enabled. Test AR/FR/EN public pages, primary/delegate/member sessions, account ownership isolation, signup/application, manual finance approval, issuance/PDF and QR/reference verification, invalid/revoked documents, foreign-origin CSRF and revoked delegation denial. Use controlled test identities, not another person's real records.
+
+Close a workflow by setting its switch to `0`. Restore private access by setting `ANTHEEC_MODE=owner-testing` and all three switches to `0`, then redeploying the compatible reviewed code. This changes access, not data: never restore an old backup over the live DB as an access rollback, delete migrations, replace the encryption key or remove audit history. No paid resource/plan/network opening, DNS, external delivery or Tighri change is authorized by this code.

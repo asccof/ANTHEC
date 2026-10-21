@@ -29,7 +29,7 @@
 </div></header>
 {% if owner_testing %}<aside class="trial-notice shell" role="note"><strong>{{ public_labels.testing }}</strong><p>{{ public_labels.testing_detail }}</p></aside>{% endif %}
 {% include "governance/deployment_notice.html" with language=page.locale.language_code %}
-{% if synthetic_preview and not public_preview %}<aside class="synthetic-notice shell" role="note">{{ public_labels.synthetic_notice }}</aside>{% endif %}
+{% if synthetic_preview and not public_preview and not operational %}<aside class="synthetic-notice shell" role="note">{{ public_labels.synthetic_notice }}</aside>{% endif %}
 <main id="main-content" tabindex="-1">{% block content %}{% endblock %}</main>
 <footer class="site-footer"><div class="shell footer-inner"><div><strong>ANTHEC</strong><p>{{ public_labels.name }}</p><small>{{ public_labels.footer }}</small></div><nav aria-label="{{ public_labels.nav }}">{% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='' %}<a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a>{% if localized_home_url %}<a href="{{ localized_home_url }}#contact">{{ public_labels.contact }}</a><a href="{{ localized_home_url }}#privacy">{{ public_labels.privacy }}</a>{% endif %}</nav></div><div class="shell footer-contact">{% include "content/contact_details.html" %}</div></footer>
 </body></html>

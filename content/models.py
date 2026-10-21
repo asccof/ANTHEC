@@ -26,7 +26,7 @@ class InstitutionalPage(Page):
         language = self.locale.language_code
         context["public_labels"] = vocabulary(language)
         context["owner_testing"] = getattr(settings, "ANTHEEC_OWNER_TESTING", False)
-        context["synthetic_preview"] = not context["owner_testing"]
+        context["synthetic_preview"] = not context["owner_testing"] and not getattr(settings, "ANTHEEC_OPERATIONAL", False)
         site = Site.find_for_request(request)
         context["is_site_home"] = bool(site and site.root_page.translation_key == self.translation_key)
         if site:

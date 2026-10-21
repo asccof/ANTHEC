@@ -162,6 +162,7 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         except signing.PendingCertificateAssets:
             if not (proof or preview):
                 raise
+    official_output = bool(getattr(settings, "ANTHEEC_OPERATIONAL", False) and not (preview or proof or participation))
     signature_pending = not is_card and certificate_assets is None
     fg = THEMES[category][1] if is_card else "#173045"
     accent = THEMES[category][2] if is_card else "#216459"
@@ -238,6 +239,8 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         return f'<div style="position:absolute;left:{x}mm;top:{y}mm;width:{w}mm;border-top:.18mm solid {color}"></div>'
 
     def spec(x, y, w, color):
+        if official_output:
+            return ""
         label = "SPECIMEN / نموذج تجريبي" if not participation else "DESIGN PROOF / NOT ISSUED / نموذج غير صادر"
         return txt(label, x, y, w, 4, 5.2 if is_card else 7.4, color, alignment="center", direction="ltr")
 
@@ -348,7 +351,7 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         name_size = (14 if rtl else 13) if identity.get("ar_name" if rtl else "latin_name") else 10.5
         center += txt(name, 191, 192.5, 64, 6, name_size, fg,
                       "NaskhB" if rtl else "ClassicB", alignment="right" if rtl else "center")
-        proof_note = ("نموذج للمراجعة — غير موقّع وغير مختوم", "Maquette — non signée et non cachetée", "Review proof — unsigned and unstamped")[idx] if signature_pending else "SPECIMEN / نموذج تجريبي"
+        proof_note = ("نموذج للمراجعة — غير موقّع وغير مختوم", "Maquette — non signée et non cachetée", "Review proof — unsigned and unstamped")[idx] if signature_pending else ("" if official_output else "SPECIMEN / نموذج تجريبي")
         if participation:
             proof_note += " / NOT ISSUED"
         center += txt(proof_note, 53, 161, 133, 4, 8.2, "#216459", alignment="center", direction="ltr")
@@ -439,8 +442,8 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         page.bleedbox = page.mediabox
     writer.add_metadata(
         {
-            "/Title": "ANTHEC PARTICIPATION DESIGN PROOF - NOT ISSUED" if participation else "ANTHEC SPECIMEN",
-            "/Subject": "Synthetic non-production credential; RGB; not PDF/X",
+            "/Title": "ANTHEC PARTICIPATION DESIGN PROOF - NOT ISSUED" if participation else ("ANTHEC" if official_output else "ANTHEC SPECIMEN"),
+            "/Subject": "ANTHEC credential; RGB; not PDF/X" if official_output else "Synthetic non-production credential; RGB; not PDF/X",
         }
     )
     output = io.BytesIO()
@@ -449,7 +452,7 @@ def _render(doc, language="ar", *, preview=False, bleed=False, participation=Non
         "width_mm": width,
         "height_mm": height,
         "bleed_mm": pad,
-        "template": VERSION if is_card else CERTIFICATE_VERSION,
+        "template": (VERSION if is_card else CERTIFICATE_VERSION) + ("-operational-v1" if official_output else ""),
         "language": language,
         "photo": str(doc.portrait.serial) if is_card else None,
         "font_scale": factor,

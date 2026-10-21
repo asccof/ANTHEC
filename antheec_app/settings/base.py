@@ -4,7 +4,7 @@ from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test", "owner-testing", "public-preview"}:
+if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test", "owner-testing", "public-preview", "operational"}:
     raise ImproperlyConfigured("Public production mode is not authorized.")
 
 INSTALLED_APPS = [
