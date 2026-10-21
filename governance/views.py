@@ -13,6 +13,17 @@ from . import services, institutional, membership_admin_services
 from .models import Document, RateBucket, Person, Activity
 from .documents import printable
 from .institutional_labels import vocabulary, display_value
+from .public_presentation import labels as public_words
+
+
+def verification_failure(request, message, status):
+    language, labels = vocabulary(request.GET.get('lang', 'ar'))
+    context = dict(language=language, labels=labels,
+                   direction='rtl' if language == 'ar' else 'ltr',
+                   public_labels=public_words(language), verification_error=message)
+    response = render(request, 'governance/verify.html', context, status=status)
+    response['Cache-Control'] = 'no-store'
+    return response
 
 
 @never_cache
@@ -29,6 +40,7 @@ def verify(request):
                 "language": language,
                 "labels": labels,
                 "direction": "rtl" if language == "ar" else "ltr",
+                "public_labels": public_words(language),
             },
         )
     # No forwarded headers trusted; fixed 10-minute IP bucket, hashed and bounded.
@@ -41,6 +53,8 @@ def verify(request):
         row.count += 1
         row.save(update_fields=["count"])
         if row.count > 30:
+            if "text/html" in request.headers.get("Accept", ""):
+                return verification_failure(request, 'verify_limit', 429)
             return JsonResponse({"error": "Try again later"}, status=429)
     data = services.lookup_document(
         token=request.POST.get("token"),
@@ -76,6 +90,8 @@ def verify(request):
                 "language": language,
                 "labels": labels,
                 "direction": "rtl" if language == "ar" else "ltr",
+                "public_labels": public_words(language),
+                "referrer_policy": "no-referrer",
                 "rows": [
                     {
                         "label": labels[k],
@@ -85,6 +101,8 @@ def verify(request):
                 ],
             },
         )
+    if not data and "text/html" in request.headers.get("Accept", ""):
+        return verification_failure(request, 'verify_error', 404)
     response = JsonResponse(
         data if data else {"error": "Document not found"}, status=200 if data else 404
     )

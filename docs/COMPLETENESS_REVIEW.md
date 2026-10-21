@@ -1,3 +1,5 @@
+> تحديث 2026-10-21: راجع [السجل الحالي](CURRENT_COMPLETION_AR.md) لحالة الواجهات والترجمة والقبول المحلي. التفاصيل أدناه لقطة تاريخية بتاريخ 2026-10-15 ولا تمثل آخر main أو آخر نشر. بوابات الإطلاق تظل منفصلة.
+
 # ANTHEC implementation completeness — 2026-10-15
 
 Authority: approved POL-01–08 and owner decisions. Accepted source baseline: main 65a0613a5814c65316a6ff25497e53e58a2a523a (PR36/37), exact-head CI 38756044296 / 38760258404, completed Codex reviews and private Render dep-db8f4e6q1p3s73ak36t0 live 2026-10-15T15:34:17Z. PR37 passed 242 PostgreSQL tests and 10 metadata tests, container/recovery checks; this is not hosted issuance or owner acceptance of its invitation output. Owner accepted earlier director/pricing and multilingual presentation testing. See [RELEASE_READINESS_REVIEW.md](RELEASE_READINESS_REVIEW.md), [owner acceptance package](OWNER_ACCEPTANCE_AR.md) and [recovery/security runbook](RECOVERY_SECURITY_RUNBOOK_AR.md). This register supersedes historical completion wording, not organizational policy.

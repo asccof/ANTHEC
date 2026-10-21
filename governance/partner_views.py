@@ -18,11 +18,12 @@ from .models import PartnershipRequest, Partner, Audit, RateBucket
 from . import partner_services as service
 from .services import digest
 from .deployment import require_applications_enabled
+from .public_presentation import labels as public_words
 
 def context(request):
     language,partner_labels=vocabulary(request.GET.get('lang','ar'))
     labels=dict(member_vocabulary(language)[1]); labels.update(partner_labels)
-    return {'language':language,'labels':labels,'direction':'rtl' if language=='ar' else 'ltr','owner_testing':getattr(settings,'ANTHEEC_OWNER_TESTING',False)}
+    return {'language':language,'labels':labels,'direction':'rtl' if language=='ar' else 'ltr','owner_testing':getattr(settings,'ANTHEEC_OWNER_TESTING',False),'public_labels':public_words(language)}
 
 @never_cache
 @require_http_methods(['GET'])
@@ -121,5 +122,5 @@ def detail(request,partner_id):
             except PermissionDenied: form.add_error(None,ctx['labels']['error']); status=403
             except ValidationError: form.add_error(None,ctx['labels']['error']); status=400
         else: status=400
-    ctx.update(row=row,form=form,partner_can_mutate=partner_can_mutate,history=Audit.objects.filter(subject=str(row.pk),action='partner.updated').order_by('pk'))
+    ctx.update(row=row,display_name=getattr(row,'name_'+ctx['language']),form=form,partner_can_mutate=partner_can_mutate,history=Audit.objects.filter(subject=str(row.pk),action='partner.updated').order_by('pk'))
     return render(request,'governance/partner_detail.html',ctx,status=status)
