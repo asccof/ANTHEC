@@ -27,6 +27,8 @@ def epoch_for(user):
 
 
 def consume_attempt(user):
+    from .public_limits import prune_expired
+    prune_expired()
     window = int(timezone.now().timestamp() // 300)
     with transaction.atomic():
         row, _ = RateBucket.objects.get_or_create(

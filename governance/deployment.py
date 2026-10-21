@@ -112,6 +112,8 @@ class OwnerTestingMiddleware:
 
     @staticmethod
     def login_budget():
+        from .public_limits import prune_expired
+        prune_expired()
         from .services import digest
         window = int(timezone.now().timestamp() // 300)
         key = digest(f"private-login-global:{window}")

@@ -119,9 +119,12 @@ class OperationalBoundaryTests(TestCase):
         from django.utils import timezone
         key=digest(f'private-login-global:{int(timezone.now().timestamp()//300)}')
         RateBucket.objects.create(key=key,count=50)
+        from datetime import timedelta
+        RateBucket.objects.create(key='expired-admin-only',count=1,created_at=timezone.now()-timedelta(hours=2))
         response=client.post('/admin/login/', {'csrfmiddlewaretoken':token,'username':'synthetic','password':'invalid'},
                              HTTP_X_FORWARDED_FOR='forged.example.invalid')
         self.assertEqual(response.status_code,429)
+        self.assertFalse(RateBucket.objects.filter(pk='expired-admin-only').exists())
 
 
 
@@ -270,6 +273,10 @@ class OperationalRateLimitTests(TestCase):
         self.assertFalse(RateBucket.objects.filter(pk='old-counter').exists())
         self.assertEqual(RateBucket.objects.get(pk='active-counter').count,10)
         self.assertEqual(RateBucket.objects.get(pk=key).count,200)
+        RateBucket.objects.create(key='expired-mfa-only',count=1,created_at=moment-timedelta(hours=2))
+        from .security import consume_attempt
+        self.assertTrue(consume_attempt(synthetic_user('synthetic-mfa-retention')))
+        self.assertFalse(RateBucket.objects.filter(pk='expired-mfa-only').exists())
 
 
 @override_settings(ANTHEEC_OPERATIONAL=True,ANTHEEC_OWNER_TESTING=False,
