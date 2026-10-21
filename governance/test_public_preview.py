@@ -50,6 +50,9 @@ class PublicPreviewTests(TestCase):
                 with self.subTest(url=url):
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, 200)
+                    head = self.client.head(url)
+                    self.assertEqual(head.status_code, 200)
+                    self.assertEqual(head.content, b'')
                     self.assertIn('no-store', response['Cache-Control'])
                     self.assertIn('noindex', response['X-Robots-Tag'])
                     self.assertTrue(response.context['public_preview'])
@@ -63,6 +66,9 @@ class PublicPreviewTests(TestCase):
         image = ActivityImage.objects.create(activity=self.activity, jpeg=picture())
         image_url = f'/activities/{self.activity.pk}/images/{image.serial}/'
         self.assertEqual(self.client.get(image_url).status_code, 200)
+        head = self.client.head(image_url)
+        self.assertEqual(head.status_code, 200)
+        self.assertEqual(head.content, b'')
         image.active = False
         image.save(update_fields=['active'])
         self.assertEqual(self.client.get(image_url).status_code, 404)

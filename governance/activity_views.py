@@ -149,7 +149,7 @@ def image_query():
 
 
 @never_cache
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "HEAD"])
 @localized
 def listing(request):
     ctx = context(request)
@@ -180,7 +180,7 @@ def listing(request):
 
 
 @never_cache
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "HEAD"])
 @localized
 def public_detail(request, activity_id):
     row = get_object_or_404(
@@ -200,7 +200,7 @@ def public_detail(request, activity_id):
 
 
 @never_cache
-@require_http_methods(["GET"])
+@require_http_methods(["GET", "HEAD"])
 def editorial_image(request, activity_id, serial):
     row = get_object_or_404(
         ActivityImage.objects.select_related("activity"),
