@@ -1,0 +1,39 @@
+"""Explicit shared-ingress budgets; never interpret untrusted proxy headers as clients."""
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+from .models import RateBucket
+from .services import digest
+
+
+# Deliberate whole-service ceilings, not measured capacity or DDoS guarantees.
+HOSTED_LIMITS = {'auth': (300, 200), 'verify': (600, 300), 'partnership': (600, 50)}
+
+
+def consume(request, scope, *, identity=None):
+    period, ceiling = HOSTED_LIMITS[scope]
+    window = int(timezone.now().timestamp() // period)
+    if getattr(settings, 'ANTHEEC_OPERATIONAL', False):
+        budgets = [(digest(f'operational-{scope}-global:{window}'), ceiling)]
+        if scope == 'auth':
+            # Separate account budget prevents one account's mistakes from
+            # imposing a ten-attempt ceiling on all users behind the ingress.
+            name = str(identity or '').strip().casefold()[:150]
+            budgets.append((digest(f'operational-auth-account:{name}:{window}'), 10))
+    else:
+        peer = request.META.get('REMOTE_ADDR', '')
+        if scope == 'partnership':
+            budgets = [(digest(f'partnership-ip:{peer}:{window}'), 5),
+                       (digest(f'partnership-global:{window}'), 50)]
+        else:
+            prefix = 'member-auth' if scope == 'auth' else 'verify'
+            budgets = [(digest(f'{prefix}:{peer}:{window}'), 10 if scope == 'auth' else 30)]
+    with transaction.atomic():
+        for key, limit in sorted(budgets):
+            bucket, _ = RateBucket.objects.get_or_create(key=key)
+            bucket = RateBucket.objects.select_for_update().get(pk=key)
+            bucket.count += 1
+            bucket.save(update_fields=['count'])
+            if bucket.count > limit:
+                return False
+    return True

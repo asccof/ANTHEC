@@ -196,3 +196,32 @@ class OperationalPDFTests(TestCase):
         new.is_specimen=True
         from django.core.exceptions import ValidationError
         with self.assertRaises(ValidationError):new.save()
+
+
+@override_settings(ANTHEEC_OPERATIONAL=True)
+class OperationalRateLimitTests(TestCase):
+    def test_accounts_do_not_share_a_ten_attempt_ceiling_on_one_ingress_peer(self):
+        from django.test import RequestFactory
+        from .public_limits import consume
+        request=RequestFactory().post('/members/login/',REMOTE_ADDR='10.0.0.1')
+        for _ in range(10):self.assertTrue(consume(request,'auth',identity='first'))
+        self.assertFalse(consume(request,'auth',identity='first'))
+        self.assertTrue(consume(request,'auth',identity='second'))
+
+    def test_forwarded_headers_or_peer_changes_cannot_evade_global_ceilings(self):
+        from django.test import RequestFactory
+        from .public_limits import consume
+        from .services import digest
+        from django.utils import timezone
+        for scope,period,limit in (('auth',300,200),('verify',600,300),('partnership',600,50)):
+            key=digest(f'operational-{scope}-global:{int(timezone.now().timestamp()//period)}')
+            RateBucket.objects.create(key=key,count=limit)
+            for peer in ('10.0.0.1','10.0.0.2'):
+                request=RequestFactory().post('/',REMOTE_ADDR=peer,HTTP_X_FORWARDED_FOR='198.51.100.1',HTTP_CF_CONNECTING_IP='198.51.100.2')
+                self.assertFalse(consume(request,scope,identity='new-account'))
+
+    def test_verification_and_partnership_endpoints_do_not_inherit_old_peer_limits(self):
+        for _ in range(31):
+            self.assertEqual(self.client.post('/verify/',{'serial':'bad','code':'bad'}).status_code,404)
+        for _ in range(6):
+            self.assertEqual(self.client.post('/partners/request/',{}).status_code,400)

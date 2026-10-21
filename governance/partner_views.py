@@ -43,14 +43,9 @@ def request_partnership(request):
     form=PartnershipForm(request.POST if request.method=='POST' else None,labels=ctx['labels'])
     if request.method=='POST':
         require_applications_enabled()
-        window=int(timezone.now().timestamp()//600)
-        keys=[(digest(f'partnership-ip:{request.META.get("REMOTE_ADDR","")}:{window}'),5),(digest(f'partnership-global:{window}'),50)]
-        with transaction.atomic():
-            for key,limit in sorted(keys):
-                bucket,_=RateBucket.objects.get_or_create(key=key)
-                bucket=RateBucket.objects.select_for_update().get(pk=key)
-                bucket.count+=1; bucket.save(update_fields=['count'])
-                if bucket.count>limit: return HttpResponse('Try again later',status=429)
+        from .public_limits import consume
+        if not consume(request, 'partnership'):
+            return HttpResponse('Try again later',status=429)
         if form.is_valid():
             PartnershipRequest.objects.create(**form.cleaned_data)
             return redirect(reverse('partnership_request')+'?lang='+ctx['language']+'&received=1')
