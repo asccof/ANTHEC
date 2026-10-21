@@ -1,4 +1,4 @@
-"""Render owner-only testing. Public production and issuance remain unavailable."""
+"""Secure hosted trial or read-only public preview; real operations remain blocked."""
 import os
 import re
 import base64
@@ -16,10 +16,21 @@ def required(name):
     return value
 
 
-if os.environ.get("ANTHEEC_MODE") != "owner-testing":
-    raise ImproperlyConfigured("Only explicit owner-testing deployment is authorized.")
+mode = os.environ.get("ANTHEEC_MODE")
+if mode not in {"owner-testing", "public-preview"}:
+    raise ImproperlyConfigured("Only owner-testing or read-only public-preview is supported.")
 DEBUG = False
-ANTHEEC_OWNER_TESTING = True
+ANTHEEC_OWNER_TESTING = mode == "owner-testing"
+ANTHEEC_PUBLIC_PREVIEW = mode == "public-preview"
+# Independent kill switches. Enabling real transactions is deliberately not
+# supported by either preview mode; a later governed release must add it.
+for name in ("ANTHEEC_APPLICATIONS_ENABLED", "ANTHEEC_PAYMENTS_ENABLED", "ANTHEEC_ISSUANCE_ENABLED"):
+    value = os.environ.get(name, "0")
+    if value != "0":
+        raise ImproperlyConfigured(f"{name} must be 0 in hosted preview modes.")
+    globals()[name] = False
+if ANTHEEC_PUBLIC_PREVIEW and os.environ.get("ANTHEEC_PUBLIC_CONTENT_APPROVED") != "1":
+    raise ImproperlyConfigured("Review public CMS, activities and partners before enabling public-preview.")
 SECRET_KEY = required("ANTHEEC_SECRET_KEY")
 if len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5:
     raise ImproperlyConfigured("A unique random secret of at least 50 characters is required.")
@@ -42,7 +53,7 @@ ANTHEEC_PUBLIC_ORIGIN = "https://" + origin.hostname
 ALLOWED_HOSTS = [origin.hostname]
 CSRF_TRUSTED_ORIGINS = [ANTHEEC_PUBLIC_ORIGIN]
 WAGTAILADMIN_BASE_URL = ANTHEEC_PUBLIC_ORIGIN
-WAGTAIL_SITE_NAME = "ANTHEC — private owner testing"
+WAGTAIL_SITE_NAME = "ANTHEC — private owner testing" if ANTHEEC_OWNER_TESTING else "ANTHEC — preview"
 OTP_TOTP_ISSUER = "ANTHEC owner testing"
 
 database = urlsplit(required("DATABASE_URL"))
@@ -78,7 +89,8 @@ EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 MIDDLEWARE = list(MIDDLEWARE)  # noqa: F405
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 MIDDLEWARE.insert(MIDDLEWARE.index("governance.middleware.AdminSecurityMiddleware"),
-                  "governance.deployment.OwnerTestingMiddleware")
+                  "governance.deployment.OwnerTestingMiddleware" if ANTHEEC_OWNER_TESTING
+                  else "governance.deployment.PublicPreviewMiddleware")
 STORAGES = {
     # Encrypted database assets retain their existing protected approval flows.
     # No filesystem uploads before private storage and its restore are approved.

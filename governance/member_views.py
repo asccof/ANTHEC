@@ -74,6 +74,9 @@ def auth_attempt(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def account(request, mode):
+    if mode == "signup":
+        from .deployment import require_applications_enabled
+        require_applications_enabled()
     if request.user.is_authenticated:
         return go(request, "member_home")
     ctx = context(request)

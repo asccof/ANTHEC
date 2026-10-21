@@ -81,7 +81,7 @@ class PolicyLocaleMiddleware(LocaleMiddleware):
 
     def process_response(self, request, response):
         from django.conf import settings
-        if (getattr(settings, "ANTHEEC_OWNER_TESTING", False)
+        if ((getattr(settings, "ANTHEEC_OWNER_TESTING", False) or getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False))
                 and getattr(response, "anthec_private_denial", False)):
             # The private gate runs before URL resolution. Do not convert its
             # denials into locale-prefixed Wagtail catch-all redirects.
@@ -90,7 +90,7 @@ class PolicyLocaleMiddleware(LocaleMiddleware):
         if match and match.func.__module__.startswith("governance."):
             return response
         result = super().process_response(request, response)
-        if getattr(settings, "ANTHEEC_OWNER_TESTING", False):
+        if (getattr(settings, "ANTHEEC_OWNER_TESTING", False) or getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)):
             # LocaleMiddleware can replace the response with a redirect. Keep
             # the private cache/indexing headers on that replacement as well.
             result["Cache-Control"] = "no-store, private"

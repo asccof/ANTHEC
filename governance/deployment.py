@@ -5,23 +5,43 @@ from django.core.files.storage import Storage
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import redirect
+from django.urls import resolve, Resolver404
 from django.utils import timezone
 from .models import Authority, RateBucket
 
 
+def workflow_disabled(name):
+    return bool(
+        getattr(settings, "ANTHEEC_OWNER_TESTING", False)
+        or getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)
+        or not getattr(settings, f"ANTHEEC_{name}_ENABLED", True)
+    )
+
+
+def presentation_context(request):
+    return {
+        "public_preview": getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False),
+        "applications_disabled": workflow_disabled("APPLICATIONS"),
+        "verification_disabled": bool(
+            getattr(settings, "ANTHEEC_OWNER_TESTING", False)
+            or getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)
+        ),
+    }
+
+
 def require_issuance_enabled():
-    if getattr(settings, "ANTHEEC_OWNER_TESTING", False):
-        raise PermissionDenied("Document issuance and generation are disabled during owner testing.")
+    if workflow_disabled("ISSUANCE"):
+        raise PermissionDenied("Document issuance and generation are disabled in this deployment.")
 
 
 def require_applications_enabled():
-    if getattr(settings, "ANTHEEC_OWNER_TESTING", False):
-        raise PermissionDenied("Applications and registrations are disabled during owner testing.")
+    if workflow_disabled("APPLICATIONS"):
+        raise PermissionDenied("Applications and registrations are disabled in this deployment.")
 
 
 def require_payments_enabled():
-    if getattr(settings, "ANTHEEC_OWNER_TESTING", False):
-        raise PermissionDenied("Payments and refunds are disabled during owner testing.")
+    if workflow_disabled("PAYMENTS"):
+        raise PermissionDenied("Payments and refunds are disabled in this deployment.")
 
 
 class DisabledMediaStorage(Storage):
@@ -29,7 +49,7 @@ class DisabledMediaStorage(Storage):
         raise PermissionDenied("Filesystem media is unavailable during owner testing.")
 
     def _save(self, name, content):
-        raise PermissionDenied("Filesystem uploads are disabled during owner testing.")
+        raise PermissionDenied("Filesystem uploads are disabled in this deployment.")
 
     def exists(self, name):
         return False
@@ -83,7 +103,8 @@ class OwnerTestingMiddleware:
         # consume the budget. Render's REMOTE_ADDR is a shared ingress peer,
         # not a client identity; use only the explicit global ceiling and do
         # not trust client-supplied forwarding headers.
-        if (not getattr(settings, "ANTHEEC_OWNER_TESTING", False) or
+        if (not (getattr(settings, "ANTHEEC_OWNER_TESTING", False) or
+                     getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)) or
                 request.path_info != "/admin/login/" or request.method != "POST"):
             return None
         from .services import digest
@@ -97,3 +118,37 @@ class OwnerTestingMiddleware:
         if bucket.count > 50:
             return HttpResponse("Try again later", status=429)
         return None
+
+
+class PublicPreviewMiddleware(OwnerTestingMiddleware):
+    """Allow only public editorial GET/HEAD routes; retain primary-only administration.
+
+    This is not a real-data production mode. Unknown/new endpoints are denied
+    until deliberately included, even if their view has no authentication check.
+    """
+    PUBLIC_VIEWS = {
+        "partners", "activity_list", "activity_public_detail", "activity_editorial_image"
+    }
+
+    def public_read(self, request):
+        if request.method not in {"GET", "HEAD"}:
+            return False
+        if request.path_info == "/":
+            return True  # LocaleMiddleware selects the public homepage.
+        try:
+            match = resolve(request.path_info, urlconf=getattr(request, "urlconf", None))
+        except Resolver404:
+            return False
+        from wagtail.views import serve
+        return match.view_name in self.PUBLIC_VIEWS or match.func is serve
+
+    def __call__(self, request):
+        if not getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False):
+            return super().__call__(request)
+        if self.public_read(request):
+            response = self.get_response(request)
+        else:
+            response = self.restricted_response(request)
+        response["Cache-Control"] = "no-store, private"
+        response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        return response
