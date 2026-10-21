@@ -80,6 +80,26 @@ class OperationalBoundaryTests(TestCase):
         self.http_login()
         self.assertEqual(self.client.get('/admin/').status_code,200)
 
+    def test_primary_password_only_is_anonymous_on_public_pages_and_blocked_on_private_routes(self):
+        from wagtail.models import Site, PageViewRestriction
+        from content.models import InstitutionalPage
+        home=Site.objects.get(is_default_site=True).root_page.specific
+        child=home.add_child(instance=InstitutionalPage(title='PRIVATE CMS',slug='restricted',live=False,
+            body=[('paragraph','PRIVATE BODY BEFORE FACTOR')]))
+        child.save_revision().publish()
+        PageViewRestriction.objects.create(page=child,restriction_type='login')
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get('/ar/').status_code,200)
+        response=self.client.get('/ar/restricted/')
+        self.assertNotIn(b'PRIVATE BODY BEFORE FACTOR',response.content)
+        for url in ('/members/','/members/documents/','/my-documents/999/','/operations/membership/'):
+            response=self.client.get(url)
+            self.assertEqual(response.url,'/security/challenge/')
+        self.assertEqual(self.client.get('/security/challenge/').status_code,200)
+        self.assertEqual(self.client.get('/health/').status_code,200)
+        self.http_login()
+        self.assertEqual(self.client.get('/ar/restricted/').status_code,200)
+
     @override_settings(ANTHEEC_APPLICATIONS_ENABLED=False, ANTHEEC_PAYMENTS_ENABLED=False,
                        ANTHEEC_ISSUANCE_ENABLED=False)
     def test_kill_switches_block_signup_and_domain_writes(self):
