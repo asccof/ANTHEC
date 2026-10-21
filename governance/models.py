@@ -2,6 +2,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 
 class Authority(models.Model):
@@ -461,6 +462,7 @@ class RecoveryCode(models.Model):
 
 
 class RateBucket(models.Model):
+    created_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True)
     key = models.CharField(max_length=64, primary_key=True)
     count = models.PositiveIntegerField(default=0)
 

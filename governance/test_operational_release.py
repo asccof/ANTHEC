@@ -242,3 +242,43 @@ class OperationalRateLimitTests(TestCase):
                 self.assertFalse(consume(request,'auth',identity=f'fresh-{index}'))
         self.assertEqual(RateBucket.objects.count(),1)
         self.assertEqual(RateBucket.objects.get(pk=key).count,200)
+
+    def test_old_counters_expire_without_resetting_active_global_or_account_limits(self):
+        from datetime import timedelta
+        from django.test import RequestFactory
+        from django.utils import timezone
+        from .public_limits import consume
+        from .services import digest
+        moment=timezone.now()
+        key=digest(f'operational-auth-global:{int(moment.timestamp()//300)}')
+        RateBucket.objects.create(key=key,count=200,created_at=moment)
+        RateBucket.objects.create(key='old-counter',count=50,created_at=moment-timedelta(hours=2))
+        RateBucket.objects.create(key='active-counter',count=10,created_at=moment-timedelta(minutes=9))
+        with patch('governance.public_limits.timezone.now',return_value=moment):
+            self.assertFalse(consume(RequestFactory().post('/'),'auth',identity='fresh'))
+        self.assertFalse(RateBucket.objects.filter(pk='old-counter').exists())
+        self.assertEqual(RateBucket.objects.get(pk='active-counter').count,10)
+        self.assertEqual(RateBucket.objects.get(pk=key).count,200)
+
+
+@override_settings(ANTHEEC_OPERATIONAL=True,ANTHEEC_OWNER_TESTING=False,
+                   ANTHEEC_PUBLIC_PREVIEW=False,ANTHEEC_APPLICATIONS_ENABLED=False)
+class OperationalProfileMaintenanceTests(TestCase):
+    def test_closed_applications_do_not_block_existing_member_contact_correction(self):
+        from . import member_services
+        from django.core.exceptions import PermissionDenied
+        user=synthetic_user('synthetic-maintenance')
+        person=Person.objects.create(user=user,full_name='Synthetic Before')
+        member_services.update_profile(user,key='contact-correction',full_name='Synthetic After',
+            contact='maintenance@example.invalid',directory_consent=False,notice=True,
+            phone='0000000000',profession='Synthetic field')
+        person.refresh_from_db()
+        self.assertEqual(person.full_name,'Synthetic After')
+        with self.assertRaises(PermissionDenied):
+            member_services.submit_application(user,key='still-closed')
+        with self.assertRaises(PermissionDenied):
+            member_services.submit_renewal(user,key='still-closed-renewal')
+        self.assertEqual(self.client.get('/members/signup/').status_code,403)
+        with override_settings(ANTHEEC_PUBLIC_PREVIEW=True):
+            with self.assertRaises(PermissionDenied):
+                member_services.update_profile(user,key='preview-profile')
