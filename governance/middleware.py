@@ -90,7 +90,8 @@ class PolicyLocaleMiddleware(LocaleMiddleware):
         if match and match.func.__module__.startswith("governance."):
             return response
         result = super().process_response(request, response)
-        if (getattr(settings, "ANTHEEC_OWNER_TESTING", False) or getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)):
+        if (getattr(settings, "ANTHEEC_OWNER_TESTING", False) or getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)
+                or getattr(settings, "ANTHEEC_OPERATIONAL", False)):
             # LocaleMiddleware can replace the response with a redirect. Keep
             # the private cache/indexing headers on that replacement as well.
             result["Cache-Control"] = "no-store, private"

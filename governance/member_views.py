@@ -57,16 +57,10 @@ def go(request, name):
 
 
 def auth_attempt(request):
-    # One hashed IP bucket covers signup/signin. Fixed window, no identities logged.
-    key = services.digest(
-        f'member-auth:{request.META.get("REMOTE_ADDR", "")}:{int(timezone.now().timestamp() // 300)}'
-    )
-    with transaction.atomic():
-        row, _ = RateBucket.objects.get_or_create(key=key)
-        row = RateBucket.objects.select_for_update().get(pk=key)
-        row.count += 1
-        row.save(update_fields=["count"])
-        return row.count <= 10
+    from .public_limits import consume
+    identity = request.POST.get("username") or (request.user.get_username() if request.user.is_authenticated else "")
+    return consume(request, "auth", identity=identity)
+
 
 
 @never_cache

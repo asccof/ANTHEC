@@ -89,7 +89,15 @@ ROWS.update({
 def vocabulary(language):
     language = language if language in ("ar", "fr", "en") else "ar"
     index = ("ar", "fr", "en").index(language)
-    return {key: values[index] for key, values in ROWS.items()}
+    result = {key: values[index] for key, values in ROWS.items()}
+    from django.conf import settings
+    if getattr(settings, "ANTHEEC_OPERATIONAL", False):
+        result["privacy_detail"] = (
+            "بيانات الطلبات والتقييمات داخلية. التحقق من الوثائق بمرجعها ورمزها أو QR، دون بحث بالأسماء.",
+            "Demandes et évaluations restent privées. Vérification par référence et code ou QR, sans recherche par nom.",
+            "Applications and assessments remain private. Verify documents by reference and code or QR, without name search.",
+        )[index]
+    return result
 
 def current_memberships(language):
     labels = member_vocabulary(language)[1]

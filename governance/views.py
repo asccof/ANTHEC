@@ -43,19 +43,11 @@ def verify(request):
                 "public_labels": public_words(language),
             },
         )
-    # No forwarded headers trusted; fixed 10-minute IP bucket, hashed and bounded.
-    bucket = services.digest(
-        f'verify:{request.META.get("REMOTE_ADDR","")}:{int(timezone.now().timestamp()//600)}'
-    )
-    with transaction.atomic():
-        row, _ = RateBucket.objects.get_or_create(key=bucket)
-        row = RateBucket.objects.select_for_update().get(pk=bucket)
-        row.count += 1
-        row.save(update_fields=["count"])
-        if row.count > 30:
-            if "text/html" in request.headers.get("Accept", ""):
-                return verification_failure(request, 'verify_limit', 429)
-            return JsonResponse({"error": "Try again later"}, status=429)
+    from .public_limits import consume
+    if not consume(request, "verify"):
+        if "text/html" in request.headers.get("Accept", ""):
+            return verification_failure(request, 'verify_limit', 429)
+        return JsonResponse({"error": "Try again later"}, status=429)
     data = services.lookup_document(
         token=request.POST.get("token"),
         serial=request.POST.get("serial"),

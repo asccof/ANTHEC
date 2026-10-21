@@ -353,3 +353,10 @@ Owner reported successful local Gemini translation testing, then noted that the 
 ## 2026-10-21 — remaining presentation and current closure register
 
 Owner requested continuing the remaining work. ADR033 prepares public partners/proposal and verification form/result/error presentation, private partnership register/review/edit and independent accreditation presentation, with preserved scopes/private projections/CSRF/trial gates and stable machine verification responses. Browser invalid/throttled verification returns localized non-reflecting HTML at existing404/429 statuses. CURRENT_COMPLETION_AR.md replaces stale assumptions with exact PR52 baseline, owner-reported local acceptance, current correction UAT, unresolved latency/OOM/restore/legal/repository controls and explicitly incomplete original feature areas. No hosted deployment, resource/price increase, payment/email activation, branch policy, private file upload or Tighri changes. Required checks/CI/exact-head review and owner visual acceptance remain distinct PR evidence.
+
+
+## 2026-10-21 operational release preparation
+
+Owner requests continued engineering toward full operational launch; CNDP filing is explicitly deferred, not evidenced as exempt or completed. ADR035 adds an independently acknowledged operational runtime with off-by-default application/payment/issuance switches, secure existing settings, protected administration, and a sanitized read-only release observation command. This is code preparation, not live activation. No Render environment, database, plan, external delivery or Tighri change. PostgreSQL CI and exact-head review remain pending until evidenced in the PR.
+
+Owner reports successful actual Render export/local restore of one encrypted synthetic audit canary and `restore_decryption_ok` with the saved original key. This proves that limited round trip; it does not prove hosted restore, restoration of photo/PDF artifacts or capacity. Versioned privacy acknowledgement implementation, rights/retention execution, hosted content/signing acceptance, independent security acceptance and source branch protections remain release work.

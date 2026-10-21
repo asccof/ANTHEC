@@ -3,7 +3,7 @@ import secrets
 from .base import *  # noqa: F403
 from django.core.exceptions import ImproperlyConfigured
 
-if os.environ.get("ANTHEEC_MODE") in {"owner-testing", "public-preview"}:
+if os.environ.get("ANTHEEC_MODE") in {"owner-testing", "public-preview", "operational"}:
     raise ImproperlyConfigured("Owner testing requires the secure production settings module.")
 
 DEBUG = True

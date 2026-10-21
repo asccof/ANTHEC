@@ -21,6 +21,7 @@ def workflow_disabled(name):
 def presentation_context(request):
     return {
         "public_preview": getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False),
+        "operational": getattr(settings, "ANTHEEC_OPERATIONAL", False),
         "applications_disabled": workflow_disabled("APPLICATIONS"),
         "verification_disabled": bool(
             getattr(settings, "ANTHEEC_OWNER_TESTING", False)
@@ -107,6 +108,12 @@ class OwnerTestingMiddleware:
                      getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)) or
                 request.path_info != "/admin/login/" or request.method != "POST"):
             return None
+        return self.login_budget()
+
+    @staticmethod
+    def login_budget():
+        from .public_limits import prune_expired
+        prune_expired()
         from .services import digest
         window = int(timezone.now().timestamp() // 300)
         key = digest(f"private-login-global:{window}")
@@ -158,3 +165,43 @@ class PublicPreviewMiddleware(OwnerTestingMiddleware):
         response["Cache-Control"] = "no-store, private"
         response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
         return response
+
+
+class OperationalMiddleware(PublicPreviewMiddleware):
+    """Operational HTTP protections; domain ownership and scoped admin rules stay in views.
+
+    Preserve the global admin login ceiling without trusting forwarding headers.
+    Dynamic private responses are never cacheable. Public discovery is a separate
+    editorial decision, so this first operational stage remains noindex.
+    """
+    def __call__(self, request):
+        if not getattr(settings, "ANTHEEC_OPERATIONAL", False):
+            return self.get_response(request)
+        user = request.user
+        factor_pending = bool(user.is_authenticated and
+            Authority.objects.filter(pk=1, primary_id=user.pk).exists() and
+            (not user.is_verified() or request.session.get("authority_epoch") != 0))
+        login_paths = {"/health/", "/admin/login/", "/admin/logout/", "/members/logout/",
+                       "/security/enroll/", "/security/challenge/"}
+        if factor_pending and request.path_info not in login_paths:
+            if self.public_read(request):
+                # Password-only primary sessions must not unlock CMS login
+                # restrictions or personalized/private public-view branches.
+                from django.contrib.auth.models import AnonymousUser
+                request.user = AnonymousUser()
+                response = self.get_response(request)
+            else:
+                response = redirect("/security/challenge/")
+        else:
+            response = self.get_response(request)
+        response["Cache-Control"] = "no-store, private"
+        response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        return response
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if not getattr(settings, "ANTHEEC_OPERATIONAL", False):
+            return None
+        if request.path_info != "/admin/login/" or request.method != "POST":
+            return None
+        # Reuse the same post-CSRF budget with no synthetic preview setting.
+        return self.login_budget()

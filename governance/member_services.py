@@ -3,6 +3,7 @@
 from functools import wraps
 import uuid
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -16,7 +17,12 @@ def member_command(action):
         @wraps(fn)
         def wrapped(user, *, key, **payload):
             from .deployment import require_applications_enabled
-            require_applications_enabled()
+            if action == "member.profile":
+                if (getattr(settings, "ANTHEEC_OWNER_TESTING", False) or
+                        getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False)):
+                    raise PermissionDenied("Profile updates are disabled in preview modes.")
+            else:
+                require_applications_enabled()
             if (
                 not user.is_authenticated
                 or not isinstance(key, str)

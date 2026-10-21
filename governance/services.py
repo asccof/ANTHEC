@@ -388,6 +388,7 @@ def issue(
     from .certificate_assets import snapshot_for as signing_snapshot_for
     signature, stamp, signing = signing_snapshot_for(kind)
     doc = Document.objects.create(
+        is_specimen=not getattr(settings, "ANTHEEC_OPERATIONAL", False),
         issued_at=timezone.now(),
         subject_name=name,
         portrait=portrait,
@@ -782,5 +783,7 @@ def lookup_document(*, token=None, serial=None, code=None):
         except (ValidationError, ValueError):
             return None
     else:
+        return None
+    if doc and getattr(settings, "ANTHEEC_OPERATIONAL", False) and doc.is_specimen:
         return None
     return public_document(doc) if doc else None
