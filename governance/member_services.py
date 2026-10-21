@@ -15,6 +15,8 @@ def member_command(action):
     def decorate(fn):
         @wraps(fn)
         def wrapped(user, *, key, **payload):
+            from .deployment import require_applications_enabled
+            require_applications_enabled()
             if (
                 not user.is_authenticated
                 or not isinstance(key, str)

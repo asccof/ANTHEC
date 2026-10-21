@@ -26,7 +26,7 @@ def context(request):
     return {'language':language,'labels':labels,'direction':'rtl' if language=='ar' else 'ltr','owner_testing':getattr(settings,'ANTHEEC_OWNER_TESTING',False),'public_labels':public_words(language)}
 
 @never_cache
-@require_http_methods(['GET'])
+@require_http_methods(["GET", "HEAD"])
 @localized
 def listing(request):
     ctx=context(request)

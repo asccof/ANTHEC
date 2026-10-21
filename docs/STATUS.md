@@ -1,5 +1,11 @@
 # Execution ledger
 
+## 2026-10-21 — staged public preview preparation
+
+Owner confirmed fresh backup custody and successful primary login after PR53 deployment `1487da5` (`dep-dbcbfloae00c7397l3o0`). Hosted predeploy migrated content0002–0003/governance0010–0014 successfully; initial health/login/static and anonymous-denial checks passed. No long-term stability or real-data release acceptance is inferred.
+
+Owner authorized the next preparation increment: secure editorial-only `public-preview`, independent fail-closed application/payment/issuance guards, closed-link presentation and primary-only administration retained. See ADR034. This branch has no schema change; tests/CI/exact review remain separate evidence recorded in its PR. Current Render settings remain owner-testing; no hosted redeploy/config change, paid resource, DNS, Tighri or MHIOS change is part of this increment.
+
 ## 2026-10-12 — private Render deployment preparation
 
 The prepared PostgreSQL disk is explicitly 1 GB with storage autoscaling disabled, matching the $13 monthly baseline; Render's larger default disk would otherwise increase cost. The revised Blueprint passes the official JSON Schema. No service or storage subscription was created.

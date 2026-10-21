@@ -4,7 +4,7 @@ from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test", "owner-testing"}:
+if os.environ.get("ANTHEEC_MODE", "development") not in {"development", "test", "owner-testing", "public-preview"}:
     raise ImproperlyConfigured("Public production mode is not authorized.")
 
 INSTALLED_APPS = [
@@ -40,6 +40,7 @@ TEMPLATES = [{
         "django.contrib.auth.context_processors.auth",
         "django.contrib.messages.context_processors.messages",
         "django.template.context_processors.i18n",
+        "governance.deployment.presentation_context",
     ]},
 }]
 if os.environ.get("ANTHEEC_DB_ENGINE", "sqlite") == "postgresql":
@@ -109,3 +110,9 @@ except (ValueError, TypeError) as exc:
 ANTHEEC_GEMINI_ENABLED = os.environ.get('ANTHEEC_GEMINI_ENABLED') == '1'
 ANTHEEC_GEMINI_FREE_PROJECT_CONFIRMED = os.environ.get('ANTHEEC_GEMINI_FREE_PROJECT_CONFIRMED') == '1'
 ANTHEEC_GEMINI_API_KEY = os.environ.get('ANTHEEC_GEMINI_API_KEY', '')
+
+# Local synthetic workflows remain enabled; hosted settings override these.
+ANTHEEC_APPLICATIONS_ENABLED = True
+ANTHEEC_PAYMENTS_ENABLED = True
+ANTHEEC_ISSUANCE_ENABLED = True
+ANTHEEC_PUBLIC_PREVIEW = False
