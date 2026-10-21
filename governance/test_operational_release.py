@@ -174,6 +174,14 @@ class OperationalPDFTests(TestCase):
             old_bytes=pdf_services.bytes_for(previous)
         from .documents import printable
         from . import services
+        # An old worker omits the new column during a rolling deploy.
+        from django.db.migrations.executor import MigrationExecutor
+        old_model=MigrationExecutor(connection).loader.project_state([('governance','0014_translationattempt')]).apps.get_model('governance','Document')
+        legacy=old_model.objects.create(kind='president_card',version=99,institutional_role_id=self.role.pk,
+            token_digest='synthetic-legacy-token',code_digest='synthetic-legacy-code',
+            subject_name='Synthetic Legacy',credentials=self.doc.credentials)
+        from .models import Document
+        self.assertTrue(Document.objects.get(pk=legacy.pk).is_specimen)
         self.assertTrue(self.doc.is_specimen)
         self.assertIn('development',printable(self.doc,'en').lower())
         old, old_metadata=pdf_design.render(self.doc,'en')
@@ -250,6 +258,9 @@ class OperationalRateLimitTests(TestCase):
         from .public_limits import consume
         from .services import digest
         moment=timezone.now()
+        with connection.cursor() as cursor:
+            cursor.execute('insert into governance_ratebucket (key,count) values (%s,%s)', ['legacy-worker',1])
+        self.assertIsNotNone(RateBucket.objects.get(pk='legacy-worker').created_at)
         key=digest(f'operational-auth-global:{int(moment.timestamp()//300)}')
         RateBucket.objects.create(key=key,count=200,created_at=moment)
         RateBucket.objects.create(key='old-counter',count=50,created_at=moment-timedelta(hours=2))

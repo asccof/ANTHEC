@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.db.models.functions import Now
 
 
 class Authority(models.Model):
@@ -350,7 +351,7 @@ class CertificateAsset(models.Model):
 
 
 class Document(models.Model):
-    is_specimen = models.BooleanField(default=True, editable=False)
+    is_specimen = models.BooleanField(default=True, db_default=True, editable=False)
     serial = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     issued_at = models.DateTimeField(null=True, editable=False)
     kind = models.CharField(max_length=30)
@@ -462,7 +463,7 @@ class RecoveryCode(models.Model):
 
 
 class RateBucket(models.Model):
-    created_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True)
+    created_at = models.DateTimeField(default=timezone.now, db_default=Now(), editable=False, db_index=True)
     key = models.CharField(max_length=64, primary_key=True)
     count = models.PositiveIntegerField(default=0)
 

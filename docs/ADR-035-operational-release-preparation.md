@@ -18,6 +18,8 @@ Public operational forms do not treat Render REMOTE_ADDR as a client identity. T
 
 Migration 0016 adds indexed creation time to rate buckets, initializing legacy rows conservatively at migration time. Operational attempts prune up to 1000 counters older than one hour, before taking current-window locks; PostgreSQL cleanup skips locked rows. Active five/ten-minute limits are retained. No scheduled worker or paid resource is needed, and no growth continues when there is no traffic. Application/renewal guards no longer block ordinary profile correction outside preview modes; signup/application/renewal still obey their switch, and previews still deny profile writes.
 
+Both additive fields retain database defaults (specimen true, counter creation time now), so an old worker can still insert records during zero-downtime cutover. Regressions exercise the historical pre-0015 Document ORM and a legacy key/count-only counter insert against the new schema.
+
 ## Work still required before activation
 
 - Implement/version/test the approved privacy notice and acknowledgement evidence; existing document notice is not a full privacy system. Implement the actual rights/retention procedure and reconcile proposed periods with financial obligations and provider retention.

@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='document',
             name='is_specimen',
-            field=models.BooleanField(default=True, editable=False),
+            field=models.BooleanField(default=True, db_default=True, editable=False),
         ),
     ]
