@@ -91,6 +91,7 @@ def verify(request):
                 "labels": labels,
                 "direction": "rtl" if language == "ar" else "ltr",
                 "public_labels": public_words(language),
+                "referrer_policy": "no-referrer",
                 "rows": [
                     {
                         "label": labels[k],

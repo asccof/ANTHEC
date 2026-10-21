@@ -11,6 +11,7 @@ class PublicPresentationTests(TestCase):
             self.assertEqual(response.status_code,404)
             self.assertContains(response,'id="verification"',status_code=404)
             self.assertContains(response,'role="alert"',status_code=404)
+            self.assertContains(response,'name="referrer" content="same-origin"',status_code=404)
             self.assertContains(response,f'lang="{language}"',status_code=404)
             for secret in ('synthetic-secret-reference','synthetic-secret-code','synthetic-private-token'):
                 self.assertNotContains(response,secret,status_code=404)
