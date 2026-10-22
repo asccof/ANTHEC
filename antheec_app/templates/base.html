@@ -3,7 +3,7 @@
 <html lang="{{ page.locale.language_code }}" dir="{% if page.locale.language_code == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ page.seo_title|default:page.title }} | ANTHEC</title>
+  <title>{% if page.seo_title %}{{ page.seo_title }}{% else %}{{ page.title }} | ANTHEC{% endif %}</title>
   <meta name="description" content="{{ page.search_description }}">
   <meta name="referrer" content="same-origin">
   <link rel="stylesheet" href="{% static 'site.css' %}">
@@ -27,6 +27,7 @@
     {% if owner_testing %}<a class="nav-pill" href="/admin/">{{ public_labels.admin_area }}</a>{% elif not public_preview %}<a class="nav-pill" href="{% url 'member_home' %}?lang={{ page.locale.language_code }}">{{ public_labels.member_area }}</a>{% endif %}
   </nav>
 </div></header>
+{% if editorial_navigation %}<nav class="shell editorial-navigation" aria-label="{% if page.locale.language_code == 'ar' %}صفحات الجمعية{% else %}{{ public_labels.nav }}{% endif %}">{% for item in editorial_navigation %}<a href="{{ item.url }}"{% if item.pk == page.pk %} aria-current="page"{% endif %}>{{ item.title }}</a>{% endfor %}</nav>{% endif %}
 {% if owner_testing %}<aside class="trial-notice shell" role="note"><strong>{{ public_labels.testing }}</strong><p>{{ public_labels.testing_detail }}</p></aside>{% endif %}
 {% include "governance/deployment_notice.html" with language=page.locale.language_code %}
 {% if synthetic_preview and not public_preview and not operational %}<aside class="synthetic-notice shell" role="note">{{ public_labels.synthetic_notice }}</aside>{% endif %}

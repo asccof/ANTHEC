@@ -18,3 +18,9 @@ html[lang="ar"] h1{line-height:1.55;font-size:clamp(2.1rem,3.8vw,3.4rem);max-wid
 
 /* Shared editable public contact details; no embedded third-party widgets. */
 .contact-section{background:#edf1ee}.contact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;font-style:normal}.contact-grid h3{font-size:1rem}.contact-grid p{font-size:.95rem;overflow-wrap:anywhere}.contact-grid a{overflow-wrap:anywhere;color:var(--teal)}.contact-actions{display:flex;gap:18px;flex-wrap:wrap}.contact-actions a{padding-block:8px;min-height:44px}.contact-email-placeholder{font-size:.88rem;color:var(--muted)}.footer-contact{border-top:1px solid var(--line);margin-top:28px;padding-top:28px}.footer-contact .contact-grid{gap:24px}.footer-contact h3{font-size:.9rem}.footer-contact p,.footer-contact a{font-size:.85rem}@media(max-width:720px){.contact-grid{grid-template-columns:1fr;gap:22px}}
+
+/* Published CMS pages stay discoverable, wrap on small screens, and honor unpublication. */
+.editorial-navigation{display:flex;flex-wrap:wrap;gap:.55rem 1rem;padding-block:1rem;border-bottom:1px solid #dce5e9}
+.editorial-navigation a{color:var(--navy,#123247);padding:.3rem;text-decoration:none}
+.editorial-navigation a:hover,.editorial-navigation a[aria-current="page"]{text-decoration:underline;text-underline-offset:.3em}
+.editorial-page{max-width:70rem}.editorial-page p{line-height:1.95}.editorial-page h2{margin-block-start:1.8rem}

@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-{% if is_site_home %}
+{% if is_site_home and page.editorial_home %}
+{% include "content/editorial_home.html" %}
+{% elif is_site_home %}
 <section class="hero"><div class="shell hero-grid"><div class="hero-copy">
   <p class="eyebrow">{{ public_labels.eyebrow }}</p><h1>{{ public_labels.hero }}</h1><p class="hero-intro">{{ public_labels.intro }}</p>
   <div class="hero-actions"><a class="button button-gold" href="#services">{{ public_labels.discover_services }}</a>
