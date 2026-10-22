@@ -64,6 +64,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build --file deploy/Dockerfile --tag anthec-owner-test:ci .
       - run: docker run --rm --network none anthec-owner-test:ci python tools/validate_container_runtime.py
+      - name: Bounded synthetic capacity at deployed memory and CPU limits
+        run: docker run --rm --network none --memory=512m --memory-swap=512m --cpus=0.5 -e CI=true -e ANTHEC_CAPACITY_SYNTHETIC=1 anthec-owner-test:ci python tools/validate_capacity.py
   public-layout:
     runs-on: ubuntu-24.04
     env:

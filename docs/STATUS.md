@@ -1,5 +1,15 @@
 # Execution ledger
 
+## 2026-10-22 — full launch acceptance in progress
+
+Owner authorized completion of launch-readiness work after PR59/main `47ac788` was published. Public institutional copy/directory and anonymous verification/activity links are deployed. Branch `eng/launch-acceptance` adds bounded synthetic capacity acceptance under enforced 512 MiB/0.5 CPU and strengthens CI restore from a text proof to model counts/migrations, portraits, signing fixtures, six immutable PDFs, credentials and encrypted audit, including incorrect-key rejection. Exact-head CI/review results remain pending until recorded on the PR.
+
+Live read-only observations at approximately 13:29 UTC: service is the intended ANTHEC workspace/resource, one instance, manual deploy, 512 MiB/0.5 CPU. Current instance sample was 128688130 bytes (~122.7 MiB), CPU 0.00794 (~1.6% of limit); no error records returned. Latency series unavailable. Health endpoint returned status ok. These are light-workload observations, not capacity proof. GitHub main reported protected=false, status enforcement off, rulesets empty. No protection mutation is claimed.
+
+Private owner-supplied policy v2 dated 2026-10-21 records internal approval by Driss Helali and an earlier local restore/decryption proof (`restore_decryption_ok`) from the hosted 16:18 UTC export. That proof covers a synthetic encrypted sample, not hosted PITR, image/PDF recovery or all key custody. The newer 23:28 UTC backup remains on the owner's Windows desktop; it has not been accessed here. Private source files stay outside this public repository.
+
+Open gates remain distinct: actual backup/key custody and asset restore; bounded capacity result; enforced repository protection; versioned privacy notice/acknowledgements and rights/retention execution; provider/processing/transfer formalities; independent security acceptance. Do not replace missing evidence with owner authorization or technical test success. CNDP filing was previously deferred, not exempted. No paid resource, external message, production private-data mutation, DNS or Tighri change in this increment.
+
 ## 2026-10-21 — staged public preview preparation
 
 Owner confirmed fresh backup custody and successful primary login after PR53 deployment `1487da5` (`dep-dbcbfloae00c7397l3o0`). Hosted predeploy migrated content0002–0003/governance0010–0014 successfully; initial health/login/static and anonymous-denial checks passed. No long-term stability or real-data release acceptance is inferred.
