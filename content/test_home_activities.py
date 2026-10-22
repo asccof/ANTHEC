@@ -71,3 +71,12 @@ class HomeActivitiesTests(TestCase):
         loaded=groups[0]['activities'][0].public_images[0]
         self.assertEqual(loaded.pk,photo.pk)
         self.assertIn('jpeg',loaded.get_deferred_fields())
+
+    def test_navigation_verification_links_open_the_tool_instead_of_editorial_guide(self):
+        call_command('publish_approved_editorial',apply=True,stdout=StringIO())
+        response=self.client.get('/ar/')
+        soup=BeautifulSoup(response.content,'html.parser')
+        links=[link for link in soup.select('a') if link.get_text(strip=True)=='التحقق من الوثائق']
+        self.assertGreaterEqual(len(links),3)
+        self.assertTrue(all(link['href']=='/verify/?lang=ar' for link in links))
+        self.assertNotContains(response,'href="/ar/verification-guide/"')
