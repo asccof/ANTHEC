@@ -1,6 +1,6 @@
 {% load static %}
 <section class="hero"><div class="shell hero-grid"><div class="hero-copy">
-<p class="eyebrow">{{ public_labels.name }}</p><h1>{{ editorial_hero }}</h1><p class="hero-intro">{{ editorial_intro }}</p>
+<p class="eyebrow">{{ public_labels.name }}</p><h1>{% for line in editorial_hero_lines %}<span class="hero-line">{{ line }}{% if not forloop.last %}.{% endif %}</span>{% endfor %}</h1><p class="hero-intro">{{ editorial_intro }}</p>
 <div class="hero-actions">{% if not applications_disabled %}<a class="button button-gold" href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{{ public_labels.apply }}</a>{% endif %}
 <a class="button button-outline" href="#about">{{ public_labels.about }}</a></div>
 </div><div class="hero-art"><div class="emblem-disc"><img src="{% static 'anthec-logo.png' %}" width="220" height="220" alt="ANTHEC"></div><p class="art-caption">{{ public_labels.name }}</p></div></div></section>

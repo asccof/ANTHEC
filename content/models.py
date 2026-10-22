@@ -53,6 +53,7 @@ class InstitutionalPage(Page):
         if context["is_site_home"] and self.editorial_home:
             content = [block for block in self.body if block.block_type != "leadership"]
             context["editorial_hero"] = content[0].value if content and content[0].block_type == "heading" else self.title
+            context["editorial_hero_lines"] = context["editorial_hero"].split(". ")
             context["editorial_intro"] = content[1].value if len(content) > 1 and content[1].block_type == "paragraph" else ""
             context["editorial_body"] = content[2:] if context["editorial_intro"] else content
             sections = []
