@@ -66,7 +66,13 @@ def main():
             # Two concurrent tasks matches the deployed single-worker/two-thread limit.
             with ThreadPoolExecutor(max_workers=2) as pool:
                 pdf_seconds = list(pool.map(render, ('ar', 'fr', 'en') * 2))
+                print('CAPACITY_STAGE PDF rendering completed', flush=True)
                 portrait_seconds = list(pool.map(portrait, range(4)))
+                print('CAPACITY_STAGE maximum-pixel portraits completed', flush=True)
+                def mixed(index):
+                    return render(('ar', 'fr', 'en')[index % 3]) if index % 2 else portrait(index)
+                mixed_seconds = list(pool.map(mixed, range(6)))
+                print('CAPACITY_STAGE mixed rendering/uploads completed', flush=True)
 
             def browse(index):
                 started = time.perf_counter()
@@ -94,6 +100,7 @@ def main():
                       'pdf_count': len(pdf_seconds), 'pdf_max_seconds': round(max(pdf_seconds), 3),
                       'portrait_count': len(portrait_seconds), 'portrait_pixels': 16_000_000,
                       'portrait_max_seconds': round(max(portrait_seconds), 3),
+                      'mixed_count': len(mixed_seconds), 'mixed_max_seconds': round(max(mixed_seconds), 3),
                       'public_get_count': len(browsing_seconds) * 3,
                       'three_gets_max_seconds': round(max(browsing_seconds), 3),
                       'hosted_load_or_throughput_proven': False}
