@@ -1,0 +1,1 @@
+{% if privacy_notice_enabled %}<a href="{% url 'privacy_notice' %}?lang={{ language|default:'ar' }}">{% if language == 'fr' %}Notice de confidentialité{% elif language == 'en' %}Privacy notice{% else %}إشعار الخصوصية{% endif %}</a>{% endif %}

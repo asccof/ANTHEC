@@ -607,7 +607,8 @@ def decide_refund(*, actor, payment_id, amount, approved, reason):
 
 
 def register(
-    activity, person, user, *, guardian_name="", guardian_capacity="", consent=False
+    activity, person, user, *, guardian_name="", guardian_capacity="", consent=False,
+    privacy_acceptance=False, privacy_version='', privacy_language=''
 ):
     from .deployment import require_applications_enabled
     require_applications_enabled()
@@ -617,6 +618,9 @@ def register(
         person = Person.objects.select_for_update().get(pk=person.pk)
         if not user.is_authenticated or not user.is_active:
             raise PermissionDenied("Authenticated applicant required")
+        from .privacy_notice import pop_ack, record
+        evidence = pop_ack({'privacy_acceptance': privacy_acceptance, 'privacy_version': privacy_version,
+                            'privacy_language': privacy_language})
         if person.minor:
             if (
                 person.guardian_id != user.pk
@@ -640,7 +644,7 @@ def register(
             raise ValidationError("Verification notice acknowledgment required")
         if Registration.objects.filter(activity=activity, person=person).exists():
             raise Conflict("Participant already registered")
-        return Registration.objects.create(
+        registration = Registration.objects.create(
             activity=activity,
             person=person,
             submitted_by=user,
@@ -650,6 +654,8 @@ def register(
             consent_version=activity.consent_version if person.minor else "",
             consent_text=activity.consent_text if person.minor else "",
         )
+        record(user, 'activity.registration', registration.pk, evidence)
+        return registration
 
 
 @command("registration.decide")

@@ -35,8 +35,9 @@ def member_command(action):
                 if not user.is_active:
                     raise PermissionDenied("Inactive account")
                 import json
-
                 hashed = s.digest(json.dumps(payload, sort_keys=True, default=str))
+                from .privacy_notice import pop_ack, record
+                evidence = pop_ack(payload) if action in {'member.profile', 'member.application', 'member.renewal', 'portrait.upload'} else None
                 previous = Command.objects.filter(
                     actor=user, action=action, key=key
                 ).first()
@@ -44,7 +45,12 @@ def member_command(action):
                     if previous.digest != hashed:
                         raise s.Conflict("Key reused with different input")
                     return previous.result
-                result = fn(user=user, **payload)
+                arguments = dict(payload)
+                if action == 'member.application':
+                    arguments['_privacy_evidence'] = evidence
+                result = fn(user=user, **arguments)
+                subject = next((result[name] for name in ('application', 'portrait', 'person') if name in result), user.pk)
+                record(user, action, subject, evidence)
                 Command.objects.create(
                     actor=user, action=action, key=key, digest=hashed, result=result
                 )
@@ -125,7 +131,8 @@ def submit_application(
     residential_address="",
     same_address=False,
     image_data,
-    photo_consent
+    photo_consent,
+    _privacy_evidence=None
 ):
     (
         address_category,
@@ -161,6 +168,8 @@ def submit_application(
         person_id=person.pk,
         image_data=image_data,
         consent=photo_consent,
+        **({'privacy_acceptance': True, 'privacy_version': _privacy_evidence['version'],
+            'privacy_language': _privacy_evidence['language']} if _privacy_evidence else {}),
     )
     from .models import Portrait
 

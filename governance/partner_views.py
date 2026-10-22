@@ -47,7 +47,12 @@ def request_partnership(request):
         if not consume(request, 'partnership'):
             return HttpResponse('Try again later',status=429)
         if form.is_valid():
-            PartnershipRequest.objects.create(**form.cleaned_data)
+            from .privacy_notice import pop_ack, record
+            with transaction.atomic():
+                data = dict(form.cleaned_data)
+                evidence = pop_ack(data)
+                row = PartnershipRequest.objects.create(**data)
+                record(request.user if request.user.is_authenticated else None, 'partnership.request', row.pk, evidence)
             return redirect(reverse('partnership_request')+'?lang='+ctx['language']+'&received=1')
     ctx.update(form=form,received=request.GET.get('received')=='1')
     return render(request,'governance/partnership_request.html',ctx,status=400 if request.method=='POST' and form.errors else 200)

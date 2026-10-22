@@ -1,0 +1,8 @@
+{% extends 'governance/public_service_base.html' %}
+{% block title %}{{ notice.title }}{% endblock %}
+{% block content %}
+<section class="public-hero"><div class="shell"><p class="eyebrow">ANTHEC</p><h1>{{ notice.title }}</h1><p><span dir="ltr">{{ notice.version }} · {{ notice.published_on }}</span></p></div></section>
+<article class="shell public-section">
+{% for heading, paragraph in notice.sections %}<section class="public-card"><h2>{{ heading }}</h2><p>{{ paragraph }}</p></section>{% endfor %}
+</article>
+{% endblock %}

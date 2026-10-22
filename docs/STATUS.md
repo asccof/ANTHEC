@@ -1,5 +1,13 @@
 # Execution ledger
 
+## 2026-10-22 — protection enforced, recovery/performance published, privacy staged
+
+Owner confirmed saving the concrete main protection settings. GitHub created the rule after secure owner identity confirmation; branch read now reports protected=true with `container`, `public-layout` and `validate` checks enforced for everyone. The saved form additionally required pull requests, current branches and resolved conversations, disallowed force pushes/deletion and applied protections to administrators. No bypass or additional person access was added.
+
+PR60 final head `bc7eb7b` passed CI39790345149 (381 PostgreSQL and 12 auxiliary tests, enhanced recovery, browser acceptance twice, non-root container and constrained capacity). Final-head Codex completed with no findings at 19:40 UTC after the earlier quota block. Merged via the protected PR path as `f295308`; merge tree `49d60563f6d3e303b4123b2ca667e6d5d6577044` matches the tested tree. Existing ANTHEC deploy `dep-dbd6llafngtc73fq4qmg` went live at 19:59:34 UTC; health, verification, activities and Arabic homepage returned 200. No new service, billing, workflow toggle, private-data mutation or Tighri change.
+
+Next bounded branch `eng/versioned-privacy` prepares ADR036: an AR/FR/EN notice and explicit unchecked, versioned, snapshotted acknowledgements in self-service and partnership requests, with backend validation and existing private audit evidence. Defaults closed and no hosted flag activation. Local focused tests passed; exact-head full CI/review pending. Rights/retention execution and provider/legal/security acceptance remain open; no CNDP reference or compliance assertion is invented.
+
 ## 2026-10-22 — full launch acceptance in progress
 
 Constrained CI `39788446160` on `3fa698d` terminated with exit 137 during the synthetic maximum-input workload. This is a reproduced constrained-test failure, not proof of the historical hosted OOM cause. The fix downscales/crops accepted images before full-size EXIF/alpha intermediates in portrait, activity and signing-asset normalization. New orientation/alpha regressions and existing portrait/PDF/application-photo tests passed locally (38 tests plus three focused regressions). Final constrained CI remains pending. Previously issued assets are untouched.
