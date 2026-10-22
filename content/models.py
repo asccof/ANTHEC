@@ -45,11 +45,26 @@ class InstitutionalPage(Page):
                 translation_key=site.root_page.translation_key, locale=self.locale).specific().first()
             if local_home:
                 context["editorial_navigation"] = local_home.get_children().live().public().in_menu().filter(locale=self.locale)
+        from .navigation import navigation_groups
+        context["navigation_groups"] = navigation_groups(context["editorial_navigation"], language)
+        context["public_leadership"] = [person.public_values(language) for person in PublicLeader.objects.filter(site=site, published=True)] if site else []
+        context["directory_configured"] = bool(site and MultilingualPublication.objects.filter(site=site).exists())
+        context["is_structure_page"] = self.slug == "governance"
         if context["is_site_home"] and self.editorial_home:
             content = [block for block in self.body if block.block_type != "leadership"]
             context["editorial_hero"] = content[0].value if content and content[0].block_type == "heading" else self.title
+            context["editorial_hero_lines"] = context["editorial_hero"].split(". ")
             context["editorial_intro"] = content[1].value if len(content) > 1 and content[1].block_type == "paragraph" else ""
             context["editorial_body"] = content[2:] if context["editorial_intro"] else content
+            sections = []
+            for block in context["editorial_body"]:
+                if block.block_type == "heading":
+                    sections.append({"heading": block.value, "paragraphs": []})
+                elif block.block_type == "paragraph":
+                    if not sections:
+                        sections.append({"heading": "", "paragraphs": []})
+                    sections[-1]["paragraphs"].append(block.value)
+            context["home_sections"] = sections
         if context["is_site_home"]:
             context["membership_prices"] = current_memberships(language)
             labels = context["public_labels"]
@@ -96,6 +111,46 @@ class PublicContact(BaseSiteSetting):
 
 class EditorialPublication(models.Model):
     """One-time import receipt outside page revisions: subsequent edits stay authoritative."""
+    site = models.OneToOneField("wagtailcore.Site", on_delete=models.PROTECT)
+    version = models.CharField(max_length=40)
+    digest = models.CharField(max_length=64)
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+
+class PublicLeader(models.Model):
+    """Public directory only; editing never creates accounts, cards or authority."""
+    site = models.ForeignKey("wagtailcore.Site", on_delete=models.PROTECT)
+    name_ar = models.CharField("الاسم بالعربية / Arabic name", max_length=200)
+    name_latin = models.CharField("الاسم بالحروف اللاتينية / Latin-script name", max_length=200)
+    role = models.CharField("الصفة / Role", max_length=20, choices=[
+        ("president", "الرئيس / Président / President"),
+        ("vice_president", "نائب الرئيس وأمين المال / Vice-président et trésorier / Vice-president and treasurer"),
+        ("founder", "عضو مؤسس / Membre fondateur / Founding member")])
+    founder = models.BooleanField("عضو مؤسس / Founding member", default=True)
+    published = models.BooleanField("ظاهر على الموقع / Visible on website", default=False)
+    sort_order = models.PositiveIntegerField("الترتيب / Display order", default=0)
+    panels = [FieldPanel(field) for field in ("site", "name_ar", "name_latin", "role", "founder", "published", "sort_order")]
+
+    class Meta:
+        ordering = ["sort_order", "pk"]
+        verbose_name = "عضو في الهيكلة / Leadership member"
+        verbose_name_plural = "هيكلة الجمعية / Association leadership"
+        constraints = [models.UniqueConstraint(fields=["site", "role"], condition=models.Q(published=True, role__in=["president", "vice_president"]), name="one_public_office_per_site")]
+
+    def __str__(self):
+        return self.name_ar + " / " + self.name_latin
+
+    def public_values(self, language):
+        labels = {
+            "ar": {"president": "الرئيس", "vice_president": "نائب الرئيس وأمين المال", "founder": "عضو مؤسس"},
+            "fr": {"president": "Président", "vice_president": "Vice-président et trésorier", "founder": "Membre fondateur"},
+            "en": {"president": "President", "vice_president": "Vice-president and treasurer", "founder": "Founding member"},
+        }
+        return dict(name=self.name_ar if language == "ar" else self.name_latin,
+                    role=self.role, label=labels.get(language, labels["en"])[self.role], founder=self.founder)
+
+
+class MultilingualPublication(models.Model):
     site = models.OneToOneField("wagtailcore.Site", on_delete=models.PROTECT)
     version = models.CharField(max_length=40)
     digest = models.CharField(max_length=64)

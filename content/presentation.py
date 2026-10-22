@@ -4,6 +4,11 @@ from governance.models import Price
 from governance.member_labels import vocabulary as member_vocabulary
 
 ROWS = {
+ "home": ("الرئيسية", "Accueil", "Home"),
+ "founders": ("الأعضاء المؤسسون", "Membres fondateurs", "Founding members"),
+ "founder_note": ("الرئيس ونائب الرئيس من الأعضاء المؤسسين أيضًا.", "Le président et le vice-président sont également membres fondateurs.", "The president and vice-president are also founding members."),
+ "menu": ("القائمة", "Menu", "Menu"),
+
  "contact": ("تواصل معنا", "Nous contacter", "Contact us"),
  "contact_intro": ("للاستفسار عن الجمعية وبرامجها والعضوية والشراكات، تواصل معنا عبر الوسيلة المناسبة لك.", "Pour toute information sur l’association, ses programmes, les adhésions ou les partenariats, choisissez le moyen de contact qui vous convient.", "For information about the association, programmes, membership or partnerships, choose the contact method that suits you."),
  "contact_phone": ("الهاتف وواتساب", "Téléphone et WhatsApp", "Phone and WhatsApp"),

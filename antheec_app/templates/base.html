@@ -10,9 +10,10 @@
 </head>
 <body>
 <a class="skip-link" href="#main-content">{{ public_labels.skip }}</a>
-{% include "governance/navigation.html" with language=page.locale.language_code %}
+{% if user.is_staff %}{% include "governance/navigation.html" with language=page.locale.language_code %}{% endif %}
 <div class="utility-bar"><div class="shell utility-inner">
   {% if owner_testing %}<span class="trial-dot">{{ public_labels.testing }}</span>{% else %}<span>{{ public_labels.eyebrow }}</span>{% endif %}
+  {% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='utility-verify' %}
   <nav class="language-nav" aria-label="{{ public_labels.languages }}">
   {% for version in language_versions %}<a href="{{ version.url }}" lang="{{ version.locale.language_code }}" hreflang="{{ version.locale.language_code }}" {% if version.pk == page.pk %}aria-current="page"{% endif %}>{{ version.locale.get_display_name }}</a>{% endfor %}
   </nav>
@@ -20,17 +21,20 @@
 <header class="site-header"><div class="shell header-inner">
   <div class="brand">{% if localized_home_url %}<a href="{{ localized_home_url }}">{% endif %}<img class="brand-emblem" src="{% static 'anthec-logo.png' %}" width="48" height="48" alt=""><strong>ANTHEC</strong><span>{{ public_labels.name }}</span>{% if localized_home_url %}</a>{% endif %}</div>
   <nav class="main-nav" aria-label="{{ public_labels.nav }}">
-    {% if localized_home_url %}<a href="{{ localized_home_url }}#about">{{ public_labels.about }}</a><a href="{{ localized_home_url }}#services">{{ public_labels.services }}</a><a href="{{ localized_home_url }}#structure">{{ public_labels.structure }}</a><a href="{{ localized_home_url }}#membership">{{ public_labels.memberships }}</a><a href="{{ localized_home_url }}#accreditation">{{ public_labels.accreditation }}</a>{% endif %}
-    <a href="{% url 'activity_list' %}?lang={{ page.locale.language_code }}">{{ public_labels.activities }}</a>
-    <a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a>
-    {% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='nav-pill' %}
-    {% if owner_testing %}<a class="nav-pill" href="/admin/">{{ public_labels.admin_area }}</a>{% elif not public_preview %}<a class="nav-pill" href="{% url 'member_home' %}?lang={{ page.locale.language_code }}">{{ public_labels.member_area }}</a>{% endif %}
+    {% if localized_home_url %}<a href="{{ localized_home_url }}">{{ public_labels.home }}</a>{% endif %}
+    {% if navigation_groups %}
+      {% for group in navigation_groups %}<details class="nav-group"><summary>{{ group.label }}</summary><div class="nav-dropdown">{% for item in group.pages %}<a href="{{ item.url }}"{% if item.pk == page.pk %} aria-current="page"{% endif %}>{% if item.slug == "governance" %}{{ public_labels.structure }}{% else %}{{ item.title }}{% endif %}</a>{% endfor %}</div></details>{% endfor %}
+    {% elif localized_home_url %}
+      <a href="{{ localized_home_url }}#about">{{ public_labels.about }}</a><a href="{{ localized_home_url }}#services">{{ public_labels.services }}</a><a href="{{ localized_home_url }}#structure">{{ public_labels.structure }}</a><a href="{{ localized_home_url }}#membership">{{ public_labels.memberships }}</a>
+    {% endif %}
+    {% if localized_home_url %}<a href="{{ localized_home_url }}#contact">{{ public_labels.contact }}</a>{% endif %}
   </nav>
+  {% if owner_testing %}<a class="button header-account" href="/admin/">{{ public_labels.admin_area }}</a>{% elif not public_preview %}<a class="button header-account" href="{% url 'member_home' %}?lang={{ page.locale.language_code }}">{{ public_labels.member_area }}</a>{% endif %}
 </div></header>
-{% if editorial_navigation %}<nav class="shell editorial-navigation" aria-label="{% if page.locale.language_code == 'ar' %}صفحات الجمعية{% else %}{{ public_labels.nav }}{% endif %}">{% for item in editorial_navigation %}<a href="{{ item.url }}"{% if item.pk == page.pk %} aria-current="page"{% endif %}>{{ item.title }}</a>{% endfor %}</nav>{% endif %}
 {% if owner_testing %}<aside class="trial-notice shell" role="note"><strong>{{ public_labels.testing }}</strong><p>{{ public_labels.testing_detail }}</p></aside>{% endif %}
 {% include "governance/deployment_notice.html" with language=page.locale.language_code %}
 {% if synthetic_preview and not public_preview and not operational %}<aside class="synthetic-notice shell" role="note">{{ public_labels.synthetic_notice }}</aside>{% endif %}
 <main id="main-content" tabindex="-1">{% block content %}{% endblock %}</main>
-<footer class="site-footer"><div class="shell footer-inner"><div><strong>ANTHEC</strong><p>{{ public_labels.name }}</p><small>{{ public_labels.footer }}</small></div><nav aria-label="{{ public_labels.nav }}">{% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='' %}<a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a>{% if localized_home_url %}<a href="{{ localized_home_url }}#contact">{{ public_labels.contact }}</a><a href="{{ localized_home_url }}#privacy">{{ public_labels.privacy }}</a>{% endif %}</nav></div><div class="shell footer-contact">{% include "content/contact_details.html" %}</div></footer>
+<footer class="site-footer"><div class="shell footer-inner"><div><strong>ANTHEC</strong><p>{{ public_labels.name }}</p><small>{{ public_labels.footer }}</small></div><nav aria-label="{{ public_labels.nav }}">{% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='' %}<a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a>{% if localized_home_url %}<a href="{{ localized_home_url }}#contact">{{ public_labels.contact }}</a><a href="{{ localized_home_url }}#privacy">{{ public_labels.privacy }}</a>{% endif %}</nav></div>{% if not is_site_home %}<div class="shell footer-contact">{% include "content/contact_details.html" %}</div>{% endif %}</footer>
+<script src="{% static 'navigation.js' %}" defer></script>
 </body></html>

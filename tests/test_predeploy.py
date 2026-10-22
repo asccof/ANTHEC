@@ -47,3 +47,9 @@ class PredeployTests(unittest.TestCase):
         code, calls = self.run_entrypoint(0, "unknown-edition")
         self.assertNotEqual(code, 0)
         self.assertFalse(any(c[0] == "publish_approved_editorial" for c in calls))
+
+    def test_multilingual_activation_runs_both_edit_preserving_commands(self):
+        code, calls = self.run_entrypoint(0, "multilingual-20261022-v1")
+        self.assertEqual(code, 0)
+        self.assertEqual(calls[-2:], [["publish_approved_editorial", "--apply"],
+                                     ["publish_multilingual_editorial", "--apply"]])
