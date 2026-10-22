@@ -1,3 +1,4 @@
+from django.db import models
 from wagtail import blocks
 from wagtail.admin.panels import FieldPanel
 from wagtail.fields import StreamField
@@ -14,7 +15,9 @@ class InstitutionalPage(Page):
             ("name", blocks.CharBlock(max_length=200)),
         ], label="Public leadership — approved names only")),
     ], blank=True, use_json_field=True)
-    content_panels = Page.content_panels + [FieldPanel("body")]
+    editorial_home = models.BooleanField(
+        "عرض محتوى الرئيسية من محرر الصفحات / Editable homepage", default=False, db_default=False)
+    content_panels = Page.content_panels + [FieldPanel("editorial_home"), FieldPanel("body")]
     template = "content/institutional_page.html"
 
     def get_context(self, request, *args, **kwargs):
@@ -36,6 +39,17 @@ class InstitutionalPage(Page):
         # Read-only public requests must not create configuration rows.
         contact = PublicContact.objects.filter(site=site).first() if site else None
         context["public_contact"] = (contact or PublicContact()).public_values(language)
+        context["editorial_navigation"] = []
+        if site:
+            local_home = Page.objects.live().public().filter(
+                translation_key=site.root_page.translation_key, locale=self.locale).specific().first()
+            if local_home:
+                context["editorial_navigation"] = local_home.get_children().live().public().in_menu().filter(locale=self.locale)
+        if context["is_site_home"] and self.editorial_home:
+            content = [block for block in self.body if block.block_type != "leadership"]
+            context["editorial_hero"] = content[0].value if content and content[0].block_type == "heading" else self.title
+            context["editorial_intro"] = content[1].value if len(content) > 1 and content[1].block_type == "paragraph" else ""
+            context["editorial_body"] = content[2:] if context["editorial_intro"] else content
         if context["is_site_home"]:
             context["membership_prices"] = current_memberships(language)
             labels = context["public_labels"]
@@ -78,3 +92,11 @@ class PublicContact(BaseSiteSetting):
         from urllib.parse import quote
         return dict(mailto="mailto:" + quote(email, safe="@") if email else "", phone=phone, tel="+" + number if number else "", whatsapp="https://wa.me/" + number if number else "", email=email,
             address=getattr(self, "address_" + (language if language in ("ar", "fr", "en") else "ar")))
+
+
+class EditorialPublication(models.Model):
+    """One-time import receipt outside page revisions: subsequent edits stay authoritative."""
+    site = models.OneToOneField("wagtailcore.Site", on_delete=models.PROTECT)
+    version = models.CharField(max_length=40)
+    digest = models.CharField(max_length=64)
+    applied_at = models.DateTimeField(auto_now_add=True)

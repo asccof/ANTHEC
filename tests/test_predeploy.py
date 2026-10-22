@@ -9,7 +9,7 @@ import unittest
 
 
 class PredeployTests(unittest.TestCase):
-    def run_entrypoint(self, failure):
+    def run_entrypoint(self, failure, edition=""):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "deploy").mkdir()
@@ -23,7 +23,7 @@ class PredeployTests(unittest.TestCase):
                 "if sys.argv[1] == 'check':\n"
                 "    sys.exit(int(os.environ['SYNTHETIC_CHECK_EXIT']))\n")
             result = subprocess.run([sys.executable, str(script)],
-                cwd=root.parent, env={**os.environ, "SYNTHETIC_CHECK_EXIT": str(failure)},
+                cwd=root.parent, env={**os.environ, "SYNTHETIC_CHECK_EXIT": str(failure), "ANTHEEC_EDITORIAL_EDITION": edition},
                 capture_output=True, timeout=20)
             calls = [json.loads(line) for line in (root / "calls.jsonl").read_text().splitlines()]
             return result.returncode, calls
@@ -38,3 +38,12 @@ class PredeployTests(unittest.TestCase):
         code, calls = self.run_entrypoint(3)
         self.assertNotEqual(code, 0)
         self.assertEqual(calls, [["check", "--deploy", "--fail-level", "ERROR"]])
+
+    def test_editorial_publication_is_explicitly_gated_after_migrations(self):
+        code, calls = self.run_entrypoint(0, "ar-20261022-v1")
+        self.assertEqual(code, 0)
+        self.assertEqual(calls[-1], ["publish_approved_editorial", "--apply"])
+        self.assertEqual(calls[-2], ["migrate", "--noinput"])
+        code, calls = self.run_entrypoint(0, "unknown-edition")
+        self.assertNotEqual(code, 0)
+        self.assertFalse(any(c[0] == "publish_approved_editorial" for c in calls))
