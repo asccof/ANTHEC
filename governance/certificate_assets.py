@@ -41,8 +41,8 @@ def normalize(upload):
                     raise ValidationError("Single JPEG/PNG within image limits required")
                 source.verify()
             with Image.open(io.BytesIO(raw)) as source:
+                source.thumbnail((2000, 2000), Image.Resampling.LANCZOS)
                 oriented = ImageOps.exif_transpose(source).convert("RGBA")
-                oriented.thumbnail((2000, 2000), Image.Resampling.LANCZOS)
                 clean = Image.new("RGBA", oriented.size)
                 clean.paste(oriented)
                 output = io.BytesIO()

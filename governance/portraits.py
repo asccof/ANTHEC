@@ -45,16 +45,21 @@ def normalize(upload):
                     raise ValidationError("Portrait dimensions outside limits")
                 source.verify()
             with Image.open(io.BytesIO(raw)) as source:
-                oriented = ImageOps.exif_transpose(source)
                 # Centered 4:5 crop, shown privately before administrative approval.
-                w, h = oriented.size
+                # Crop/resize in stored orientation before allocating RGBA and
+                # flattening. Full-size intermediate buffers could exhaust a
+                # 512 MiB worker with two accepted 16 MP uploads in parallel.
+                rotated = source.getexif().get(274, 1) in {5, 6, 7, 8}
+                w, h = reversed(source.size) if rotated else source.size
                 crop_w, crop_h = min(w, h * 4 / 5), min(h, w * 5 / 4)
                 if crop_w < 300 or crop_h < 375:
                     raise ValidationError("Portrait crop too small")
+                reduced = ImageOps.fit(source, (750, 600) if rotated else (600, 750),
+                                       method=Image.Resampling.LANCZOS)
+                oriented = ImageOps.exif_transpose(reduced)
                 rgba = oriented.convert("RGBA")
                 clean = Image.new("RGB", oriented.size, "white")
                 clean.paste(rgba, mask=rgba.getchannel("A"))
-                clean = ImageOps.fit(clean, (600, 750), method=Image.Resampling.LANCZOS)
                 output = io.BytesIO()
                 clean.save(output, format="JPEG", quality=92)
                 return output.getvalue()

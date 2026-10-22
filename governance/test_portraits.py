@@ -2,7 +2,7 @@ import base64
 import io
 import uuid
 from datetime import date
-from PIL import Image
+from PIL import Image, ImageOps, ImageChops, ImageStat
 from django.test import TestCase, Client
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError, PermissionDenied
@@ -96,6 +96,30 @@ class PortraitTests(TestCase):
         self.assertEqual(clean.size, (600, 750))
         self.assertFalse(clean.getexif())
         self.assertNotIn(b"PRIVATE", normalized)
+
+    def test_bounded_resize_preserves_all_exif_orientations_and_transparency(self):
+        for orientation in range(1, 9):
+            with self.subTest(orientation=orientation):
+                source = Image.new('RGBA', (1000, 800), (0, 0, 0, 0))
+                source.paste('red', (100, 50, 450, 350))
+                source.paste('blue', (550, 450, 950, 750))
+                exif = Image.Exif()
+                exif[274] = orientation
+                raw = io.BytesIO()
+                source.save(raw, 'PNG', exif=exif)
+                actual = Image.open(io.BytesIO(p.normalize(io.BytesIO(raw.getvalue()))))
+                # Compare against the prior full-size orientation/white/crop
+                # pipeline using asymmetric content, including mirrored EXIF.
+                with Image.open(io.BytesIO(raw.getvalue())) as original:
+                    oriented = ImageOps.exif_transpose(original)
+                    expected = Image.new('RGB', oriented.size, 'white')
+                    expected.paste(oriented, mask=oriented.getchannel('A'))
+                    expected = ImageOps.fit(expected, (600, 750), method=Image.Resampling.LANCZOS)
+                self.assertEqual(actual.size, (600, 750))
+                self.assertFalse(actual.getexif())
+                self.assertLess(max(ImageStat.Stat(ImageChops.difference(actual, expected)).mean), 3)
+        # A long source that previously satisfied the minimum crop remains valid.
+        self.assertEqual(Image.open(io.BytesIO(p.normalize(io.BytesIO(image_bytes((300, 2000)))))).size, (600, 750))
 
     def test_ownership_and_guardian_scope(self):
         with self.assertRaises(PermissionDenied):
