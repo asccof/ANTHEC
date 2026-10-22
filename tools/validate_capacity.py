@@ -19,6 +19,9 @@ def main():
     if not limit.exists() or limit.read_text().strip() != str(512 * 1024 * 1024):
         raise SystemExit('Run with an enforced 512 MiB cgroup memory limit.')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'antheec_app.settings.test'
+    # The runtime image defaults to secure hosted mode. This isolated utility
+    # must explicitly select synthetic settings before Django is initialized.
+    os.environ['ANTHEEC_MODE'] = 'development'
     from django.conf import settings
     if settings.DATABASES['default']['ENGINE'] != 'django.db.backends.sqlite3':
         raise SystemExit('Requires disposable SQLite, never a hosted database.')
