@@ -116,9 +116,27 @@ class PrivacyNoticeTests(TestCase):
                                             details__purpose='member.application').exists())
 
     def test_invalid_publication_date_fails_closed(self):
-        with override_settings(ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON=''):
-            with self.assertRaises(ImproperlyConfigured):
-                privacy.enabled()
+        for value in ('', '2099-01-01'):
+            with override_settings(ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON=value):
+                with self.assertRaises(ImproperlyConfigured):
+                    privacy.enabled()
+
+    @override_settings(ANTHEEC_OPERATIONAL=True, ANTHEEC_OWNER_TESTING=False,
+                       ANTHEEC_PUBLIC_PREVIEW=False)
+    def test_password_only_primary_can_read_anonymous_notice(self):
+        from .models import Authority
+        from .test_operational_release import MIDDLEWARE
+        self.enableOperationalMiddleware = override_settings(MIDDLEWARE=MIDDLEWARE)
+        self.enableOperationalMiddleware.enable()
+        self.addCleanup(self.enableOperationalMiddleware.disable)
+        Authority.objects.create(primary=self.user)
+        self.client.force_login(self.user)
+        for method in (self.client.get, self.client.head):
+            response = method('/privacy/?lang=fr')
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(response.wsgi_request.user.is_authenticated)
+            self.assertIn('no-store', response['Cache-Control'])
+        self.assertEqual(self.client.get('/admin/').url, '/security/challenge/')
 
     def test_portrait_and_renewal_service_boundaries_cannot_skip_notice(self):
         from . import portraits
@@ -154,6 +172,7 @@ class PrivacyHostedSettingsTests(TestCase):
                 'ANTHEEC_PUBLIC_CONTENT_APPROVED': '1', 'ANTHEEC_PRIVACY_NOTICE_ENABLED': '1'}
         self.assertNotEqual(run(base).returncode, 0)
         self.assertNotEqual(run({**base, 'ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON': 'invalid'}).returncode, 0)
+        self.assertNotEqual(run({**base, 'ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON': '2099-01-01'}).returncode, 0)
         self.assertEqual(run({**base, 'ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON': '2026-10-22'},
                             command='from django.conf import settings as s; assert s.ANTHEEC_PRIVACY_NOTICE_ENABLED').returncode, 0)
         self.assertNotEqual(run({'ANTHEEC_PRIVACY_NOTICE_ENABLED': '1',

@@ -30,7 +30,12 @@ ANTHEEC_PRIVACY_NOTICE_ENABLED = privacy_flag == '1'
 ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON = os.environ.get('ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON', '')
 if ANTHEEC_PRIVACY_NOTICE_ENABLED:
     from datetime import date as _privacy_date
+    from datetime import datetime as _privacy_datetime
+    from zoneinfo import ZoneInfo as _PrivacyZoneInfo
     try:
+        _publication_day = _privacy_date.fromisoformat(ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON)
+        if _publication_day > _privacy_datetime.now(_PrivacyZoneInfo(TIME_ZONE)).date():
+            raise ValueError
         if _privacy_date.fromisoformat(ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON).isoformat() != ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON:
             raise ValueError
     except ValueError:

@@ -5,6 +5,7 @@ from datetime import date
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import get_language
 
@@ -39,7 +40,7 @@ def enabled():
         return False
     try:
         day = date.fromisoformat(settings.ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON)
-        if day.isoformat() != settings.ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON:
+        if day.isoformat() != settings.ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON or day > timezone.localdate():
             raise ValueError
     except (AttributeError, ValueError, TypeError):
         raise ImproperlyConfigured('Privacy notice requires an explicit ISO publication date.') from None
