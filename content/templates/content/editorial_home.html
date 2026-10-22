@@ -1,14 +1,13 @@
 {% load static %}
 <section class="hero"><div class="shell hero-grid"><div class="hero-copy">
 <p class="eyebrow">{{ public_labels.name }}</p><h1>{{ editorial_hero }}</h1><p class="hero-intro">{{ editorial_intro }}</p>
-<div class="hero-actions"><a class="button button-gold" href="#about">{{ public_labels.about }}</a>
-{% if not applications_disabled %}<a class="button button-outline" href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{{ public_labels.apply }}</a>{% endif %}
-{% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='button button-teal' %}</div>
+<div class="hero-actions">{% if not applications_disabled %}<a class="button button-gold" href="{% url 'member_signup' %}?lang={{ page.locale.language_code }}">{{ public_labels.apply }}</a>{% endif %}
+<a class="button button-outline" href="#about">{{ public_labels.about }}</a></div>
 </div><div class="hero-art"><div class="emblem-disc"><img src="{% static 'anthec-logo.png' %}" width="220" height="220" alt="ANTHEC"></div><p class="art-caption">{{ public_labels.name }}</p></div></div></section>
-<section id="about" class="section shell editorial-page"><div id="services">{% for block in editorial_body %}{% if block.block_type == 'heading' %}<h2>{{ block.value }}</h2>{% elif block.block_type == 'paragraph' %}<p>{{ block.value|linebreaksbr }}</p>{% endif %}{% endfor %}</div>
-<div class="hero-actions"><a class="button button-teal" href="{% url 'activity_list' %}?lang={{ page.locale.language_code }}">{{ public_labels.activities }}</a><a class="button button-teal" href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a></div></section>
+<section id="about" class="section shell"><div id="services" class="home-sections">{% for section in home_sections %}<article>{% if section.heading %}<h2>{{ section.heading }}</h2>{% endif %}{% for paragraph in section.paragraphs %}<p>{{ paragraph|linebreaksbr }}</p>{% endfor %}</article>{% endfor %}</div>
+<div class="section-links"><a href="{% url 'activity_list' %}?lang={{ page.locale.language_code }}">{{ public_labels.activities }}</a><a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a></div></section>
 <section id="membership" class="section membership-section"><div class="shell"><h2>{{ public_labels.memberships }}</h2><div class="membership-grid">{% for item in membership_prices %}<article class="membership-card{% if item.featured %} featured{% endif %}"><h3>{{ item.name }}</h3><p class="price">{% if item.amount != None %}<strong>{{ item.amount }}</strong><span>{{ public_labels.annual }}</span>{% else %}{{ public_labels.unconfigured }}{% endif %}</p><p>{% if item.featured %}{{ public_labels.level3 }}{% else %}{{ public_labels.other_tiers }}{% endif %}</p></article>{% endfor %}</div><aside class="permanent-note"><h3>{{ public_labels.permanent }}</h3><p>{{ public_labels.permanent_detail }}</p></aside></div></section>
 <section id="accreditation" class="section shell"><h2>{{ public_labels.accreditation }}</h2><p>{{ public_labels.private_terms }}</p><p>{{ public_labels.not_licence }}</p></section>
-<section id="structure" class="section shell"><h2>{{ public_labels.structure }}</h2><div class="leadership-grid">{% for group in leadership_groups %}{% if group.names %}<article class="leadership-card"><h3>{{ group.label }}</h3>{% for name in group.names %}<p class="leadership-name">{{ name }}</p>{% endfor %}</article>{% endif %}{% endfor %}</div></section>
+{% include "content/leadership_directory.html" %}
 <section id="contact" class="section contact-section"><div class="shell"><h2>{{ public_labels.contact }}</h2><p>{{ public_labels.contact_intro }}</p>{% include "content/contact_details.html" %}</div></section>
 <section id="privacy" class="section shell privacy-panel"><h2>{{ public_labels.privacy }}</h2><p>{{ public_labels.privacy_detail }}</p></section>

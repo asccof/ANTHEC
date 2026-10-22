@@ -1,0 +1,8 @@
+<section id="structure" class="{% if not embedded %}section shell{% else %}embedded-directory{% endif %}">
+{% if not embedded %}<h2>{{ public_labels.structure }}</h2><p>{{ public_labels.structure_intro }}</p>{% endif %}
+{% if public_leadership %}
+<div class="office-grid">{% for person in public_leadership %}{% if person.role != 'founder' %}<article class="office-card"><p class="office-label">{{ person.label }}</p><h3>{{ person.name }}</h3></article>{% endif %}{% endfor %}</div>
+<h3 class="founders-title">{{ public_labels.founders }}</h3><p class="founder-note">{{ public_labels.founder_note }}</p>
+<div class="founders-grid">{% for person in public_leadership %}{% if person.founder %}<article><h4>{{ person.name }}</h4><p>{{ person.label }}</p></article>{% endif %}{% endfor %}</div>
+{% elif not directory_configured %}<div class="leadership-grid">{% for group in leadership_groups %}{% if group.names %}<article class="leadership-card"><h3>{{ group.label }}</h3>{% for name in group.names %}<p class="leadership-name">{{ name }}</p>{% endfor %}</article>{% endif %}{% endfor %}</div>{% endif %}
+</section>
