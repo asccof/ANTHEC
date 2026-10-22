@@ -38,7 +38,8 @@ def main():
         raise SystemExit('Layout acceptance requires isolated SQLite test settings.')
     output = Path('layout-acceptance')
     output.mkdir(exist_ok=True)
-    with override_settings(ANTHEEC_OPERATIONAL=True):
+    with override_settings(ANTHEEC_OPERATIONAL=True, ANTHEEC_PRIVACY_NOTICE_ENABLED=True,
+                           ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON='2026-10-22'):
         call_command('migrate', verbosity=0)
         call_command('seed_demo')
         call_command('publish_approved_editorial', apply=True)
@@ -98,6 +99,18 @@ def main():
                     assert response.status == 200
                     assert page.locator('.office-card').count() == 2
                     assert page.locator('.founders-grid article').count() == 7
+                    from governance.privacy_notice import WORDS
+                    for width in (390, 1280):
+                        page.set_viewport_size({'width': width, 'height': 960})
+                        response = page.goto(f'http://127.0.0.1:{server.server_port}/privacy/?lang={language}')
+                        assert response.status == 200
+                        assert page.locator('h1').inner_text() == WORDS[language][0]
+                        assert page.locator('article h2').count() == 6
+                        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, width, 'privacy overflow')
+                    response = page.goto(f'http://127.0.0.1:{server.server_port}/members/signup/?lang={language}')
+                    assert response.status == 200
+                    assert not page.locator('#id_privacy_acceptance').is_checked()
+                    assert page.locator('#id_privacy_version').input_value().startswith('ANTHEC-privacy-v2')
                     # A public visitor opens the form and a QR result without account login.
                     response = page.goto(f'http://127.0.0.1:{server.server_port}/verify/?lang={language}')
                     assert response.status == 200
@@ -114,7 +127,7 @@ def main():
         finally:
             server.shutdown()
             server.server_close()
-    print('PASS: three languages, four widths, published activity images, anonymous verification and direct QR results.')
+    print('PASS: three languages, four widths, published activity images, anonymous verification, direct QR results and staged versioned privacy notice/unchecked acknowledgement.')
 
 
 if __name__ == '__main__':

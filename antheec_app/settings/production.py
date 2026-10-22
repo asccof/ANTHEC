@@ -23,6 +23,18 @@ DEBUG = False
 ANTHEEC_OWNER_TESTING = mode == "owner-testing"
 ANTHEEC_PUBLIC_PREVIEW = mode == "public-preview"
 ANTHEEC_OPERATIONAL = mode == "operational"
+privacy_flag = os.environ.get('ANTHEEC_PRIVACY_NOTICE_ENABLED', '0')
+if privacy_flag not in {'0', '1'} or (privacy_flag == '1' and not ANTHEEC_OPERATIONAL):
+    raise ImproperlyConfigured('Privacy notice activation requires operational mode and an explicit 0/1 flag.')
+ANTHEEC_PRIVACY_NOTICE_ENABLED = privacy_flag == '1'
+ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON = os.environ.get('ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON', '')
+if ANTHEEC_PRIVACY_NOTICE_ENABLED:
+    from datetime import date as _privacy_date
+    try:
+        if _privacy_date.fromisoformat(ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON).isoformat() != ANTHEEC_PRIVACY_NOTICE_PUBLISHED_ON:
+            raise ValueError
+    except ValueError:
+        raise ImproperlyConfigured('Privacy notice needs its actual ISO publication date.') from None
 # No new mode is activated by deployment alone. This is an operator release
 # acknowledgement, not evidence of legal acceptance or successful recovery.
 if ANTHEEC_OPERATIONAL and os.environ.get("ANTHEEC_OPERATIONAL_RELEASE_APPROVED") != "1":

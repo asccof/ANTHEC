@@ -217,6 +217,9 @@ def registration_request(request):
             guardian_name=payload.get("guardian_name", ""),
             guardian_capacity=payload.get("guardian_capacity", ""),
             consent=payload.get("consent", False),
+            privacy_acceptance=payload.get('privacy_acceptance', False),
+            privacy_version=payload.get('privacy_version', ''),
+            privacy_language=payload.get('privacy_language', ''),
         )
         return JsonResponse({"registration": row.pk, "state": row.state}, status=201)
     except PermissionDenied:

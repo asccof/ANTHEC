@@ -7,15 +7,16 @@ from django.contrib.auth.forms import (
 )
 from .services import TIERS
 from .intake import CAPACITIES, validate_capacity, validate_phone, validate_addresses
+from .privacy_notice import PrivacyNoticeMixin
 
 
 def label_fields(form, labels):
     for name, field in form.fields.items():
-        if name != "key":
+        if name != "key" and not name.startswith('privacy_'):
             field.label = labels.get(name, name)
 
 
-class SignupForm(UserCreationForm):
+class SignupForm(PrivacyNoticeMixin, UserCreationForm):
     def __init__(self, *args, labels, **kwargs):
         super().__init__(*args, **kwargs)
         label_fields(self, labels)
@@ -41,7 +42,7 @@ class CommandForm(forms.Form):
         label_fields(self, labels)
 
 
-class ProfileForm(CommandForm):
+class ProfileForm(PrivacyNoticeMixin, CommandForm):
     full_name = forms.CharField(max_length=200)
     contact = forms.EmailField(required=False)
     phone = forms.CharField(max_length=32, validators=[validate_phone])
@@ -50,7 +51,7 @@ class ProfileForm(CommandForm):
     notice = forms.BooleanField(required=True)
 
 
-class ApplicationForm(CommandForm):
+class ApplicationForm(PrivacyNoticeMixin, CommandForm):
     address_category = forms.ChoiceField(choices=[])
     correspondence_address = forms.CharField(
         max_length=1000, required=False, widget=forms.Textarea
@@ -113,7 +114,7 @@ class ApplicationForm(CommandForm):
         return data
 
 
-class RenewalForm(CommandForm):
+class RenewalForm(PrivacyNoticeMixin, CommandForm):
     membership_id = forms.ModelChoiceField(queryset=None)
 
     def __init__(self, *args, labels, user, **kwargs):

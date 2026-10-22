@@ -1,6 +1,7 @@
 from django import forms
 from django.db.models import Q
 from .models import Person
+from .privacy_notice import PrivacyNoticeMixin
 
 
 class LabelForm(forms.Form):
@@ -192,7 +193,7 @@ class ActivityImageForm(EditorialDecisionForm):
     caption = forms.CharField(required=False, max_length=240)
 
 
-class RegistrationForm(LabelForm):
+class RegistrationForm(PrivacyNoticeMixin, LabelForm):
     person = forms.ModelChoiceField(queryset=Person.objects.none())
     guardian_name = forms.CharField(max_length=200, required=False)
     guardian_capacity = forms.CharField(max_length=100, required=False)

@@ -30,7 +30,8 @@ def upload(request):
     data = ctx(request)
     labels = data["photo_labels"]
 
-    class UploadForm(forms.Form):
+    from .privacy_notice import PrivacyNoticeMixin
+    class UploadForm(PrivacyNoticeMixin, forms.Form):
         key = forms.UUIDField(initial=uuid.uuid4, widget=forms.HiddenInput)
         person_id = forms.ModelChoiceField(
             queryset=portraits.owned_people(request.user), label=labels["person"]
@@ -53,6 +54,7 @@ def upload(request):
                     person_id=form.cleaned_data["person_id"].pk,
                     image_data=base64.b64encode(clean).decode(),
                     consent=form.cleaned_data["consent"],
+                    **{k:v for k,v in form.cleaned_data.items() if k.startswith('privacy_')},
                 )
                 return redirect(
                     reverse("portrait_upload") + "?lang=" + data["language"]

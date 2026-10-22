@@ -1,4 +1,5 @@
 from django.urls import path
+from . import privacy_views
 from . import (
     certificate_asset_views,
     pdf_views,
@@ -17,6 +18,7 @@ from . import (
 )
 
 urlpatterns = [
+    path('privacy/', privacy_views.notice, name='privacy_notice'),
     path("operations/contact/", content_operations.contact, name="delegated_contact"),
     path("operations/documents/", document_operations.listing, name="delegated_documents"),
     path("operations/documents/<int:document_id>/", document_operations.detail, name="delegated_document"),

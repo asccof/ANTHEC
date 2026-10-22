@@ -19,7 +19,9 @@ def workflow_disabled(name):
 
 
 def presentation_context(request):
+    from .privacy_notice import enabled
     return {
+        'privacy_notice_enabled': enabled(),
         "public_preview": getattr(settings, "ANTHEEC_PUBLIC_PREVIEW", False),
         "operational": getattr(settings, "ANTHEEC_OPERATIONAL", False),
         "applications_disabled": workflow_disabled("APPLICATIONS"),

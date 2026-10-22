@@ -1,14 +1,16 @@
 from django import forms
 from .member_forms import CommandForm
+from .privacy_notice import PrivacyNoticeMixin
 
-class PartnershipForm(forms.Form):
+class PartnershipForm(PrivacyNoticeMixin, forms.Form):
     organization=forms.CharField(max_length=200)
     contact_email=forms.EmailField()
     message=forms.CharField(max_length=3000,widget=forms.Textarea)
     notice_acknowledged=forms.BooleanField(required=True)
     def __init__(self,*args,labels,**kwargs):
         super().__init__(*args,**kwargs)
-        for name,field in self.fields.items(): field.label=labels[name]
+        for name,field in self.fields.items():
+            if not name.startswith('privacy_'): field.label=labels[name]
 
 class PartnershipDecisionForm(CommandForm):
     decision=forms.ChoiceField(choices=[])

@@ -89,8 +89,11 @@ def account(request, mode):
             if mode == "signup":
                 try:
                     with transaction.atomic():
+                        from .privacy_notice import pop_ack, record
+                        evidence = pop_ack(dict(form.cleaned_data))
                         user = form.save()
                         services.audit(user, "member.account.created", user.pk)
+                        record(user, 'member.signup', user.pk, evidence)
                 except IntegrityError:
                     form.add_error(None, ctx["labels"]["error"])
                     return render(
@@ -333,6 +336,7 @@ def apply(request):
                     applicant_capacity=form.cleaned_data["applicant_capacity"],
                     capacity_other=form.cleaned_data["capacity_other"],
                     key=str(form.cleaned_data["key"]),
+                    **{k:v for k,v in form.cleaned_data.items() if k.startswith('privacy_')},
                 )
                 return go(request, "member_home")
             except (ValidationError, ObjectDoesNotExist, PermissionDenied):
@@ -367,6 +371,7 @@ def renew(request):
                     request.user,
                     membership_id=form.cleaned_data["membership_id"].pk,
                     key=str(form.cleaned_data["key"]),
+                    **{k:v for k,v in form.cleaned_data.items() if k.startswith('privacy_')},
                 )
                 return go(request, "member_home")
             except (ValidationError, ObjectDoesNotExist, PermissionDenied):
