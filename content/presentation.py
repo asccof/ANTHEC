@@ -4,6 +4,9 @@ from governance.models import Price
 from governance.member_labels import vocabulary as member_vocabulary
 
 ROWS = {
+ "upcoming_activities": ("الأنشطة المقبلة والجارية", "Activités à venir et en cours", "Upcoming and ongoing activities"),
+ "past_activities": ("الأنشطة السابقة", "Activités passées", "Past activities"),
+
  "home": ("الرئيسية", "Accueil", "Home"),
  "founders": ("الأعضاء المؤسسون", "Membres fondateurs", "Founding members"),
  "founder_note": ("الرئيس ونائب الرئيس من الأعضاء المؤسسين أيضًا.", "Le président et le vice-président sont également membres fondateurs.", "The president and vice-president are also founding members."),

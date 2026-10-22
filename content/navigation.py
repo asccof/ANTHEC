@@ -1,7 +1,7 @@
 """One compact navigation, exclusively using published, public, menu-visible pages."""
 GROUPS = [
     (("الجمعية", "L’association", "About us"), ("about", "vision", "goals", "fields", "governance", "ethics")),
-    (("البرامج", "Programmes", "Programmes"), ("programmes", "training", "family-community")),
+    (("الأنشطة والبرامج", "Activités et programmes", "Activities and programmes"), ("programmes", "training", "family-community")),
     (("العضوية", "Adhésion", "Membership"), ("membership", "accreditation")),
     (("الموارد والتعاون", "Ressources et coopération", "Resources and cooperation"), ("resources-news", "cooperation", "verification-guide", "faq")),
 ]
@@ -17,7 +17,7 @@ def navigation_groups(pages, language):
         items = [by_slug[s] for s in slugs if s in by_slug]
         assigned.update(slugs)
         if items:
-            result.append(dict(label=labels[index], pages=items))
+            result.append(dict(label=labels[index], pages=items, activity_links="programmes" in slugs))
     # Newly created CMS pages remain discoverable without editing template code.
     extra = [p for p in pages if p.slug not in assigned]
     if extra:
