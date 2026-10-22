@@ -2,7 +2,7 @@ import uuid
 from django.conf import settings
 from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Prefetch
+from django.db.models import Q
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse
@@ -25,6 +25,7 @@ from .activity_forms import (
     ActivityImageForm,
 )
 from .models import Activity, ActivityImage, Registration, Attendance, Audit, Document
+from .activity_public import decorate_activity, image_query, published_activities
 from .deployment import require_applications_enabled, require_issuance_enabled
 from . import services, activity_services, activity_editorial
 from .activity_translation import TranslationConflict
@@ -134,32 +135,13 @@ def form_payload(data):
     return key, data
 
 
-def decorate_activity(row, language):
-    row.content = activity_editorial.display(row, language)
-    row.ended = row.ends_on < timezone.localdate()
-    return row
-
-
-def image_query():
-    return Prefetch(
-        "editorial_images",
-        queryset=ActivityImage.objects.filter(active=True).defer("jpeg").order_by("pk"),
-        to_attr="public_images",
-    )
-
-
 @never_cache
 @require_http_methods(["GET", "HEAD"])
 @localized
 def listing(request):
     ctx = context(request)
     past = request.GET.get("period") == "past"
-    rows = Activity.objects.filter(is_published=True).prefetch_related(image_query())
-    rows = (
-        rows.filter(ends_on__lt=timezone.localdate()).order_by("-starts_on", "-pk")
-        if past
-        else rows.filter(ends_on__gte=timezone.localdate()).order_by("starts_on", "pk")
-    )
+    rows = published_activities(past=past)
     page = Paginator(rows, 12).get_page(request.GET.get("page"))
     for row in page:
         decorate_activity(row, ctx["language"])

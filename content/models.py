@@ -51,6 +51,10 @@ class InstitutionalPage(Page):
         context["directory_configured"] = bool(site and MultilingualPublication.objects.filter(site=site).exists())
         context["is_structure_page"] = self.slug == "governance"
         if context["is_site_home"] and self.editorial_home:
+            from governance.activity_public import homepage_activities
+            from governance.activity_editorial_labels import labels as activity_labels
+            context["homepage_activities"] = homepage_activities(language)
+            context["activity_labels"] = activity_labels(language)
             content = [block for block in self.body if block.block_type != "leadership"]
             context["editorial_hero"] = content[0].value if content and content[0].block_type == "heading" else self.title
             context["editorial_hero_lines"] = context["editorial_hero"].split(". ")

@@ -4,6 +4,19 @@ from .models import PartnershipRequest, Partner
 
 
 class PublicPresentationTests(TestCase):
+    def test_anonymous_verification_opens_directly_without_account_credentials(self):
+        from bs4 import BeautifulSoup
+        for language in ('ar','fr','en'):
+            response=self.client.get('/verify/?lang='+language)
+            self.assertEqual(response.status_code,200)
+            soup=BeautifulSoup(response.content,'html.parser')
+            self.assertFalse(soup.select('input[type="password"],input[name="username"],input[name="email"]'))
+            self.assertEqual(soup.select_one('#document-reference')['type'],'text')
+            self.assertEqual(soup.select_one('#document-code')['type'],'text')
+            self.assertTrue(soup.select_one('#document-code-help').get_text(strip=True))
+            self.assertContains(response,'requestSubmit()')
+            self.assertNotContains(response,'ANTHEEC')
+
     def test_verification_html_failure_keeps_form_and_does_not_echo_credentials(self):
         for language in ('ar','fr','en'):
             response = self.client.post('/verify/?lang='+language,
