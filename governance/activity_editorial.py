@@ -114,8 +114,9 @@ def normalize_image(raw):
                     raise ValidationError("Image dimensions outside limits")
                 source.verify()
             with Image.open(io.BytesIO(raw)) as source:
+                swapped = source.getexif().get(274, 1) in {5, 6, 7, 8}
+                source.thumbnail((1200, 1600) if swapped else (1600, 1200), Image.Resampling.LANCZOS)
                 image = ImageOps.exif_transpose(source).convert("RGBA")
-                image.thumbnail((1600, 1200), Image.Resampling.LANCZOS)
                 clean = Image.new("RGB", image.size, "white")
                 clean.paste(image, mask=image.getchannel("A"))
                 output = io.BytesIO()

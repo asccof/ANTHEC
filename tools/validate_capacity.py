@@ -34,6 +34,7 @@ def main():
         from django.test import Client, override_settings
         from governance.test_pdfs import PDFTests
         from governance import pdf_design, portraits
+        from governance import activity_editorial, certificate_assets
         from governance.models import Document
         from PIL import Image
         with override_settings(ANTHEEC_OPERATIONAL=True):
@@ -73,6 +74,10 @@ def main():
                     return render(('ar', 'fr', 'en')[index % 3]) if index % 2 else portrait(index)
                 mixed_seconds = list(pool.map(mixed, range(6)))
                 print('CAPACITY_STAGE mixed rendering/uploads completed', flush=True)
+                activity_images = list(pool.map(activity_editorial.normalize_image, (source, source)))
+                signing_images = list(pool.map(lambda raw: certificate_assets.normalize(io.BytesIO(raw)), (source, source)))
+                assert all(activity_images) and all(signing_images)
+                print('CAPACITY_STAGE activity/signing image normalization completed', flush=True)
 
             def browse(index):
                 started = time.perf_counter()
