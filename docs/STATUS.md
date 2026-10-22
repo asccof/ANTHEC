@@ -1,3 +1,9 @@
+## 2026-10-22 — phase-one activation and dependency audit
+
+Owner authorized phase-one execution. Privacy notice v2 was activated on the existing ANTHEC service with actual publication date 2026-10-22; deploy dep-dbd77ejl550s73atuvdg is live on d2672b1. AR/FR/EN notice and signup GET checks passed; no existing secret/workflow flag was replaced. Rights/retention handling is documented privately for the president, with no new deletion job or claim of completed real-data erasure. Owner-local backup/key custody, provider/CNDP formalities and independent security acceptance remain unverified.
+
+A fresh pip-audit found advisories against five direct pins (106 advisory records, including aliases/duplicates; not 106 confirmed exploitable application flaws). Stage minimal security refresh: certifi 2026.10.19, Pillow 13.0.0, pip 26.2, cryptography 50.0.2 and pypdf 6.21.1. No key rotation, schema/asset rewrite, new service or clinical data. Initial patched-pin audit reports no known vulnerabilities; final CI/review and deployed verification remain required. Existing cryptographic recovery, immutable PDF, QR/layout and bounded memory tests are acceptance gates for this update. This does not constitute a formal independent penetration-test acceptance.
+
 # Execution ledger
 
 ## 2026-10-22 — protection enforced, recovery/performance published, privacy staged
