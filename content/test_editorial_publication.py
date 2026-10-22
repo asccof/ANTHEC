@@ -86,3 +86,13 @@ class EditorialPublicationTests(TestCase):
         response=self.client.get('/ar/')
         self.assertNotContains(response,'href="/ar/about/"')
         self.assertNotContains(response,'href="/ar/faq/"')
+
+    def test_same_version_changed_payload_is_not_silently_accepted(self):
+        self.apply()
+        EditorialPublication.objects.update(digest='0'*64)
+        self.home.refresh_from_db()
+        before=self.home.live_revision_id
+        with self.assertRaisesMessage(CommandError,'payload changed'):
+            self.apply()
+        self.home.refresh_from_db()
+        self.assertEqual(self.home.live_revision_id,before)

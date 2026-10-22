@@ -22,10 +22,14 @@ class Command(BaseCommand):
         if len(sites) != 1:
             raise CommandError('Exactly one default site is required.')
         site = sites[0]
+        raw = (Path(__file__).resolve().parents[2] / 'approved_ar_20261022.json').read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
         receipt = EditorialPublication.objects.filter(site=site).first()
         if receipt:
             if receipt.version != VERSION:
                 raise CommandError('Another editorial edition was already applied; review explicitly.')
+            if receipt.digest != digest:
+                raise CommandError('Editorial payload changed after publication; review an edit-preserving update explicitly.')
             self.stdout.write('Approved Arabic edition already applied; CMS edits preserved.')
             return
         Page.objects.select_for_update().get(pk=site.root_page_id)
@@ -36,7 +40,6 @@ class Command(BaseCommand):
             raise CommandError('Expected the existing Arabic institutional site root.')
         if home.has_unpublished_changes:
             raise CommandError('Unpublished homepage changes exist; review before import.')
-        raw = (Path(__file__).resolve().parents[2] / 'approved_ar_20261022.json').read_bytes()
         edition = json.loads(raw)
         if edition['version'] != VERSION or len(edition['pages']) != 17:
             raise CommandError('Unexpected editorial payload.')
@@ -63,5 +66,5 @@ class Command(BaseCommand):
                 search_description=entry['search_description'],
                 body=[(b['type'], b['value']) for b in entry['body']]))
             child.save_revision(log_action=True).publish(log_action=True)
-        EditorialPublication.objects.create(site=site, version=VERSION, digest=hashlib.sha256(raw).hexdigest())
+        EditorialPublication.objects.create(site=site, version=VERSION, digest=digest)
         self.stdout.write('Published approved Arabic homepage and 16 pages; future CMS edits will not be reimported.')
