@@ -20,7 +20,7 @@
 <header class="site-header"><div class="shell header-inner">
   <div class="brand">{% if localized_home_url %}<a href="{{ localized_home_url }}">{% endif %}<img class="brand-emblem" src="{% static 'anthec-logo.png' %}" width="48" height="48" alt=""><strong>ANTHEC</strong><span>{{ public_labels.name }}</span>{% if localized_home_url %}</a>{% endif %}</div>
   <nav class="main-nav" aria-label="{{ public_labels.nav }}">
-    {% if localized_home_url %}<a href="{{ localized_home_url }}#about">{{ public_labels.about }}</a><a href="{{ localized_home_url }}#services">{{ public_labels.services }}</a><a href="{{ localized_home_url }}#structure">{{ public_labels.structure }}</a><a href="{{ localized_home_url }}#membership">{{ public_labels.memberships }}</a><a href="{{ localized_home_url }}#accreditation">{{ public_labels.accreditation }}</a>{% endif %}
+    {% if localized_home_url %}<a href="{{ localized_home_url }}#about">{{ public_labels.about }}</a><a href="{{ localized_home_url }}#services">{{ public_labels.services }}</a><a href="{% if structure_page %}{{ structure_page.url }}{% else %}{{ localized_home_url }}#structure{% endif %}">{{ public_labels.structure }}</a><a href="{{ localized_home_url }}#membership">{{ public_labels.memberships }}</a><a href="{{ localized_home_url }}#accreditation">{{ public_labels.accreditation }}</a>{% endif %}
     <a href="{% url 'activity_list' %}?lang={{ page.locale.language_code }}">{{ public_labels.activities }}</a>
     <a href="{% url 'partners' %}?lang={{ page.locale.language_code }}">{{ public_labels.partners }}</a>
     {% include 'governance/document_verify_link.html' with language=page.locale.language_code verify_link_class='nav-pill' %}

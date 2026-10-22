@@ -96,3 +96,38 @@ class EditorialPublicationTests(TestCase):
             self.apply()
         self.home.refresh_from_db()
         self.assertEqual(self.home.live_revision_id,before)
+
+    def test_structure_section_reads_published_cms_page_and_keeps_edits(self):
+        from bs4 import BeautifulSoup
+        self.apply()
+        self.home.refresh_from_db()
+        structure=self.home.get_children().get(slug='governance').specific
+        response=self.client.get('/ar/')
+        section=BeautifulSoup(response.content,'html.parser').select_one('#structure')
+        self.assertIn('الجمع العام الوطني',section.get_text())
+        self.assertIn('المجلس المؤسس',section.get_text())
+        self.assertIn('href="/ar/governance/"',str(section))
+        nav=BeautifulSoup(response.content,'html.parser').select_one('.main-nav')
+        self.assertEqual(nav.find('a',string='هيكلة الجمعية')['href'],'/ar/governance/')
+        structure.body=[('paragraph','Owner revised structure')]
+        structure.save_revision().publish()
+        section=BeautifulSoup(self.client.get('/ar/').content,'html.parser').select_one('#structure')
+        self.assertIn('Owner revised structure',section.get_text())
+        structure.body=[('paragraph','Unpublished structure draft')]
+        structure.save_revision()
+        section=BeautifulSoup(self.client.get('/ar/').content,'html.parser').select_one('#structure')
+        self.assertNotIn('Unpublished structure draft',section.get_text())
+
+    def test_restricted_unpublished_and_other_locale_structure_not_embedded(self):
+        from wagtail.models import PageViewRestriction
+        self.apply()
+        self.home.refresh_from_db()
+        structure=self.home.get_children().get(slug='governance').specific
+        structure.body=[('paragraph','Sensitive synthetic structure')]
+        structure.save_revision().publish()
+        self.assertNotContains(self.client.get('/fr/'),'Sensitive synthetic structure')
+        restriction=PageViewRestriction.objects.create(page=structure,restriction_type='login')
+        self.assertNotContains(self.client.get('/ar/'),'Sensitive synthetic structure')
+        restriction.delete()
+        structure.unpublish()
+        self.assertNotContains(self.client.get('/ar/'),'Sensitive synthetic structure')

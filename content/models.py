@@ -40,11 +40,14 @@ class InstitutionalPage(Page):
         contact = PublicContact.objects.filter(site=site).first() if site else None
         context["public_contact"] = (contact or PublicContact()).public_values(language)
         context["editorial_navigation"] = []
+        context["structure_page"] = None
         if site:
             local_home = Page.objects.live().public().filter(
                 translation_key=site.root_page.translation_key, locale=self.locale).specific().first()
             if local_home:
                 context["editorial_navigation"] = local_home.get_children().live().public().in_menu().filter(locale=self.locale)
+                context["structure_page"] = local_home.get_children().live().public().filter(
+                    locale=self.locale, slug="governance", content_type=self.content_type).specific().first()
         if context["is_site_home"] and self.editorial_home:
             content = [block for block in self.body if block.block_type != "leadership"]
             context["editorial_hero"] = content[0].value if content and content[0].block_type == "heading" else self.title
