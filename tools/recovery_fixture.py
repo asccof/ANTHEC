@@ -2,11 +2,12 @@
 import base64
 import hashlib
 from django.apps import apps
-from django.db import connection
+from django.db import connection, transaction
 from django.test import override_settings
 from cryptography.fernet import Fernet, InvalidToken
 
 
+@transaction.atomic
 def seed():
     from governance.test_pdfs import PDFTests
     from governance.models import Accreditation, Audit

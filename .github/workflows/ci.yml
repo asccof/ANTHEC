@@ -52,12 +52,12 @@ jobs:
       - run: python manage.py seed_demo
       - run: python manage.py seed_policy_prices
       - run: pip check
-      - run: python manage.py test content governance --verbosity=2
       - run: python tools/validate_recovery.py
         env:
           CI: 'true'
           # Public synthetic fixture from settings.test; never a deployed key.
           ANTHEEC_DATA_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      - run: python manage.py test content governance --verbosity=2
   container:
     runs-on: ubuntu-24.04
     steps:
