@@ -1,15 +1,21 @@
 """Browser acceptance against an isolated local database, never hosted personal data."""
 import os
 import threading
+import tempfile
 from datetime import timedelta
 from io import BytesIO
 from pathlib import Path
 from wsgiref.simple_server import make_server, WSGIRequestHandler
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'antheec_app.settings.test')
+from django.conf import settings
+if settings.DATABASES['default']['ENGINE'] != 'django.db.backends.sqlite3':
+    raise SystemExit('Layout acceptance requires isolated SQLite test settings.')
+_layout_database = tempfile.TemporaryDirectory(prefix='anthec-layout-')
+settings.DATABASES['default']['NAME'] = str(Path(_layout_database.name) / 'layout.sqlite3')
 import django
 django.setup()
-from django.conf import settings
+from django.db import connections
 from django.core.management import call_command
 from django.core.wsgi import get_wsgi_application
 from django.contrib.staticfiles.handlers import StaticFilesHandler
@@ -107,8 +113,13 @@ def main():
                 browser.close()
         finally:
             server.shutdown()
+            server.server_close()
     print('PASS: three languages, four widths, published activity images, anonymous verification and direct QR results.')
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    finally:
+        connections.close_all()
+        _layout_database.cleanup()
