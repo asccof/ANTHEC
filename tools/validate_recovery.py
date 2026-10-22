@@ -34,6 +34,7 @@ def main():
         run(sys.executable, "manage.py", "shell", "-c",
             "import json; from pathlib import Path; from tools.recovery_fixture import snapshot; "
             f"assert json.loads(Path({str(proof)!r}).read_text()) == json.loads(json.dumps(snapshot()))", env=restore)
+        run(sys.executable, 'manage.py', 'check_restored_assets', '--allow-local-restore', env=restore)
     print("PASS: synthetic PostgreSQL export, authenticated backup and isolated restore/decryption; "
           "all model counts/migrations, portrait, signature/stamp fixtures, six immutable PDFs, "
           "document credentials and encrypted audit match; incorrect data key rejected.")
