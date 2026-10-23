@@ -115,6 +115,12 @@ def main():
                         assert page.locator('#membership-intake fieldset').count() == 4
                         if width in (390, 1280):
                             page.screenshot(path=str(output / f'intake-{language}-{width}.png'), full_page=True)
+                    for fee_tier, expected in (('general', '100'), ('affiliate', '500'), ('advanced', '1500'), ('accredited', '3000'), ('founder', '0'), ('honorary', '0')):
+                        page.locator('#id_tier').select_option(fee_tier)
+                        reminder = page.locator('[data-fee-tier="'+fee_tier+'"]')
+                        assert reminder.is_visible()
+                        assert expected in reminder.inner_text()
+                        assert page.locator('[data-fee-tier]:visible').count() == 1
                     assert not page.locator('#id_privacy_acceptance').is_checked()
                     assert page.locator('#id_privacy_version').input_value().startswith('ANTHEC-privacy-v2')
                     # A public visitor opens the form and a QR result without account login.
@@ -145,7 +151,7 @@ def main():
                         page.locator('#id_'+name).check()
                     page.locator('#membership-intake button[type=submit]').click()
                     page.wait_for_url('**/members/applications/**')
-                    assert page.locator('[role=status]').count() == 1
+                    assert page.locator('[role=status]').count() == 2
                     assert page.locator('main').get_by_text('Synthetic Browser '+language, exact=False).count() > 0
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, 'receipt overflow')
                     page.close()

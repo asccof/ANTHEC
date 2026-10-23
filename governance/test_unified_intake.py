@@ -106,3 +106,28 @@ class UnifiedIntakeTests(TestCase):
             self.assertEqual(self.client.get('/members/signup/').status_code, 403)
             self.client.force_login(user)
             self.assertEqual(self.client.get('/members/apply/').status_code, 403)
+
+    def test_fee_reminder_uses_effective_prices_and_does_not_require_payment(self):
+        from .models import Price, Payment
+        from django.utils import timezone
+        from datetime import timedelta
+        Price.objects.create(tier='affiliate', amount=725, starts_at=timezone.now()-timedelta(seconds=1))
+        Price.objects.create(tier='affiliate', amount=999, starts_at=timezone.now()+timedelta(days=1))
+        for lang in ('ar', 'fr', 'en'):
+            response = self.client.get('/members/signup/?lang='+lang)
+            fees = {item['tier']: item for item in response.context['fee_choices']}
+            self.assertEqual(fees['affiliate']['amount'], 725)
+            self.assertEqual(fees['founder']['amount'], 0)
+            self.assertEqual(fees['honorary']['amount'], 0)
+            self.assertContains(response, 'data-fee-tier="affiliate"')
+            self.assertContains(response, response.context['labels']['fee_contact'])
+        response = self.client.post('/members/signup/?lang=en', self.payload(lang='en'), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Application.objects.get().quote, 725)
+        self.assertFalse(Payment.objects.exists())
+        self.assertContains(response, response.context['labels']['pending_fee_contact'])
+        # Receipt continues showing the submitted quote after later price changes.
+        Price.objects.create(tier='affiliate', amount=800, starts_at=timezone.now())
+        receipt = self.client.get(response.request['PATH_INFO']+'?lang=en')
+        self.assertEqual(receipt.context['app'].quote, 725)
+        self.assertContains(receipt, receipt.context['labels']['pending_fee_contact'])

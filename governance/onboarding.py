@@ -6,10 +6,11 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist, Permissi
 from django.db import transaction, IntegrityError
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.utils import timezone
 from . import member_services, services
 from .member_forms import SignupForm, ProfileForm, ApplicationForm
 from .member_views import context, go, auth_attempt
-from .models import Person, Application, Membership
+from .models import Person, Application, Membership, Price
 
 PROFILE_FIELDS = ('full_name', 'contact', 'phone', 'profession', 'directory_consent')
 APPLICATION_FIELDS = ('address_category', 'correspondence_address', 'professional_address',
@@ -79,6 +80,14 @@ def intake(request, *, new_account):
             services.audit(None, 'member.account.failed', 'signup')
         ctx['error'] = ctx['labels']['intake_errors']
         status = 400
+    # Use the same effective price ordering as the submission quote; never trust POST prices.
+    fee_choices = []
+    selected_tier = application['tier'].value() or 'general'
+    for tier in services.TIERS:
+        price = Price.objects.filter(tier=tier, starts_at__lte=timezone.now()).order_by('-starts_at', '-pk').first()
+        amount = price.amount if price else (0 if tier in {'founder', 'honorary'} else None)
+        fee_choices.append({'tier': tier, 'name': ctx['labels'][tier], 'amount': amount,
+                            'selected': tier == selected_tier})
     privacy_form = account or profile
     groups = []
     if account:
@@ -96,5 +105,5 @@ def intake(request, *, new_account):
         'submit_label': ctx['labels']['signup_apply_submit'] if account else ctx['labels']['submit_application'],
         'form': account or application, 'account_form': account, 'profile_form': profile,
         'application_form': application, 'privacy_form': privacy_form, 'intake_forms': forms,
-        'field_groups': groups, 'new_account': new_account,
+        'field_groups': groups, 'new_account': new_account, 'fee_choices': fee_choices,
     }, status=status)
