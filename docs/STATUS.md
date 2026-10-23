@@ -1,3 +1,7 @@
+## 2026-10-23 — membership fee reminder prepared
+
+Owner requested a nonblocking fee reminder at tier selection and a persistent pending-review/payment-contact message after submission. The intake reads current effective Price rows using the submission quote ordering, retains free founder/honorary treatment, and uses the stored quote on the private receipt. AR/FR/EN, no-JavaScript fallback and browser back restoration are included. No payment field, validation gate, price change, migration or translation-provider activation. Exact-head CI/review and hosted deployment remain pending.
+
 ## 2026-10-23 — one-submit membership intake prepared
 
 After the official-domain cutover (PR63, live ead1377 / dep-dbdnisss728c73cj26dg), the owner requested and explicitly approved replacing separate account/profile/application steps with one form and submit. ADR038 records composed validation, an atomic account/profile/pending-portrait/application save, existing-account prefill, distinct consent/evidence purposes, duplicate guards and a private pending-review receipt in AR/FR/EN. Local focused acceptance passed 46 tests; metadata validation, 12 auxiliary tests, system/migration checks passed. Browser acceptance adds synthetic complete submissions in each language and responsive form checks. Full exact-head PostgreSQL/container/layout CI, code review and deployment remain pending. No real signup, private member update, fees/artwork/schema change or Tighri action.

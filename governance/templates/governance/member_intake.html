@@ -9,11 +9,22 @@
 {% if privacy_notice_enabled %}{{ privacy_form.privacy_version }}{{ privacy_form.privacy_language }}{{ privacy_form.privacy_version.errors }}{{ privacy_form.privacy_language.errors }}{% endif %}
 {% for item in intake_forms %}{{ item.non_field_errors }}{% endfor %}
 {% for heading, fields in field_groups %}<fieldset><legend>{{ heading }}</legend><div class="intake-grid">
-{% for field in fields %}<p class="intake-field">{{ field.label_tag }}{{ field }}{% if field.help_text %}<span class="helptext">{{ field.help_text|safe }}</span>{% endif %}{{ field.errors }}</p>{% endfor %}
+{% for field in fields %}<p class="intake-field">{{ field.label_tag }}{{ field }}{% if field.help_text %}<span class="helptext">{{ field.help_text|safe }}</span>{% endif %}{{ field.errors }}</p>{% if field.name == 'tier' %}<div class="intake-fee-reminder" aria-live="polite" aria-atomic="true">
+{% for fee in fee_choices %}<div data-fee-tier="{{ fee.tier }}"{% if not fee.selected %} hidden{% endif %}><p><strong>{{ labels.fee_reminder }} — {{ fee.name }}: {% if fee.amount != None %}{{ fee.amount }} MAD{% else %}—{% endif %}</strong></p><p>{% if fee.amount == None %}{{ labels.fee_unavailable }}{% elif fee.amount == 0 %}{{ labels.fee_exempt }}{% else %}{{ labels.fee_contact }}{% endif %}</p></div>{% endfor %}
+<noscript><p>{{ labels.fee_contact }}</p>{% for fee in fee_choices %}<p>{{ fee.name }}: {{ fee.amount|default_if_none:'—' }} MAD</p>{% endfor %}</noscript></div>{% endif %}{% endfor %}
 </div></fieldset>{% endfor %}
 <button type="submit">{{ submit_label }}</button></form></section>
 {% include 'governance/intake_fields_script.html' %}
 <script>
+const tierSelect = document.getElementById('id_tier');
+function updateFeeReminder() {
+  document.querySelectorAll('[data-fee-tier]').forEach(item => {
+    item.hidden = item.dataset.feeTier !== tierSelect.value;
+  });
+}
+tierSelect.addEventListener('change', updateFeeReminder);
+window.addEventListener('pageshow', updateFeeReminder);
+updateFeeReminder();
 const intakeForm = document.getElementById('membership-intake');
 intakeForm.addEventListener('submit', () => {
   intakeForm.querySelector('button[type=submit]').disabled = true;
