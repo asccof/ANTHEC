@@ -148,11 +148,13 @@ def main():
                     assert page.locator('[role=status]').count() == 1
                     assert page.locator('main').get_by_text('Synthetic Browser '+language, exact=False).count() > 0
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, 'receipt overflow')
-                    from governance.models import Application, Membership
-                    submitted = Application.objects.get(person__user__username='synthetic-browser-'+language)
-                    assert submitted.state == 'submitted' and not Membership.objects.filter(application=submitted).exists()
                     page.close()
                 browser.close()
+            # Playwright's sync context owns an event loop; inspect Django ORM only after it exits.
+            from governance.models import Application, Membership
+            for language in ('ar', 'fr', 'en'):
+                submitted = Application.objects.get(person__user__username='synthetic-browser-'+language)
+                assert submitted.state == 'submitted' and not Membership.objects.filter(application=submitted).exists()
         finally:
             server.shutdown()
             server.server_close()
