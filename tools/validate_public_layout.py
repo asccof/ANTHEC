@@ -130,6 +130,7 @@ def main():
                     qr.close()
                     # One complete synthetic signup creates the pending application, not membership.
                     page.goto(f'http://127.0.0.1:{server.server_port}/members/signup/?lang={language}')
+                    page.locator('#id_address_category').select_option('beneficiary')
                     for name, value in {'username': 'synthetic-browser-'+language,
                             'password1': 'Cedar-mountain-789!pass', 'password2': 'Cedar-mountain-789!pass',
                             'full_name': 'Synthetic Browser '+language, 'phone': '+212600000001',
@@ -137,7 +138,6 @@ def main():
                         page.locator('#id_'+name).fill(value)
                     page.locator('#id_tier').select_option('affiliate')
                     page.locator('#id_applicant_capacity').select_option('coach')
-                    page.locator('#id_address_category').select_option('beneficiary')
                     portrait = BytesIO()
                     Image.new('RGB', (600, 750), 'navy').save(portrait, 'PNG')
                     page.locator('#id_photo').set_input_files({'name': 'synthetic.png', 'mimeType': 'image/png', 'buffer': portrait.getvalue()})
