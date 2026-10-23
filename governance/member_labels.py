@@ -3,6 +3,16 @@
 from .institutional_labels import LABELS as INSTITUTIONAL
 
 ROWS = {
+    "signup_apply": ("إنشاء الحساب وطلب الانخراط", "Compte et demande d’adhésion", "Account and membership application"),
+    "signup_apply_submit": ("إنشاء الحساب وإرسال طلب الانخراط", "Créer le compte et envoyer la demande", "Create account and submit application"),
+    "account_section": ("بيانات الدخول", "Identifiants de connexion", "Sign-in details"),
+    "profile_section": ("المعلومات الشخصية", "Informations personnelles", "Personal information"),
+    "application_section": ("طلب الانخراط", "Demande d’adhésion", "Membership application"),
+    "consent_section": ("الإقرارات", "Déclarations", "Acknowledgements"),
+    "unified_intro": ("املأ الاستمارة مرة واحدة لإنشاء حسابك وإرسال طلب انخراطك. يظل الطلب قيد المراجعة إلى أن تقرر الإدارة.", "Remplissez ce formulaire une seule fois pour créer votre compte et envoyer votre demande. Elle restera en attente de décision administrative.", "Complete this form once to create your account and submit your application. It remains pending administrative review."),
+    "existing_account": ("لدي حساب بالفعل — تسجيل الدخول", "J’ai déjà un compte — me connecter", "Already have an account? Sign in"),
+    "application_received": ("تم استلام طلب انخراطك، وهو قيد المراجعة.", "Votre demande d’adhésion a été reçue et attend son examen.", "Your membership application has been received and is pending review."),
+    "intake_errors": ("يرجى تصحيح الحقول المشار إليها قبل الإرسال. أعد اختيار الصورة إذا لزم الأمر.", "Corrigez les champs indiqués avant l’envoi. Sélectionnez à nouveau le portrait si nécessaire.", "Correct the indicated fields before submitting. Select the portrait again if needed."),
     "contact_observation": ("بيانات التواصل العامة", "Coordonnées publiques", "Public contact details"),
     "public_phone": ("الهاتف وواتساب", "Téléphone et WhatsApp", "Phone and WhatsApp"),
     "public_email": ("البريد الإلكتروني", "Courriel", "Email"),

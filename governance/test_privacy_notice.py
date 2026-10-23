@@ -11,7 +11,7 @@ from .models import Audit, Person, Activity, Registration, PartnershipRequest, A
 from .tests import synthetic_user
 from .member_forms import SignupForm
 from .member_labels import vocabulary
-from .intake_test_support import intake_payload
+from .intake_test_support import intake_payload, signup_payload
 
 
 def acknowledgement(language='ar'):
@@ -73,16 +73,19 @@ class PrivacyNoticeTests(TestCase):
         self.assertEqual(self.client.post('/privacy/').status_code, 405)
 
     def test_signup_does_not_create_account_until_acknowledged(self):
-        data = dict(username='synthetic-privacy-signup', password1='Synthetic-long-567!pass',
-                    password2='Synthetic-long-567!pass')
+        call_command('seed_policy_prices', verbosity=0)
+        data = signup_payload('synthetic-privacy-signup')
         self.assertEqual(self.client.post('/members/signup/?lang=en', data).status_code, 400)
         self.assertFalse(get_user_model().objects.filter(username=data['username']).exists())
-        response = self.client.post('/members/signup/?lang=en', {**data, **acknowledgement('en')})
+        response = self.client.post('/members/signup/?lang=en', {
+            **signup_payload(data['username']), **acknowledgement('en')})
         self.assertEqual(response.status_code, 302)
         actor = get_user_model().objects.get(username=data['username'])
-        row = Audit.objects.get(action='privacy.acknowledged', actor=actor)
-        self.assertEqual(row.details['purpose'], 'member.signup')
-        self.assertEqual(row.details['notice']['language'], 'en')
+        rows = Audit.objects.filter(action='privacy.acknowledged', actor=actor)
+        self.assertEqual(set(row.details['purpose'] for row in rows),
+                         {'member.signup', 'member.profile', 'member.application', 'portrait.upload'})
+        for row in rows:
+            self.assertEqual(row.details['notice']['language'], 'en')
 
     def test_anonymous_partnership_request_keeps_separate_acknowledgements(self):
         data = dict(organization='Synthetic organization', contact_email='synthetic@example.invalid',

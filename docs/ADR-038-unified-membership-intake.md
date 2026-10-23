@@ -1,0 +1,13 @@
+# ADR 038 — one-submit account and membership intake
+
+Date: 2026-10-23. Authority: owner reviewed and approved the concrete single-page proposal before implementation. Status: prepared; final CI, exact-head review and deployment are separate evidence.
+
+## Decision
+
+Default public signup now collects credentials, existing profile fields, application classification/addresses and portrait, with separate verification/portrait/optional-directory declarations and one visible versioned privacy acknowledgement. The same acknowledgement records its existing distinct account/profile/application/portrait purposes. One POST validates all three forms, including portrait normalization, before account creation; an outer database transaction wraps account creation and the existing profile/application services and their private audit records. Log in only after commit and show the private application summary with a pending-review receipt. No approval, payment, document issuance, privilege grant or identity matching is performed by signup.
+
+Existing authenticated applicants use the same form without credential fields, prefilled from their own profile. Legacy partial application submissions may reuse previously saved profile values; a marker on the new form prevents an unchecked verification declaration from being silently filled. Unchecked directory consent is never filled from initials. Pending applications redirect to their existing private summary; existing memberships retain their renewal path. Public activity login/resume remains supported; default new signup now submits a membership request as explicitly requested by the owner.
+
+Account username uniqueness and the existing locked/idempotent command services prevent duplicate accounts/requests; the browser additionally disables repeated submit while retaining recovery on back navigation. A late service error rolls back the account, profile, pending portrait, application, commands and evidence. Inputs remain escaped; passwords/files are not persisted in browser drafts or echoed on validation errors. The existing shared-ingress authentication budget runs before image decoding on signup; CSRF, workflow guards, protected portrait review and POL-01–08 remain in force.
+
+No schema, new service, paid resource, email delivery, private production test record, historical record migration or Tighri change. Validate the complete flow with isolated synthetic images/users, AR/FR/EN browser submissions and narrow/wide layouts, plus full PostgreSQL/recovery/container CI and exact-head code review before deployment. Runtime acceptance uses public form reads only, not real signup transactions.

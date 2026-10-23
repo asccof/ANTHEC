@@ -109,6 +109,12 @@ def main():
                         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, width, 'privacy overflow')
                     response = page.goto(f'http://127.0.0.1:{server.server_port}/members/signup/?lang={language}')
                     assert response.status == 200
+                    for width in (320, 390, 768, 1280):
+                        page.set_viewport_size({'width': width, 'height': 960})
+                        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, width, 'intake overflow')
+                        assert page.locator('#membership-intake fieldset').count() == 4
+                        if width in (390, 1280):
+                            page.screenshot(path=str(output / f'intake-{language}-{width}.png'), full_page=True)
                     assert not page.locator('#id_privacy_acceptance').is_checked()
                     assert page.locator('#id_privacy_version').input_value().startswith('ANTHEC-privacy-v2')
                     # A public visitor opens the form and a QR result without account login.
@@ -122,12 +128,37 @@ def main():
                     assert qr.locator('#verification').count() == 0
                     assert '#' not in qr.url
                     qr.close()
+                    # One complete synthetic signup creates the pending application, not membership.
+                    page.goto(f'http://127.0.0.1:{server.server_port}/members/signup/?lang={language}')
+                    page.locator('#id_address_category').select_option('beneficiary')
+                    for name, value in {'username': 'synthetic-browser-'+language,
+                            'password1': 'Cedar-mountain-789!pass', 'password2': 'Cedar-mountain-789!pass',
+                            'full_name': 'Synthetic Browser '+language, 'phone': '+212600000001',
+                            'profession': 'Synthetic coach', 'residential_address': 'Synthetic residence'}.items():
+                        page.locator('#id_'+name).fill(value)
+                    page.locator('#id_tier').select_option('affiliate')
+                    page.locator('#id_applicant_capacity').select_option('coach')
+                    portrait = BytesIO()
+                    Image.new('RGB', (600, 750), 'navy').save(portrait, 'PNG')
+                    page.locator('#id_photo').set_input_files({'name': 'synthetic.png', 'mimeType': 'image/png', 'buffer': portrait.getvalue()})
+                    for name in ('notice', 'photo_consent', 'privacy_acceptance'):
+                        page.locator('#id_'+name).check()
+                    page.locator('#membership-intake button[type=submit]').click()
+                    page.wait_for_url('**/members/applications/**')
+                    assert page.locator('[role=status]').count() == 1
+                    assert page.locator('main').get_by_text('Synthetic Browser '+language, exact=False).count() > 0
+                    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, 'receipt overflow')
                     page.close()
                 browser.close()
+            # Playwright's sync context owns an event loop; inspect Django ORM only after it exits.
+            from governance.models import Application, Membership
+            for language in ('ar', 'fr', 'en'):
+                submitted = Application.objects.get(person__user__username='synthetic-browser-'+language)
+                assert submitted.state == 'submitted' and not Membership.objects.filter(application=submitted).exists()
         finally:
             server.shutdown()
             server.server_close()
-    print('PASS: three languages, four widths, published activity images, anonymous verification, direct QR results and staged versioned privacy notice/unchecked acknowledgement.')
+    print('PASS: three languages, four widths, published activity images, anonymous verification, direct QR results versioned privacy notice/unchecked acknowledgement, and one-submit membership intake in each language.')
 
 
 if __name__ == '__main__':

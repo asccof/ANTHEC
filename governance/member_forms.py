@@ -91,6 +91,12 @@ class ApplicationForm(PrivacyNoticeMixin, CommandForm):
         self.fields["applicant_capacity"].help_text = labels["capacity_notice"]
         self.fields["capacity_other"].help_text = labels["capacity_other_hint"]
 
+    def clean_photo(self):
+        from .portraits import normalize
+        upload = self.cleaned_data['photo']
+        self.normalized_photo = normalize(upload)
+        return upload
+
     def clean(self):
         data = super().clean()
         if data.get("applicant_capacity"):
