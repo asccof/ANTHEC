@@ -61,6 +61,31 @@ class DisabledMediaStorage(Storage):
         raise PermissionDenied("Private media has no public URL.")
 
 
+class CanonicalOriginMiddleware:
+    """Retain old QR URLs through an exact read-only redirect, before auth/static handling."""
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from urllib.parse import urlsplit
+        legacy = getattr(settings, "ANTHEEC_LEGACY_ORIGIN", "")
+        if legacy and request.get_host().split(":", 1)[0].lower() == urlsplit(legacy).hostname:
+            if request.path_info == "/health/" and request.method in {"GET", "HEAD"}:
+                return self.get_response(request)
+            # Never forward an old-origin login, payment or application submission.
+            if request.method not in {"GET", "HEAD"}:
+                response = HttpResponse("Use the current site address.", status=421)
+            else:
+                response = HttpResponse(status=308)
+                # No fragment in Location: browsers retain the original QR fragment.
+                response["Location"] = settings.ANTHEEC_PUBLIC_ORIGIN + request.get_full_path()
+            response["Cache-Control"] = "no-store, private"
+            response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+            response["Referrer-Policy"] = "no-referrer"
+            return response
+        return self.get_response(request)
+
+
 class OwnerTestingMiddleware:
     """Only the active MFA-verified primary sees dynamic application data."""
     def __init__(self, get_response):
@@ -173,8 +198,8 @@ class OperationalMiddleware(PublicPreviewMiddleware):
     """Operational HTTP protections; domain ownership and scoped admin rules stay in views.
 
     Preserve the global admin login ceiling without trusting forwarding headers.
-    Dynamic private responses are never cacheable. Public discovery is a separate
-    editorial decision, so this first operational stage remains noindex.
+    Dynamic private responses are never cacheable. Explicit discovery applies only
+    to successful anonymous editorial reads, never account/document routes.
     """
     def __call__(self, request):
         if not getattr(settings, "ANTHEEC_OPERATIONAL", False):
@@ -197,7 +222,11 @@ class OperationalMiddleware(PublicPreviewMiddleware):
         else:
             response = self.get_response(request)
         response["Cache-Control"] = "no-store, private"
-        response["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        discoverable = (getattr(settings, "ANTHEEC_PUBLIC_DISCOVERY_ENABLED", False)
+                        and not user.is_authenticated and response.status_code == 200
+                        and self.public_read(request))
+        response["X-Robots-Tag"] = ("index, follow" if discoverable
+                                   else "noindex, nofollow, noarchive")
         return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):

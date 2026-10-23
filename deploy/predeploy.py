@@ -23,3 +23,8 @@ if editorial_version:
     if editorial_version == "multilingual-20261022-v1":
         subprocess.run([sys.executable, str(root / "manage.py"),
                         "publish_multilingual_editorial", "--apply"], cwd=root, check=True)
+
+# Explicit canonical-domain cutover; no membership, assets or PDFs are rewritten.
+if os.environ.get("ANTHEEC_SYNC_SITE_ORIGIN", "0") == "1":
+    subprocess.run([sys.executable, str(root / "manage.py"),
+                    "sync_site_origin", "--apply"], cwd=root, check=True)

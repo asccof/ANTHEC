@@ -64,15 +64,30 @@ if hmac.compare_digest(
         base64.urlsafe_b64decode(b"MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=")):
     raise ImproperlyConfigured("The repository test key must never be deployed.")
 
-origin = urlsplit(required("ANTHEEC_PUBLIC_ORIGIN"))
-if (origin.scheme != "https" or origin.path not in {"", "/"} or origin.query or
-        origin.fragment or origin.username or origin.password or not origin.hostname or
-        not re.fullmatch(r"[a-z0-9]+(?:[a-z0-9.-]*[a-z0-9])?", origin.netloc)):
-    raise ImproperlyConfigured("One exact HTTPS hostname is required; no wildcard, port or URL path.")
-ANTHEEC_PUBLIC_ORIGIN = "https://" + origin.hostname
-ALLOWED_HOSTS = [origin.hostname]
+def exact_origin(value):
+    parsed = urlsplit(value)
+    if (parsed.scheme != "https" or parsed.path not in {"", "/"} or parsed.query or
+            parsed.fragment or parsed.username or parsed.password or not parsed.hostname or
+            not re.fullmatch(r"[a-z0-9]+(?:[a-z0-9.-]*[a-z0-9])?", parsed.netloc)):
+        raise ImproperlyConfigured("One exact HTTPS hostname is required; no wildcard, port or URL path.")
+    return "https://" + parsed.hostname
+
+
+ANTHEEC_PUBLIC_ORIGIN = exact_origin(required("ANTHEEC_PUBLIC_ORIGIN"))
+ALLOWED_HOSTS = [urlsplit(ANTHEEC_PUBLIC_ORIGIN).hostname]
+ANTHEEC_LEGACY_ORIGIN = os.environ.get("ANTHEEC_LEGACY_ORIGIN", "")
+if ANTHEEC_LEGACY_ORIGIN:
+    ANTHEEC_LEGACY_ORIGIN = exact_origin(ANTHEEC_LEGACY_ORIGIN)
+    if not ANTHEEC_OPERATIONAL or ANTHEEC_LEGACY_ORIGIN == ANTHEEC_PUBLIC_ORIGIN:
+        raise ImproperlyConfigured("Legacy redirects require operational mode and a distinct exact origin.")
+    ALLOWED_HOSTS.append(urlsplit(ANTHEEC_LEGACY_ORIGIN).hostname)
 CSRF_TRUSTED_ORIGINS = [ANTHEEC_PUBLIC_ORIGIN]
 WAGTAILADMIN_BASE_URL = ANTHEEC_PUBLIC_ORIGIN
+for _flag in ("ANTHEEC_SYNC_SITE_ORIGIN", "ANTHEEC_PUBLIC_DISCOVERY_ENABLED"):
+    _value = os.environ.get(_flag, "0")
+    if _value not in {"0", "1"} or (_value == "1" and not ANTHEEC_OPERATIONAL):
+        raise ImproperlyConfigured(f"{_flag} requires operational mode and an explicit 0/1 flag.")
+    globals()[_flag] = _value == "1"
 WAGTAIL_SITE_NAME = "ANTHEC — private owner testing" if ANTHEEC_OWNER_TESTING else ("ANTHEC" if ANTHEEC_OPERATIONAL else "ANTHEC — preview")
 OTP_TOTP_ISSUER = "ANTHEC" if ANTHEEC_OPERATIONAL else "ANTHEC owner testing"
 
@@ -108,6 +123,7 @@ SECURE_REFERRER_POLICY = "same-origin"
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 MIDDLEWARE = list(MIDDLEWARE)  # noqa: F405
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+MIDDLEWARE.insert(0, "governance.deployment.CanonicalOriginMiddleware")
 MIDDLEWARE.insert(MIDDLEWARE.index("governance.middleware.AdminSecurityMiddleware"),
                   "governance.deployment.OwnerTestingMiddleware" if ANTHEEC_OWNER_TESTING
                   else ("governance.deployment.OperationalMiddleware" if ANTHEEC_OPERATIONAL

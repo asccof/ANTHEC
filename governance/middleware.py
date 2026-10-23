@@ -95,5 +95,6 @@ class PolicyLocaleMiddleware(LocaleMiddleware):
             # LocaleMiddleware can replace the response with a redirect. Keep
             # the private cache/indexing headers on that replacement as well.
             result["Cache-Control"] = "no-store, private"
-            result["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+            if result is not response or "X-Robots-Tag" not in result:
+                result["X-Robots-Tag"] = "noindex, nofollow, noarchive"
         return result
