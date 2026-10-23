@@ -42,6 +42,17 @@ class CanonicalRedirectTests(SimpleTestCase):
             self.assertEqual(self.middleware(request).content, b'current')
         self.assertEqual(self.downstream.call_count, 2)
 
+    def test_django_accepted_host_variants_never_bypass_legacy_gate(self):
+        for host in ('old.example.invalid.', 'OLD.EXAMPLE.INVALID.', 'old.example.invalid.:443'):
+            with self.subTest(host=host):
+                read = self.factory.get('/verify/?lang=ar', HTTP_HOST=host)
+                response = self.middleware(read)
+                self.assertEqual(response.status_code, 308)
+                self.assertEqual(response['Location'], 'https://new.example.invalid/verify/?lang=ar')
+                write = self.factory.post('/members/signup/', HTTP_HOST=host)
+                self.assertEqual(self.middleware(write).status_code, 421)
+        self.downstream.assert_not_called()
+
     def test_unlisted_host_is_rejected_before_redirect(self):
         from django.core.exceptions import DisallowedHost
         request = self.factory.get('/', HTTP_HOST='evil.example.invalid')

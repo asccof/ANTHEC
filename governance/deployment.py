@@ -69,7 +69,7 @@ class CanonicalOriginMiddleware:
     def __call__(self, request):
         from urllib.parse import urlsplit
         legacy = getattr(settings, "ANTHEEC_LEGACY_ORIGIN", "")
-        if legacy and request.get_host().split(":", 1)[0].lower() == urlsplit(legacy).hostname:
+        if legacy and request.get_host().split(":", 1)[0].lower().removesuffix(".") == urlsplit(legacy).hostname:
             if request.path_info == "/health/" and request.method in {"GET", "HEAD"}:
                 return self.get_response(request)
             # Never forward an old-origin login, payment or application submission.
