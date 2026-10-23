@@ -131,3 +131,26 @@ class UnifiedIntakeTests(TestCase):
         receipt = self.client.get(response.request['PATH_INFO']+'?lang=en')
         self.assertEqual(receipt.context['app'].quote, 725)
         self.assertContains(receipt, receipt.context['labels']['pending_fee_contact'])
+
+    def test_documented_exemption_or_verified_payment_suppresses_payment_prompt(self):
+        from .models import Exemption, Payment
+        response = self.client.post('/members/signup/?lang=en', self.payload(lang='en'), follow=True)
+        app = Application.objects.get()
+        user = app.person.user
+        url = response.request['PATH_INFO']+'?lang=en'
+        Payment.objects.create(application=app, amount=app.quote, method='cash',
+                               verified_by=user, proof_reference='Synthetic payment')
+        receipt = self.client.get(url)
+        self.assertNotContains(receipt, receipt.context['labels']['pending_fee_contact'])
+        self.assertContains(receipt, receipt.context['labels']['application_received'])
+        self.assertFalse(receipt.context['fee_exempt'])
+        from .models import Refund
+        payment = Payment.objects.get(application=app)
+        Refund.objects.create(payment=payment, amount=app.quote, approved=True, actor=user, reason='Synthetic refund')
+        self.assertContains(self.client.get(url), receipt.context['labels']['pending_fee_contact'])
+        Exemption.objects.create(application=app, actor=user, reason='Synthetic exception')
+        receipt = self.client.get(url)
+        self.assertNotContains(receipt, receipt.context['labels']['pending_fee_contact'])
+        self.assertContains(receipt, receipt.context['labels']['fee_exempt'])
+        app.refresh_from_db()
+        self.assertEqual(app.quote, 500)

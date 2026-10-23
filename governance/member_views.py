@@ -347,7 +347,8 @@ def renew(request):
 @localized
 def application_detail(request, application_id):
     from django.db.models import Q
-    from .models import Document, Refund, Membership
+    from .models import Document, Refund, Membership, Exemption
+    from django.db.models import Sum
 
     ctx = context(request)
     app = get_object_or_404(
@@ -372,6 +373,9 @@ def application_detail(request, application_id):
             ),
             "—",
         ),
+        fee_exempt=Exemption.objects.filter(application=app).exists(),
+        fee_outstanding=app.quote - (app.payment_set.aggregate(total=Sum('amount'))['total'] or 0)
+            + (Refund.objects.filter(payment__application=app, approved=True).aggregate(total=Sum('amount'))['total'] or 0),
         app=app,
         tier=ctx["labels"][app.tier],
         state=ctx["labels"].get(app.state, app.state),
