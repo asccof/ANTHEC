@@ -71,6 +71,8 @@ def account(request, mode):
     if mode == "signup":
         from .deployment import require_applications_enabled
         require_applications_enabled()
+        from .onboarding import intake
+        return intake(request, new_account=not request.user.is_authenticated)
     if request.user.is_authenticated:
         return go(request, "member_home")
     ctx = context(request)
@@ -300,54 +302,8 @@ def profile(request):
 @require_http_methods(["GET", "POST"])
 @localized
 def apply(request):
-    ctx = context(request)
-    person = Person.objects.filter(user=request.user).first()
-    if not person or not person.phone or not person.profession:
-        return go(request, "member_profile")
-    form = ApplicationForm(
-        request.POST if request.method == "POST" else None,
-        request.FILES or None,
-        labels=ctx["labels"],
-    )
-    status = 200
-    if request.method == "POST":
-        if form.is_valid():
-            try:
-                import base64
-                from .portraits import normalize
-
-                member_services.submit_application(
-                    request.user,
-                    image_data=base64.b64encode(
-                        normalize(form.cleaned_data["photo"])
-                    ).decode(),
-                    photo_consent=form.cleaned_data["photo_consent"],
-                    **{
-                        k: form.cleaned_data[k]
-                        for k in (
-                            "address_category",
-                            "correspondence_address",
-                            "professional_address",
-                            "residential_address",
-                            "same_address",
-                        )
-                    },
-                    tier=form.cleaned_data["tier"],
-                    applicant_capacity=form.cleaned_data["applicant_capacity"],
-                    capacity_other=form.cleaned_data["capacity_other"],
-                    key=str(form.cleaned_data["key"]),
-                    **{k:v for k,v in form.cleaned_data.items() if k.startswith('privacy_')},
-                )
-                return go(request, "member_home")
-            except (ValidationError, ObjectDoesNotExist, PermissionDenied):
-                form.add_error(None, ctx["labels"]["error"])
-        status = 400
-    return render(
-        request,
-        "governance/member_form.html",
-        {**ctx, "form": form, "title": ctx["labels"]["apply"]},
-        status=status,
-    )
+    from .onboarding import intake
+    return intake(request, new_account=False)
 
 
 @never_cache

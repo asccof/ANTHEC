@@ -147,7 +147,7 @@ class IntakeTests(TestCase):
                 )
                 self.assertEqual(
                     soup.select_one("section form button").get_text(strip=True),
-                    labels[mode],
+                    labels['signup_apply_submit'] if mode == 'signup' else labels[mode],
                 )
 
     def test_verification_csrf_origin_boundary_and_nonleaking_policy(self):
@@ -187,7 +187,9 @@ class IntakeTests(TestCase):
         person.phone = person.profession = ""
         person.save(update_fields=["phone", "profession"])
         response = self.client.get("/members/apply/?lang=fr")
-        self.assertRedirects(response, "/members/profile/?lang=fr")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="phone"')
+        self.assertContains(response, 'name="profession"')
         with self.assertRaises(ValidationError):
             m.submit_application(
                 self.user,

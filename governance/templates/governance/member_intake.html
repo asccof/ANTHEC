@@ -1,0 +1,27 @@
+{% extends 'governance/member_base.html' %}
+{% block content %}
+<section class="unified-intake"><h2>{{ title }}</h2>
+{% if new_account %}<p>{{ labels.unified_intro }}</p><a href="{% url 'member_login' %}?lang={{ language }}">{{ labels.existing_account }}</a>{% endif %}
+<p>{{ labels.existing_record }}</p><p>{{ labels.terms }}</p>
+{% if error %}<p role="alert" class="intake-error">{{ error }}</p>{% endif %}
+<form method="post" enctype="multipart/form-data" id="membership-intake">{% csrf_token %}<input type="hidden" name="intake_profile" value="1">
+{{ application_form.key }}{{ application_form.key.errors }}
+{% if privacy_notice_enabled %}{{ privacy_form.privacy_version }}{{ privacy_form.privacy_language }}{{ privacy_form.privacy_version.errors }}{{ privacy_form.privacy_language.errors }}{% endif %}
+{% for item in intake_forms %}{{ item.non_field_errors }}{% endfor %}
+{% for heading, fields in field_groups %}<fieldset><legend>{{ heading }}</legend><div class="intake-grid">
+{% for field in fields %}<p class="intake-field">{{ field.label_tag }}{{ field }}{% if field.help_text %}<span class="helptext">{{ field.help_text|safe }}</span>{% endif %}{{ field.errors }}</p>{% endfor %}
+</div></fieldset>{% endfor %}
+<button type="submit">{{ submit_label }}</button></form></section>
+{% include 'governance/intake_fields_script.html' %}
+<script>
+const intakeForm = document.getElementById('membership-intake');
+intakeForm.addEventListener('submit', () => {
+  intakeForm.querySelector('button[type=submit]').disabled = true;
+  intakeForm.setAttribute('aria-busy', 'true');
+});
+window.addEventListener('pageshow', () => {
+  intakeForm.querySelector('button[type=submit]').disabled = false;
+  intakeForm.removeAttribute('aria-busy');
+});
+</script>
+{% endblock %}

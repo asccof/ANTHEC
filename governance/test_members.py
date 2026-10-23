@@ -1,4 +1,4 @@
-from .intake_test_support import intake_payload
+from .intake_test_support import intake_payload, signup_payload
 from django.core.files.uploadedfile import SimpleUploadedFile
 import base64
 
@@ -40,17 +40,13 @@ class MemberTests(TestCase):
         client = Client()
         response = client.post(
             "/members/signup/?lang=fr",
-            {
-                "username": "synthetic-new",
-                "password1": "Synthetic-long-567!pass",
-                "password2": "Synthetic-long-567!pass",
-            },
+            signup_payload('synthetic-new', password1='Synthetic-long-567!pass', password2='Synthetic-long-567!pass'),
         )
         self.assertEqual(response.status_code, 302)
         user = get_user_model().objects.get(username="synthetic-new")
         self.assertFalse(user.is_staff or user.is_superuser)
         self.assertFalse(user.groups.exists())
-        self.assertEqual(Person.objects.count(), 0)
+        self.assertEqual(Person.objects.count(), 1)
         self.assertEqual(client.get("/members/logout/").status_code, 405)
         self.assertEqual(client.post("/members/logout/").status_code, 302)
         self.assertEqual(
@@ -202,7 +198,7 @@ class MemberTests(TestCase):
         self.assertEqual(self.client.get("/my-documents/1/").status_code, 404)
 
     def test_ui_notice_required_and_account_ids_cannot_select_someone_else(self):
-        self.assertEqual(self.client.get("/members/apply/").status_code, 302)
+        self.assertEqual(self.client.get("/members/apply/").status_code, 200)
         data = dict(
             key=str(uuid.uuid4()),
             full_name="Synthetic Own",

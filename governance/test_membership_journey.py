@@ -1,6 +1,6 @@
 import base64
 from django.core.files.uploadedfile import SimpleUploadedFile
-from .intake_test_support import intake_payload
+from .intake_test_support import intake_payload, signup_payload
 from datetime import date
 from io import StringIO
 from unittest.mock import patch
@@ -59,39 +59,9 @@ class MembershipJourneyTests(TestCase):
 
     def create_app(self, tier="accredited"):
         self.assertEqual(
-            self.form_post(
-                self.member,
-                "/members/signup/?lang=en",
-                {
-                    "username": "synthetic-journey",
-                    "password1": "Cedar-mountain-789!pass",
-                    "password2": "Cedar-mountain-789!pass",
-                },
-            ).status_code,
-            302,
-        )
-        self.assertEqual(
-            self.form_post(
-                self.member,
-                "/members/profile/?lang=fr",
-                {
-                    "full_name": "Synthetic Journey",
-                    "contact": "journey@example.invalid",
-                    "phone": "+212600000001",
-                    "profession": "Synthetic coach",
-                    "notice": "on",
-                },
-            ).status_code,
-            302,
-        )
-        self.assertEqual(
-            self.form_post(
-                self.member,
-                "/members/apply/?lang=ar",
-                {"tier": tier, "applicant_capacity": "coach"},
-            ).status_code,
-            302,
-        )
+            self.form_post(self.member, '/members/signup/?lang=en',
+                signup_payload('synthetic-journey', tier=tier, full_name='Synthetic Journey',
+                               contact='journey@example.invalid')).status_code, 302)
         return Application.objects.get()
 
     def admin_post(self, app, action, **data):

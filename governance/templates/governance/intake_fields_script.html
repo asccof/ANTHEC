@@ -1,0 +1,34 @@
+<script>
+const capacity = document.getElementById('id_applicant_capacity');
+const other = document.getElementById('id_capacity_other');
+if (capacity && other) {
+  const updateOther = () => {
+    const selected = capacity.value === 'other';
+    other.closest('p').hidden = !selected;
+    other.disabled = !selected;
+    other.required = selected;
+  };
+  capacity.addEventListener('change', updateOther);
+  updateOther();
+}
+const category = document.getElementById('id_address_category');
+const same = document.getElementById('id_same_address');
+if (category && same) {
+  const toggle = (name, visible, required) => {
+    const field = document.getElementById('id_' + name);
+    field.closest('p').hidden = !visible;
+    field.disabled = !visible;
+    field.required = required;
+  };
+  const updateAddresses = () => {
+    const pro = category.value === 'professional';
+    toggle('correspondence_address', pro, pro);
+    toggle('same_address', pro, false);
+    toggle('professional_address', pro && !same.checked, pro && !same.checked);
+    toggle('residential_address', category.value === 'beneficiary', category.value === 'beneficiary');
+  };
+  category.addEventListener('change', updateAddresses);
+  same.addEventListener('change', updateAddresses);
+  updateAddresses();
+}
+</script>
