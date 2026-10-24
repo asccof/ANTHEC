@@ -161,7 +161,7 @@ class PublicPreviewMiddleware(OwnerTestingMiddleware):
     until deliberately included, even if their view has no authentication check.
     """
     PUBLIC_VIEWS = {
-        "partners", "activity_list", "activity_public_detail", "activity_editorial_image", "privacy_notice"
+        "tools", "tool_detail", "tool_image", "partners", "activity_list", "activity_public_detail", "activity_editorial_image", "privacy_notice"
     }
 
     def public_read(self, request):

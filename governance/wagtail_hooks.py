@@ -109,3 +109,10 @@ def scoped_admin_menu(request, menu_items):
     menu_items[:] = [item for item in menu_items
                      if str(getattr(item, 'url', '')).startswith(('/ar/', '/fr/', '/en/'))
                      or allows(request, by_url.get(str(getattr(item, 'url', '')), by_name.get(getattr(item, 'name', ''), '')))]
+
+
+@hooks.register('register_admin_menu_item')
+def tools_menu():
+    from .tool_labels import vocabulary as tool_vocabulary
+    label = lazy(lambda: tool_vocabulary(get_language().split('-')[0])[1]['administration'], str)()
+    return PrimaryDirectorMenuItem(label, reverse('tool_register'), icon_name='folder-open-inverse', order=945)
