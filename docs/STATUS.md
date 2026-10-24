@@ -1,3 +1,7 @@
+## 2026-10-24 — tools entry points clarified
+
+Owner screenshots identify the existing resources-news editorial page being opened instead of the new tools catalog. Add the Tools & Resources link beside that page in its navigation dropdown and an explicit catalog button above the editorial page body in AR/FR/EN. Preserve research/news copy and existing top-level tools link. No data, schema or workflow change. Checks/review/deployment remain separate evidence.
+
 ## 2026-10-24 — tools and resources prepared
 
 Owner requests a multilingual tools catalog with optional image/text/link, details, and a full-name/phone/email request received privately by administration for manual follow-up. ADR039 implements a public catalog and primary-only admin tools/request inbox, publication controls, signed idempotent intake, versioned acknowledgement evidence and existing workflow/rate/CSRF guards. PostgreSQL binary media stays separate from private portraits; no filesystem/provider/email activation, invented production catalog or membership/fee change. Migration0017 is additive. Exact-head CI/review and hosted rollout remain pending.
