@@ -23,7 +23,7 @@ from django.test import override_settings
 from playwright.sync_api import sync_playwright
 from django.utils import timezone
 from PIL import Image
-from governance.models import Activity, ActivityImage
+from governance.models import Activity, ActivityImage, MemberTool
 from governance.tests import PolicyTests
 from governance.services import decrypt
 
@@ -55,6 +55,12 @@ def main():
                     code: {'title': 'Synthetic '+code+' activity', 'summary': 'Synthetic public post',
                            'description': 'Synthetic public description'} for code in ('ar','fr','en')}})
             ActivityImage.objects.create(activity=activity, jpeg=picture.getvalue(), caption='Synthetic illustration')
+        tool_picture = BytesIO()
+        Image.new('RGB', (600, 400), '#146e70').save(tool_picture, 'JPEG')
+        tool = MemberTool.objects.create(title_ar='أداة اصطناعية', title_fr='Outil fictif', title_en='Synthetic Tool',
+            summary_ar='موارد اصطناعية للعرض', summary_fr='Ressource fictive', summary_en='Synthetic resource',
+            description_ar='وصف اصطناعي للأداة', description_fr='Description fictive', description_en='Synthetic tool description',
+            image=tool_picture.getvalue(), published=True, website='https://tools.example.invalid')
         fixture = PolicyTests('test_public_verification_requires_secret_and_has_only_allowlisted_fields')
         fixture.setUp()
         document = fixture.document()
@@ -154,11 +160,33 @@ def main():
                     assert page.locator('[role=status]').count() == 2
                     assert page.locator('main').get_by_text('Synthetic Browser '+language, exact=False).count() > 0
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, 'receipt overflow')
+                    # Tools catalog, image/detail, and full private contact request in each language.
+                    page.goto(f'http://127.0.0.1:{server.server_port}/tools/?lang={language}')
+                    for width in (320, 390, 768, 1280):
+                        page.set_viewport_size({'width': width, 'height': 960})
+                        assert page.locator('.tool-card').count() == 1
+                        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, width, 'tools overflow')
+                        assert page.locator('.tool-card img').evaluate('(img) => img.complete && img.naturalWidth > 0')
+                        if width in (390, 1280):
+                            page.screenshot(path=str(output / f'tools-{language}-{width}.png'), full_page=True)
+                    page.goto(f'http://127.0.0.1:{server.server_port}/tools/{tool.pk}/?lang={language}')
+                    assert page.locator('.tool-feature').is_visible()
+                    page.goto(f'http://127.0.0.1:{server.server_port}/tools/{tool.pk}/request/?lang={language}')
+                    assert not page.locator('#id_privacy_acceptance').is_checked()
+                    page.locator('#id_full_name').fill('Synthetic Tool Applicant '+language)
+                    page.locator('#id_phone').fill('+212600000001')
+                    page.locator('#id_email').fill('private-tools-'+language+'@example.invalid')
+                    page.locator('#id_privacy_acceptance').check()
+                    page.locator('#tool-request-form button').click()
+                    page.wait_for_url('**/request/?lang='+language+'&received=1')
+                    assert page.locator('[role=status]').count() == 1
+                    assert 'private-tools-' not in page.locator('body').inner_text()
                     page.close()
                 browser.close()
             # Playwright's sync context owns an event loop; inspect Django ORM only after it exits.
-            from governance.models import Application, Membership
+            from governance.models import Application, Membership, ToolRequest
             for language in ('ar', 'fr', 'en'):
+                assert ToolRequest.objects.filter(email='private-tools-'+language+'@example.invalid', state='submitted').count() == 1
                 submitted = Application.objects.get(person__user__username='synthetic-browser-'+language)
                 assert submitted.state == 'submitted' and not Membership.objects.filter(application=submitted).exists()
         finally:

@@ -14,6 +14,7 @@ WORDS = {
     'verify_intro': ('أدخل مرجع الوثيقة ورمز التحقق المطبوع عليها، أو افتح الرابط الموجود في رمز QR.', 'Saisissez la référence et le code imprimés sur le document, ou ouvrez le lien de son QR code.', 'Enter the reference and verification code printed on the document, or open its QR link.'),
     'verify_privacy': ('التحقق يخص وثيقة محددة؛ لا يوجد بحث عام بالاسم، ولا تُعرض معلومات التواصل أو ملفات العضو الخاصة.', 'La vérification concerne un document précis : aucune recherche par nom ni accès aux coordonnées ou dossiers privés.', 'Verification concerns one specific document: there is no name search or access to private contacts or member files.'),
     'verify_error': ('لم يُعثر على وثيقة بهذه البيانات. تحقق من المرجع والرمز وحاول مجددًا.', 'Aucun document ne correspond. Vérifiez la référence et le code puis réessayez.', 'No document matches these details. Check the reference and code and try again.'),
+    'tools': ('أدوات وموارد', 'Outils et ressources', 'Tools & Resources'),
     'verify_limit': ('طلبات كثيرة. انتظر قليلًا قبل إعادة المحاولة.', 'Trop de tentatives. Patientez avant de réessayer.', 'Too many attempts. Please wait before trying again.'),
     'verify_result': ('نتيجة التحقق', 'Résultat de vérification', 'Verification result'),
     'verify_again': ('التحقق من وثيقة أخرى', 'Vérifier un autre document', 'Verify another document'),

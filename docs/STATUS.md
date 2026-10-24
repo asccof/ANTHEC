@@ -1,3 +1,7 @@
+## 2026-10-24 — tools and resources prepared
+
+Owner requests a multilingual tools catalog with optional image/text/link, details, and a full-name/phone/email request received privately by administration for manual follow-up. ADR039 implements a public catalog and primary-only admin tools/request inbox, publication controls, signed idempotent intake, versioned acknowledgement evidence and existing workflow/rate/CSRF guards. PostgreSQL binary media stays separate from private portraits; no filesystem/provider/email activation, invented production catalog or membership/fee change. Migration0017 is additive. Exact-head CI/review and hosted rollout remain pending.
+
 ## 2026-10-23 — membership fee reminder prepared
 
 Owner requested a nonblocking fee reminder at tier selection and a persistent pending-review/payment-contact message after submission. The intake reads current effective Price rows using the submission quote ordering, retains free founder/honorary treatment, and uses the stored quote on the private receipt. AR/FR/EN, no-JavaScript fallback and browser back restoration are included. No payment field, validation gate, price change, migration or translation-provider activation. Exact-head CI/review and hosted deployment remain pending.

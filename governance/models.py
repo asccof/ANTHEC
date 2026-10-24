@@ -560,3 +560,46 @@ class TranslationAttempt(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['actor', 'key'], name='translation_actor_key')]
+
+
+class MemberTool(models.Model):
+    """Public editorial resources, separate from private member/document media."""
+    title_ar = models.CharField(max_length=200)
+    title_fr = models.CharField(max_length=200, blank=True)
+    title_en = models.CharField(max_length=200, blank=True)
+    summary_ar = models.CharField(max_length=400, blank=True)
+    summary_fr = models.CharField(max_length=400, blank=True)
+    summary_en = models.CharField(max_length=400, blank=True)
+    description_ar = models.TextField(max_length=12000, blank=True)
+    description_fr = models.TextField(max_length=12000, blank=True)
+    description_en = models.TextField(max_length=12000, blank=True)
+    website = models.URLField(max_length=1000, blank=True)
+    image = models.BinaryField(default=bytes, blank=True)
+    image_serial = models.UUIDField(default=uuid.uuid4)
+    published = models.BooleanField(default=False)
+    sort_order = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'pk']
+
+    def public_values(self, language):
+        return {field: getattr(self, field+'_'+language) or getattr(self, field+'_ar')
+                for field in ('title', 'summary', 'description')}
+
+
+class ToolRequest(models.Model):
+    tool = models.ForeignKey(MemberTool, on_delete=models.PROTECT)
+    tool_title = models.CharField(max_length=200)
+    full_name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=32)
+    email = models.EmailField()
+    language = models.CharField(max_length=2)
+    submission_key = models.UUIDField(unique=True)
+    state = models.CharField(max_length=12, default='submitted')
+    notes = models.TextField(max_length=3000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(state__in=['submitted', 'contacted', 'closed']), name='tool_request_state')]

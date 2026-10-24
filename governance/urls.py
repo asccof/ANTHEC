@@ -1,5 +1,5 @@
 from django.urls import path
-from . import privacy_views
+from . import privacy_views, tool_views
 from . import (
     certificate_asset_views,
     pdf_views,
@@ -18,6 +18,15 @@ from . import (
 )
 
 urlpatterns = [
+    path('tools/', tool_views.listing, name='tools'),
+    path('tools/<int:tool_id>/', tool_views.detail, name='tool_detail'),
+    path('tools/<int:tool_id>/request/', tool_views.request_tool, name='tool_request'),
+    path('tools/<int:tool_id>/image/<uuid:serial>/', tool_views.image, name='tool_image'),
+    path('operations/tools/', tool_views.register, name='tool_register'),
+    path('operations/tools/<int:tool_id>/image/<uuid:serial>/', tool_views.admin_image, name='tool_admin_image'),
+    path('operations/tools/new/', tool_views.edit, name='tool_add'),
+    path('operations/tools/<int:tool_id>/', tool_views.edit, name='tool_edit'),
+    path('operations/tools/requests/<int:request_id>/', tool_views.review, name='tool_review'),
     path('privacy/', privacy_views.notice, name='privacy_notice'),
     path("operations/contact/", content_operations.contact, name="delegated_contact"),
     path("operations/documents/", document_operations.listing, name="delegated_documents"),

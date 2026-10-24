@@ -9,7 +9,7 @@ from .services import digest
 
 
 # Deliberate whole-service ceilings, not measured capacity or DDoS guarantees.
-HOSTED_LIMITS = {'auth': (300, 200), 'verify': (600, 300), 'partnership': (600, 50)}
+HOSTED_LIMITS = {'auth': (300, 200), 'verify': (600, 300), 'partnership': (600, 50), 'tool_request': (600, 50)}
 
 
 def prune_expired(now=None):
@@ -41,9 +41,9 @@ def consume(request, scope, *, identity=None):
             budgets.append((digest(f'operational-auth-account:{name}:{window}'), 10))
     else:
         peer = request.META.get('REMOTE_ADDR', '')
-        if scope == 'partnership':
-            budgets = [(digest(f'partnership-ip:{peer}:{window}'), 5),
-                       (digest(f'partnership-global:{window}'), 50)]
+        if scope in {'partnership', 'tool_request'}:
+            budgets = [(digest(f'{scope}-ip:{peer}:{window}'), 5),
+                       (digest(f'{scope}-global:{window}'), 50)]
         else:
             prefix = 'member-auth' if scope == 'auth' else 'verify'
             budgets = [(digest(f'{prefix}:{peer}:{window}'), 10 if scope == 'auth' else 30)]
