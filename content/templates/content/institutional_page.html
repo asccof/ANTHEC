@@ -27,6 +27,6 @@
 <section id="contact" class="section contact-section"><div class="shell"><div class="section-heading"><p class="eyebrow">ANTHEC</p><h2>{{ public_labels.contact }}</h2><p>{{ public_labels.contact_intro }}</p></div>{% include "content/contact_details.html" %}</div></section>
 <section id="privacy" class="section shell privacy-panel"><div><p class="eyebrow">{{ public_labels.privacy }}</p><h2>{{ public_labels.privacy }}</h2></div><p>{{ public_labels.privacy_detail }}</p></section>
 {% else %}
-<article class="section shell editorial-page"><p class="eyebrow">{{ public_labels.editorial }}</p><h1>{{ page.title }}</h1>{% if is_structure_page %}{% include "content/leadership_directory.html" with embedded=True %}{% endif %}{% for block in page.body %}{% if block.block_type == 'heading' %}<h2>{{ block.value }}</h2>{% elif block.block_type == 'paragraph' %}<p>{{ block.value|linebreaksbr }}</p>{% endif %}{% endfor %}</article>
+<article class="section shell editorial-page"><p class="eyebrow">{{ public_labels.editorial }}</p><h1>{{ page.title }}</h1>{% if page.slug == 'resources-news' %}<p><a class="button button-teal" href="{% url 'tools' %}?lang={{ page.locale.language_code }}">{{ public_labels.tools }} ←</a></p>{% endif %}{% if is_structure_page %}{% include "content/leadership_directory.html" with embedded=True %}{% endif %}{% for block in page.body %}{% if block.block_type == 'heading' %}<h2>{{ block.value }}</h2>{% elif block.block_type == 'paragraph' %}<p>{{ block.value|linebreaksbr }}</p>{% endif %}{% endfor %}</article>
 {% endif %}
 {% endblock %}
