@@ -4,6 +4,7 @@ from governance.models import Price
 from governance.member_labels import vocabulary as member_vocabulary
 
 ROWS = {
+ "tools": ("أدوات وموارد", "Outils et ressources", "Tools & Resources"),
  "upcoming_activities": ("الأنشطة المقبلة والجارية", "Activités à venir et en cours", "Upcoming and ongoing activities"),
  "past_activities": ("الأنشطة السابقة", "Activités passées", "Past activities"),
 

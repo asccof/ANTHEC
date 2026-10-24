@@ -1,6 +1,6 @@
 ## 2026-10-24 — tools entry points clarified
 
-Owner screenshots identify the existing resources-news editorial page being opened instead of the new tools catalog. Add the Tools & Resources link beside that page in its navigation dropdown and an explicit catalog button above the editorial page body in AR/FR/EN. Preserve research/news copy and existing top-level tools link. No data, schema or workflow change. Checks/review/deployment remain separate evidence.
+Owner screenshots identify the existing resources-news editorial page being opened instead of the new tools catalog. Live inspection additionally found CMS tools anchors with empty text: the new label existed only in the service-page vocabulary. Add the missing CMS vocabulary label and a regression checking visible anchor text in all three languages. Add the Tools & Resources link beside that page in its navigation dropdown and an explicit catalog button above the editorial page body in AR/FR/EN. Preserve research/news copy and existing top-level tools link. No data, schema or workflow change. Checks/review/deployment remain separate evidence.
 
 ## 2026-10-24 — tools and resources prepared
 

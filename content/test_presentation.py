@@ -1,5 +1,6 @@
 """Synthetic presentation acceptance: scope, current prices and trial restrictions."""
 from io import StringIO
+from bs4 import BeautifulSoup
 from datetime import timedelta
 from django.test import TestCase, override_settings
 from django.core.management import call_command
@@ -33,6 +34,10 @@ class PresentationTests(TestCase):
             for anchor in ("main-content","about","services","structure","membership","accreditation","privacy"):
                 self.assertContains(response,'id="'+anchor+'"')
             self.assertContains(response,'href="/activities/?lang='+language+'"')
+            tools = BeautifulSoup(response.content, 'html.parser').select('a[href="/tools/?lang='+language+'"]')
+            self.assertTrue(tools)
+            expected_tools = {'ar':'أدوات وموارد','fr':'Outils et ressources','en':'Tools & Resources'}[language]
+            self.assertTrue(all(link.get_text(strip=True) == expected_tools for link in tools))
             self.assertContains(response,'href="/partners/?lang='+language+'"')
             self.assertContains(response,'lang="'+language+'"')
             self.assertContains(response,'dir="rtl"' if language=="ar" else 'dir="ltr"')
