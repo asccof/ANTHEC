@@ -166,7 +166,9 @@ def main():
                         page.set_viewport_size({'width': width, 'height': 960})
                         assert page.locator('.tool-card').count() == 1
                         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language, width, 'tools overflow')
-                        assert page.locator('.tool-card img').evaluate('(img) => img.complete && img.naturalWidth > 0')
+                        tool_image = page.locator('.tool-card img')
+                        tool_image.scroll_into_view_if_needed()
+                        assert tool_image.evaluate('(img) => img.decode().then(() => img.naturalWidth > 0)')
                         if width in (390, 1280):
                             page.screenshot(path=str(output / f'tools-{language}-{width}.png'), full_page=True)
                     page.goto(f'http://127.0.0.1:{server.server_port}/tools/{tool.pk}/?lang={language}')
