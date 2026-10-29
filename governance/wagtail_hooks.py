@@ -103,6 +103,7 @@ def scoped_admin_menu(request, menu_items):
               reverse('partnership_register'): 'partner.view',
               reverse('accreditation_register'): 'accreditation.view',
               reverse('activity_admin_register'): 'activity.view',
+              reverse('member_accounts'): 'account.view',
               reverse('pricing_register'): 'pricing.view'}
     by_name = {'explorer': 'content.view', 'images': 'media_image.view',
                'documents': 'media_document.view', 'settings': 'contact.view'}
@@ -116,3 +117,21 @@ def tools_menu():
     from .tool_labels import vocabulary as tool_vocabulary
     label = lazy(lambda: tool_vocabulary(get_language().split('-')[0])[1]['administration'], str)()
     return PrimaryDirectorMenuItem(label, reverse('tool_register'), icon_name='folder-open-inverse', order=945)
+
+
+@hooks.register('register_admin_menu_item')
+def member_accounts_menu():
+    from .member_labels import vocabulary as account_vocabulary
+    label=lazy(lambda:account_vocabulary(get_language().split('-')[0])[1]['accounts'],str)()
+    return MenuItem(label,reverse('member_accounts'),icon_name='user',order=915)
+
+
+@hooks.register('before_edit_user')
+def ordinary_member_account_editor(request, user):
+    from .account_services import ordinary_accounts
+    from .capabilities import allows
+    from django.shortcuts import redirect
+    if allows(request,'account.view') and ordinary_accounts().filter(pk=user.pk).exists():
+        language=(request.GET.get('lang') or get_language()).split('-')[0]
+        language=language if language in {'ar','fr','en'} else 'ar'
+        return redirect(reverse('member_account',args=[user.pk])+'?lang='+language)

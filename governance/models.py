@@ -603,3 +603,13 @@ class ToolRequest(models.Model):
 
     class Meta:
         constraints = [models.CheckConstraint(condition=Q(state__in=['submitted', 'contacted', 'closed']), name='tool_request_state')]
+
+
+class MemberAccountControl(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='member_control')
+    state = models.CharField(max_length=12, default='active')
+    epoch = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=Q(state__in=['active','suspended','cancelled']), name='member_account_state')]

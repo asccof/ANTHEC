@@ -125,7 +125,8 @@ def workspace(request):
     from .capabilities import enforce, allows
     enforce(request)
     ctx = context(request)
-    links = [("membership.view", "membership_admin_register", "administration"),
+    links = [("account.view", "member_accounts", "accounts"),
+             ("membership.view", "membership_admin_register", "administration"),
              ("identity.view", "membership_identities", "identities"),
              ("portrait.view", "portrait_review", "manage_portrait"),
              ("document.view", "delegated_documents", "documents"),

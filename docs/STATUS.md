@@ -1,3 +1,7 @@
+## 2026-10-29 — confirmed member account controls prepared
+
+Owner distinguishes login account cancellation/suspension/editing from membership and document status, and requests independent confirm-only state operations without the member’s password or mandatory unrelated identity fields. ADR040 adds scoped ordinary-member account controls, separate optional account/profile editing, per-account session epochs, protected administrator targets, explicit new delegation options (no existing grants changed), and distinct states in membership administration. Migration0018 is additive. Initial 109 focused/content tests passed; final hook/browser/full CI/review and hosted acceptance remain pending. No real account was changed.
+
 ## 2026-10-24 — tools entry points clarified
 
 Owner screenshots identify the existing resources-news editorial page being opened instead of the new tools catalog. Live inspection additionally found CMS tools anchors with empty text: the new label existed only in the service-page vocabulary. Add the missing CMS vocabulary label and a regression checking visible anchor text in all three languages. Add the Tools & Resources link beside that page in its navigation dropdown and an explicit catalog button above the editorial page body in AR/FR/EN. Preserve research/news copy and existing top-level tools link. No data, schema or workflow change. Checks/review/deployment remain separate evidence.

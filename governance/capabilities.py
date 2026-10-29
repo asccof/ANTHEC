@@ -3,6 +3,13 @@
 from django.core.exceptions import PermissionDenied, ValidationError
 
 GROUPS = [
+    ('account', 'حسابات المنخرطين', 'Comptes des adhérents', 'Member accounts', [
+        ('view', 'الاطلاع', 'Consulter', 'View'),
+        ('edit', 'تعديل البيانات', 'Modifier', 'Edit details'),
+        ('suspend', 'الإيقاف', 'Suspendre', 'Suspend'),
+        ('cancel', 'إلغاء التفعيل', 'Désactiver', 'Deactivate'),
+        ('activate', 'إعادة التفعيل', 'Réactiver', 'Reactivate'),
+    ]),
     (
         "membership",
         "العضوية",
@@ -339,6 +346,10 @@ def enforce(request, *capabilities, recent=False):
 
 def action_capabilities(action, payload):
     """Resolve the exact decision, never a combined approve/reject permission."""
+    if action == 'account.state':
+        return ['account.view', 'account.' + {'active':'activate','suspended':'suspend','cancelled':'cancel'}.get(payload.get('state'),'invalid')]
+    if action == 'account.edit':
+        return ['account.view', 'account.edit']
     static = {
         "content.publish": "content.publish",
         "membership.approve": "membership.approve",

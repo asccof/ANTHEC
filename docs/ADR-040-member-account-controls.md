@@ -1,0 +1,15 @@
+# ADR 040 — Separate confirmed member account controls
+
+Date: 2026-10-29. Authority: owner requests disabling/deactivating/editing a login account without re-entering the member’s password or unrelated mandatory profile fields. Status: prepared; exact-head CI/review/deployment remain separate.
+
+## Decision
+
+A Member Accounts administration screen separates login-account state (active/suspended/deactivated), the historical membership application decision, and membership/document validity. A state action posts only the chosen state, key, expected epoch, explicit confirmation and optional reason. No password, email or name required for a state action. Deactivation is retained soft cancellation of login access, not erasure. Reactivation never restores membership or document validity automatically.
+
+A separate edit form permits username, optional account email/first/last name and existing Person name/contact/phone/profession corrections, with explicit confirmation. It changes no password, privilege, guardian relationship, consent evidence, membership tier/quote or issued document snapshots. Empty optional account fields stay valid. Immutable issued PDFs require the existing reissue workflow separately. The native Wagtail edit entry for ordinary member accounts redirects to this bounded editor for actors with account.view; administrative user editing remains separate.
+
+New explicit account.view/edit/suspend/cancel/activate delegation options require their view prerequisite. Existing grants are unchanged; no automatic permission migration. Primary MFA/epoch and delegate epoch are rechecked by the existing command wrapper; targets exclude staff, superusers, the primary and any delegated administrator (including revoked delegation history). Unknown routes/forged actions fail closed. Audit keeps actor/action/state or changed field names and the optional administrative reason, without copying passwords or profile/contact values into command audit details.
+
+Migration0018 adds per-account state/epoch only on mutation. Each account edit or state change increments the epoch under the target User lock; signed-in requests with an older epoch are logged out. Existing pre-feature sessions remain compatible while epoch is zero; they cannot return after disable/re-enable. The shared successful-login signal records the current account epoch for both member and native Wagtail logins, including former members later delegated as administrators. No global logout or password rotation. Already-running requests retain the existing service transaction boundaries; this does not promise cancellation of in-flight work. CSRF, explicit confirmation, optimistic epoch and existing per-actor command idempotency protect changes.
+
+Membership lists now label application acceptance, membership state and account state separately and link to the account screen. Account controls are available from the admin menu, membership files and scoped workspace. All development uses isolated synthetic identities; do not change real member accounts during verification. No external mail, paid resource, Tighri action or existing grant/financial/asset mutation.
