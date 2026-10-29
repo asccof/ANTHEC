@@ -68,5 +68,5 @@ def detail(request,user_id):
             action['form']=confirm
             action['form'].auto_id='id_'+action['state']+'_%s'
     return render(request,'governance/account_detail.html',{**ctx,'target':user,'state_label':ctx['labels']['account_'+state],
-        'confirmation':confirm,'edit_form':form,'actions':actions,'can_edit':allows(request,'account.edit'),
+        'confirmation':confirm,'edit_confirmation':confirm if editing else AccountConfirmationForm(labels=ctx['labels'],initial=initial,auto_id='id_edit_%s'),'edit_form':form,'actions':actions,'can_edit':allows(request,'account.edit'),
         'saved':request.GET.get('saved')=='1'},status=status)

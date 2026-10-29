@@ -84,7 +84,10 @@ class AccountControlsTests(TestCase):
         self.assertEqual(self.client.get(f'/operations/accounts/{self.admin.pk}/').status_code,404)
         with self.assertRaises(PermissionDenied):
             service.change_state(self.request,key=str(uuid.uuid4()),user_id=self.admin.pk,state='cancelled',expected_epoch=0,confirm=True)
-        self.assertEqual(self.client.post(self.url,dict(action='suspended',key=str(uuid.uuid4()),expected_epoch=0)).status_code,400)
+        invalid=self.client.post(self.url,dict(action='suspended',key=str(uuid.uuid4()),expected_epoch=0))
+        self.assertEqual(invalid.status_code,400)
+        ids=[tag['id'] for tag in BeautifulSoup(invalid.content,'html.parser').select('[id]')]
+        self.assertEqual(len(ids),len(set(ids)))
         csrf=Client(enforce_csrf_checks=True);csrf.cookies.update(self.client.cookies)
         self.assertEqual(csrf.post(self.url,{}).status_code,403)
         delegate=fixtures.synthetic_user('synthetic-account-delegate',True)
