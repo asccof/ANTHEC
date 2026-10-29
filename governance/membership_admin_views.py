@@ -19,6 +19,31 @@ from .membership_admin_forms import (
 from .models import Application, Document, Audit, Membership, Refund, Person
 
 
+def membership_presentation(app, labels):
+    """Show current restrictions ahead of the historical application decision."""
+    from .account_services import status_for
+    user = app.person.user
+    account_state = status_for(user)[0] if user else None
+    try:
+        membership_state = app.membership.state
+    except Membership.DoesNotExist:
+        membership_state = None
+    badge_state = app.state
+    badge_label = labels.get(app.state, app.state)
+    if membership_state in {'suspended', 'cancelled'}:
+        badge_state = membership_state
+        badge_label = labels['membership_state'] + ': ' + labels[membership_state]
+    if account_state in {'suspended', 'cancelled'}:
+        badge_state = account_state
+        badge_label = labels['account_state'] + ': ' + labels['account_' + account_state]
+    return {
+        'badge_state': badge_state,
+        'badge_label': badge_label,
+        'account_state': labels['account_' + account_state] if account_state else '—',
+        'membership_state': labels.get(membership_state, '—'),
+    }
+
+
 @never_cache
 @login_required(login_url="/admin/login/")
 @require_http_methods(["GET"])
@@ -36,11 +61,7 @@ def register(request):
         for a in apps
     ]
     for item in ctx['applications']:
-        user=item['app'].person.user
-        from .account_services import status_for
-        item['account_state']=ctx['labels']['account_'+status_for(user)[0]] if user else '—'
-        try:item['membership_state']=ctx['labels'][item['app'].membership.state]
-        except Membership.DoesNotExist:item['membership_state']='—'
+        item.update(membership_presentation(item['app'], ctx['labels']))
     return render(request, "governance/membership_admin_register.html", ctx)
 
 
@@ -92,7 +113,7 @@ def identities(request):
 def detail(request, application_id):
     read_authority(request, "membership.view")
     app = get_object_or_404(
-        Application.objects.select_related("person", "previous"), pk=application_id
+        Application.objects.select_related("person__user__member_control", "previous"), pk=application_id
     )
     ctx = context(request)
     from .capabilities import allows
@@ -233,6 +254,7 @@ def detail(request, application_id):
         )
         | Q(action="document.replaced", subject__in=[str(d.pk) for d in documents])
     ).order_by("pk")
+    ctx.update(membership_presentation(app, ctx["labels"]))
     ctx.update(
         finance_visible=finance_visible,
         documents_visible=documents_visible,

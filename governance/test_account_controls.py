@@ -112,6 +112,7 @@ class AccountControlsTests(TestCase):
         self.assertContains(response,'Application decision')
         self.assertContains(response,'Membership state')
         self.assertContains(response,'Login account state')
+        self.assertEqual(BeautifulSoup(response.content, 'html.parser').select_one('.state-badge').get_text(), 'Membership state: Cancelled')
         self.assertContains(response,'Cancelled')
         self.assertContains(response,'Active')
         for lang in ('ar','fr','en'):
@@ -134,3 +135,37 @@ class AccountControlsTests(TestCase):
         self.assertEqual(fresh.session['authority_epoch'],grant.epoch)
         self.assertEqual(fresh.get('/operations/accounts/').status_code,200)
         self.assertEqual(old.get('/operations/accounts/').status_code,302)
+
+    def test_membership_only_delegate_sees_current_restriction_not_approved_badge(self):
+        from . import services
+        from .member_labels import vocabulary
+        from django.utils import timezone
+        call_command('seed_policy_prices', stdout=StringIO())
+        self.person.verification_notice_at = timezone.now(); self.person.save()
+        app = services.create_application(self.person, 'general')
+        services.exempt_fee(self.request, key=str(uuid.uuid4()), application_id=app.pk, reason='Synthetic')
+        services.approve_membership(self.request, key=str(uuid.uuid4()), application_id=app.pk, reason='Synthetic')
+        delegate = fixtures.synthetic_user('synthetic-membership-reader', True)
+        Delegation.objects.create(user=delegate, capabilities=['membership.view'])
+        reader = Client(); reader.force_login(delegate)
+        epoch = 0
+        for state in ('cancelled', 'suspended', 'active'):
+            service.change_state(self.request, key=str(uuid.uuid4()), user_id=self.holder.pk,
+                                 state=state, expected_epoch=epoch, confirm=True)
+            epoch += 1
+            for lang in ('ar', 'fr', 'en'):
+                _, labels = vocabulary(lang)
+                for path in ('/operations/membership/', f'/operations/membership/{app.pk}/'):
+                    response = reader.get(path + '?lang=' + lang)
+                    self.assertEqual(response.status_code, 200)
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    expected = labels['approved'] if state == 'active' else labels['account_state'] + ': ' + labels['account_' + state]
+                    self.assertEqual(soup.select_one('.state-badge').get_text(), expected)
+                    self.assertContains(response, labels['application_decision'])
+                    self.assertContains(response, labels['account_' + state])
+                    self.assertNotContains(response, self.url)
+        app.refresh_from_db(); self.assertEqual(app.state, 'approved')
+        self.holder.is_active = False; self.holder.save(update_fields=['is_active'])
+        MemberAccountControl.objects.filter(user=self.holder).delete()
+        response = reader.get('/operations/membership/?lang=en')
+        self.assertContains(response, 'Login account state: Suspended')
