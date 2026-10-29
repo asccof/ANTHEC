@@ -1,5 +1,5 @@
 from django.urls import path
-from . import privacy_views, tool_views
+from . import privacy_views, tool_views, account_views
 from . import (
     certificate_asset_views,
     pdf_views,
@@ -18,6 +18,8 @@ from . import (
 )
 
 urlpatterns = [
+    path('operations/accounts/',account_views.listing,name='member_accounts'),
+    path('operations/accounts/<int:user_id>/',account_views.detail,name='member_account'),
     path('tools/', tool_views.listing, name='tools'),
     path('tools/<int:tool_id>/', tool_views.detail, name='tool_detail'),
     path('tools/<int:tool_id>/request/', tool_views.request_tool, name='tool_request'),

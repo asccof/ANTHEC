@@ -1,11 +1,11 @@
 {% extends 'governance/membership_admin_base.html' %}
-{% block administration %}
+{% load delegation_permissions %}{% block administration %}
 <section class="admin-intro"><p class="member-eyebrow">ANTHEC</p><h2>{{ labels.administration }}</h2><p>{{ labels.admin_intro }}</p><p class="muted">{{ labels.register_window }}</p></section>
 <div class="application-grid admin-register">
 {% for item in applications %}
 <article class="application-card">
 <div class="term-title"><h3><a href="{% url 'membership_admin_detail' item.app.pk %}?lang={{ language }}">#{{ item.app.pk }} — {{ item.app.person.full_name }}</a></h3><span class="state-badge state-{{ item.app.state }}">{{ item.state }}</span></div>
-<p>{{ item.tier }}</p><dl class="admin-facts"><dt>{{ labels.quote }}</dt><dd><bdi>{{ item.app.quote }} MAD</bdi></dd><dt>{{ labels.quoted_on }}</dt><dd><bdi dir="ltr">{{ item.app.quoted_on|date:'Y-m-d' }}</bdi></dd></dl>
+<p>{{ item.tier }}</p><p>{{ labels.application_decision }}: {{ item.state }} · {{ labels.membership_state }}: {{ item.membership_state }}</p>{% if request|cap:'account.view' %}<p>{{ labels.account_state }}: {{ item.account_state }}</p>{% if item.app.person.user_id %}<a href="{% url 'member_account' item.app.person.user_id %}?lang={{ language }}">{{ labels.account_open }}</a>{% endif %}{% endif %}<dl class="admin-facts"><dt>{{ labels.quote }}</dt><dd><bdi>{{ item.app.quote }} MAD</bdi></dd><dt>{{ labels.quoted_on }}</dt><dd><bdi dir="ltr">{{ item.app.quoted_on|date:'Y-m-d' }}</bdi></dd></dl>
 <a class="member-button" href="{% url 'membership_admin_detail' item.app.pk %}?lang={{ language }}">{{ labels.open_application }} <span aria-hidden="true">←</span></a>
 </article>
 {% empty %}<section><p class="empty-state">{{ labels.empty }}</p></section>{% endfor %}

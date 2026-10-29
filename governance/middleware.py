@@ -98,3 +98,16 @@ class PolicyLocaleMiddleware(LocaleMiddleware):
             if result is not response or "X-Robots-Tag" not in result:
                 result["X-Robots-Tag"] = "noindex, nofollow, noarchive"
         return result
+
+
+class MemberAccountMiddleware:
+    def __init__(self,get_response):self.get_response=get_response
+
+    def __call__(self,request):
+        if request.user.is_authenticated:
+            from django.contrib.auth import logout
+            from .models import MemberAccountControl
+            control=MemberAccountControl.objects.filter(user_id=request.user.pk).first()
+            if control and (control.state!='active' or request.session.get('member_account_epoch',0)!=control.epoch):
+                logout(request)
+        return self.get_response(request)

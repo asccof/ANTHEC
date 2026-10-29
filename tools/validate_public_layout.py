@@ -63,6 +63,16 @@ def main():
             image=tool_picture.getvalue(), published=True, website='https://tools.example.invalid')
         fixture = PolicyTests('test_public_verification_requires_secret_and_has_only_allowlisted_fields')
         fixture.setUp()
+        from django.test import Client
+        from governance.tests import synthetic_user
+        from governance.models import Person
+        account_targets = {}
+        for code in ('ar','fr','en'):
+            target = synthetic_user('synthetic-account-browser-'+code)
+            Person.objects.create(user=target,full_name='Synthetic account '+code)
+            account_targets[code] = target.pk
+        admin_client = fixture.http_login(client=Client())
+        admin_cookie = admin_client.cookies[settings.SESSION_COOKIE_NAME].value
         document = fixture.document()
         credentials = decrypt(document.credentials)
         server = make_server('127.0.0.1', 0, StaticFilesHandler(get_wsgi_application()), handler_class=QuietHandler)
@@ -184,10 +194,30 @@ def main():
                     assert page.locator('[role=status]').count() == 1
                     assert 'private-tools-' not in page.locator('body').inner_text()
                     page.close()
+                admin_context = browser.new_context()
+                admin_context.add_cookies([{'name':settings.SESSION_COOKIE_NAME,'value':admin_cookie,
+                    'url':f'http://127.0.0.1:{server.server_port}'}])
+                for language in ('ar','fr','en'):
+                    account_page = admin_context.new_page()
+                    account_page.goto(f'http://127.0.0.1:{server.server_port}/operations/accounts/{account_targets[language]}/?lang={language}')
+                    for width in (320,390,1280):
+                        account_page.set_viewport_size({'width':width,'height':960})
+                        assert account_page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (language,width,'account controls overflow')
+                    assert account_page.locator('input[type=password]').count() == 0
+                    action = account_page.locator('.account-state-form').filter(has=account_page.locator('input[name=action][value=suspended]'))
+                    assert action.locator('input[name=username], input[name=email], input[name=full_name]').count() == 0
+                    action.locator('input[name=confirm]').check()
+                    action.locator('button').click()
+                    account_page.wait_for_url('**&saved=1')
+                    assert account_page.locator('[role=status]').count() == 1
+                    account_page.screenshot(path=str(output / f'account-controls-{language}.png'), full_page=True)
+                    account_page.close()
+                admin_context.close()
                 browser.close()
             # Playwright's sync context owns an event loop; inspect Django ORM only after it exits.
-            from governance.models import Application, Membership, ToolRequest
+            from governance.models import Application, Membership, ToolRequest, MemberAccountControl
             for language in ('ar', 'fr', 'en'):
+                assert MemberAccountControl.objects.get(user_id=account_targets[language]).state == 'suspended'
                 assert ToolRequest.objects.filter(email='private-tools-'+language+'@example.invalid', state='submitted').count() == 1
                 submitted = Application.objects.get(person__user__username='synthetic-browser-'+language)
                 assert submitted.state == 'submitted' and not Membership.objects.filter(application=submitted).exists()

@@ -26,7 +26,7 @@ from .models import Application, Document, Audit, Membership, Refund, Person
 def register(request):
     read_authority(request, "membership.view")
     ctx = context(request)
-    apps = Application.objects.select_related("person").order_by("-pk")[:100]
+    apps = Application.objects.select_related("person__user__member_control").prefetch_related("membership").order_by("-pk")[:100]
     ctx["applications"] = [
         {
             "app": a,
@@ -35,6 +35,12 @@ def register(request):
         }
         for a in apps
     ]
+    for item in ctx['applications']:
+        user=item['app'].person.user
+        from .account_services import status_for
+        item['account_state']=ctx['labels']['account_'+status_for(user)[0]] if user else '—'
+        try:item['membership_state']=ctx['labels'][item['app'].membership.state]
+        except Membership.DoesNotExist:item['membership_state']='—'
     return render(request, "governance/membership_admin_register.html", ctx)
 
 
