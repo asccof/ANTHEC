@@ -117,3 +117,20 @@ class AccountControlsTests(TestCase):
         for lang in ('ar','fr','en'):
             self.assertEqual(self.client.get('/operations/accounts/?lang='+lang).status_code,200)
             self.assertEqual(self.client.get(self.url+'?lang='+lang).status_code,200)
+
+    def test_edited_member_later_delegated_can_use_native_admin_login(self):
+        from .delegation_cms import synchronize_cms_group
+        old=Client();old.force_login(self.holder)
+        service.edit_account(self.request,key=str(uuid.uuid4()),user_id=self.holder.pk,
+            expected_epoch=0,confirm=True,fields=dict(username=self.holder.username,email='',
+            first_name='',last_name='',full_name='Synthetic corrected',contact='',phone='',profession=''))
+        self.holder.is_staff=True;self.holder.save(update_fields=['is_staff'])
+        grant=Delegation.objects.create(user=self.holder,capabilities=['account.view'])
+        synchronize_cms_group(self.holder,grant)
+        fresh=Client()
+        response=fresh.post('/admin/login/',{'username':self.holder.username,'password':'synthetic-password-123','next':'/admin/'})
+        self.assertEqual(response.status_code,302)
+        self.assertEqual(fresh.session['member_account_epoch'],1)
+        self.assertEqual(fresh.session['authority_epoch'],grant.epoch)
+        self.assertEqual(fresh.get('/operations/accounts/').status_code,200)
+        self.assertEqual(old.get('/operations/accounts/').status_code,302)

@@ -108,13 +108,6 @@ def account(request, mode):
                 user = form.get_user()
                 services.audit(user, "member.account.login", user.pk)
             login(request, user)
-            from .models import MemberAccountControl
-            control = MemberAccountControl.objects.filter(user=user).first()
-            if control and control.state != 'active':
-                logout(request)
-                from django.core.exceptions import PermissionDenied
-                raise PermissionDenied('Inactive account')
-            request.session['member_account_epoch'] = control.epoch if control else 0
             from .models import Authority, Delegation
             if Authority.objects.filter(pk=1, primary=user).exists():
                 return go(request, "security_challenge")
